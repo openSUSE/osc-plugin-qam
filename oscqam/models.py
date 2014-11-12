@@ -39,6 +39,12 @@ class XmlFactoryMixin(object):
     Otherwise it will parse the children into another node and set the property
     to a list of these new parsed nodes.
     """
+    def __init__(self, *args, **kwargs):
+        """Will set every element in kwargs to a property of the class.
+        """
+        for kwarg in kwargs:
+            setattr(self, kwarg, kwargs[kwarg])
+    
     @staticmethod
     def listify(dictionary, key):
         """Will wrap an existing dictionary key in a list.
@@ -56,21 +62,25 @@ class XmlFactoryMixin(object):
         """
         objects = []
         for request in et.iter(tag):
+            attribs = {}
+            for attribute in request.attrib:
+                attribs[attribute] = request.attrib[attribute]
             kwargs = {}
-            for attribute in request:
-                key = attribute.tag
-                children = attribute.getchildren()
-                # Handle nested element
-                if children:
-                    value = cls.parse_et(remote, attribute, key)
-                    if key in kwargs:
-                        XmlFactoryMixin.listify(kwargs, key)
-                        kwargs[key].append(value)
-                    else:
-                        kwargs[key] = value
-                # TODO: Handle elements with attributes
+            for child in request:
+                key = child.tag
+                subchildren = list(child)
+                if subchildren:
+                    value = cls.parse_et(remote, child, key)
+                    if len(value) == 1:
+                        value = value[0]
                 else:
-                    kwargs[key] = attribute.text
+                    value = child.text.strip()
+                if key in kwargs:
+                    XmlFactoryMixin.listify(kwargs, key)
+                    kwargs[key].append(value)
+                else:
+                    kwargs[key] = value
+            kwargs.update(attribs)
             objects.append(cls(remote, **kwargs))
         return objects
     
@@ -86,9 +96,8 @@ class Group(XmlFactoryMixin):
     endpoint = 'group'
     
     def __init__(self, remote, **kwargs):
+        super(Group, self).__init__(**kwargs)
         self.remote = remote
-        for kwarg in kwargs:
-            setattr(self, kwarg, kwargs[kwarg])
 
     @classmethod
     def all(cls, remote):
@@ -110,10 +119,9 @@ class User(XmlFactoryMixin):
     endpoint = 'person'
     
     def __init__(self, remote, **kwargs):
+        super(User, self).__init__(**kwargs)
         self.remote = remote
         self._groups = None
-        for kwarg in kwargs:
-            setattr(self, kwarg, kwargs[kwarg])
                                     
     @property
     def groups(self):
@@ -149,9 +157,8 @@ class Request(XmlFactoryMixin):
     endpoint = 'request'
     
     def __init__(self, remote, **kwargs):
+        super(Request, self).__init__(**kwargs)
         self.remote = remote
-        for kwarg in kwargs:
-            setattr(self, kwarg, kwargs[kwarg])
 
     @property
     def groups(self):
