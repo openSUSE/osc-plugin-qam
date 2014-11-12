@@ -1,5 +1,5 @@
 from functools import wraps
-from models import Group, User, Request
+from .models import Group, User, Request
 
 
 class RemoteAction(object):

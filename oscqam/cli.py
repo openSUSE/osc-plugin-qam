@@ -3,8 +3,8 @@ import sys
 from osc import cmdln
 import osc.conf
 
-from osc_qam_plugin.actions import RequestAction
-from osc_qam_plugin.models import RemoteFacade
+from oscqam.actions import RequestAction
+from oscqam.models import RemoteFacade
 
 
 class QamInterpreter(cmdln.Cmdln):
