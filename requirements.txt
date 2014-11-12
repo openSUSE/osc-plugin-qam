@@ -1,3 +1,4 @@
 m2crypto
 pycurl
 urlgrabber
+pytest
