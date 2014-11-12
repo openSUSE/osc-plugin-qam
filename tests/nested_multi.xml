@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<person>
+  <firstname>John</firstname>
+  <lastname>Smith</lastname>
+  <address>
+    <streetname>
+      Arcadiaavenue
+    </streetname>
+    <streetnumber>
+      1
+    </streetnumber>
+  </address>
+  <address>
+    <streetname>
+      Rassilonblvd
+    </streetname>
+    <streetnumber>
+      2
+    </streetnumber>
+  </address>
+</person>
