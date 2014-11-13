@@ -71,6 +71,3 @@ class XmlFactoryMixinTests(unittest.TestCase):
         self.assertEqual(john.address.main, 'True')
         self.assertEqual(john.address.streetname, 'Arcadiaavenue')
         self.assertEqual(john.address.streetnumber, '1')
-
-if __name__ == '__main__':
-    main()

@@ -44,6 +44,9 @@ class XmlFactoryMixin(object):
         """
         for kwarg in kwargs:
             setattr(self, kwarg, kwargs[kwarg])
+
+    def exists(self, attr):
+        return hasattr(self, attr) and getattr(self, attr)
     
     @staticmethod
     def listify(dictionary, key):
@@ -55,11 +58,13 @@ class XmlFactoryMixin(object):
             dictionary[key] = [value]
 
     @classmethod
-    def parse_et(cls, remote, et, tag):
+    def parse_et(cls, remote, et, tag, wrapper_cls=None):
         """Recursively parses an element-tree instance.
 
         Will iterate over the tag as root-level.
         """
+        if not wrapper_cls:
+            wrapper_cls = cls
         objects = []
         for request in et.iter(tag):
             attribs = {}
@@ -69,25 +74,30 @@ class XmlFactoryMixin(object):
             for child in request:
                 key = child.tag
                 subchildren = list(child)
-                if subchildren:
-                    value = cls.parse_et(remote, child, key)
+                if subchildren or child.attrib:
+                    # Prevent that all children have the same class as the parent.
+                    # This might lead to providing methods that make no sense.
+                    value = cls.parse_et(remote, child, key, XmlFactoryMixin)
                     if len(value) == 1:
                         value = value[0]
                 else:
-                    value = child.text.strip()
+                    if child.text:
+                        value = child.text.strip()
+                    else:
+                        value = None
                 if key in kwargs:
                     XmlFactoryMixin.listify(kwargs, key)
                     kwargs[key].append(value)
                 else:
                     kwargs[key] = value
             kwargs.update(attribs)
-            objects.append(cls(remote, **kwargs))
+            objects.append(wrapper_cls(remote, **kwargs))
         return objects
     
     @classmethod
     def parse(cls, remote, xml, tag):
         root = ET.fromstring(xml)
-        return cls.parse_et(remote, root, tag)
+        return cls.parse_et(remote, root, tag, cls)
 
 
 class Group(XmlFactoryMixin):
