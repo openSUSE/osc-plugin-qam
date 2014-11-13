@@ -128,11 +128,13 @@ class Group(XmlFactoryMixin):
     def parse(cls, remote, xml):
         return super(Group, cls).parse(remote, xml, 'entry')
 
+
 class User(XmlFactoryMixin):
     """Wraps a user of the obs in an object.
 
     """
     endpoint = 'person'
+    qam_regex = re.compile(".*qam.*")
     
     def __init__(self, remote, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -149,6 +151,12 @@ class User(XmlFactoryMixin):
             self._groups = Group.for_user(self.remote, self)
         return self._groups
 
+    @property
+    def qam_groups(self):
+        """Return only the groups that are part of the qam-workflow."""
+        return [group for group in self.groups
+                if User.qam_regex.match(group.name)]
+
     def __str__(self):
         return unicode(self)
 
@@ -159,7 +167,6 @@ class User(XmlFactoryMixin):
     def by_name(cls, remote, name):
         url = '/'.join([User.endpoint, name])
         users = remote.get(url, User.parse)
-        import pdb; pdb.set_trace()
         if users:
             return users[0]
         raise AttributeError("User not found.")
