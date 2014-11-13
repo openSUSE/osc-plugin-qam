@@ -2,12 +2,18 @@
 everything in a consistent state.
 
 """
-import osc.core
+import logging
+import os
+import re
 import urllib
 try:
     from xml.etree import cElementTree as ET
 except ImportError:
     import cElementTree as ET
+import osc.core
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class RemoteFacade(object):
