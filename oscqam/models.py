@@ -178,43 +178,149 @@ class User(XmlFactoryMixin):
 
 class Request(XmlFactoryMixin):
     endpoint = 'request'
+
+    open_states = ['new', 'review']
     
     def __init__(self, remote, **kwargs):
         super(Request, self).__init__(**kwargs)
         self.remote = remote
+        self._groups = None
+
+    def open_reviews(self):
+        def name_review(r):
+            if r.exists('by_group'):
+                r.name = r.by_group
+            elif r.exists('by_user'):
+                r.name = r.by_user
+            elif r.exists('who'):
+                r.name = r.who
+            else:
+                r.name = ''
+        if not self.review:
+            return []
+        if isinstance(self.review, list):
+            open_reviews = [r for r in self.review if hasattr(r, 'state') and
+                            r.state in Request.open_states]
+            for r in open_reviews:
+                name_review(r)
+        else:
+            name_review(self.review)
+            open_reviews = [self.review]
+        return open_reviews
 
     @property
     def groups(self):
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
-        if not self.groups:
-            self.groups = Group.for_request(self.remote, self)
-        return self.groups
-
-    @classmethod
-    def all(cls, remote):
-        pass
+        if not self._groups:
+            self._groups = Group.for_request(self.remote, self)
+        return self._groups
 
     @classmethod
     def for_user(cls, remote, user):
         params={'user': user.login,
-                'view': 'collection'}
+                'view': 'collection',
+                'types': 'review'}
         return remote.get(cls.endpoint, cls.parse, params)
 
     @classmethod
+    def open_for_groups(cls, remote, groups):
+        """Will return all requests of the given type for the given groups
+        that are still open: the state of the review should be in state 'new'.
+
+        Args:
+            - remote: The remote facade to use.
+            - groups: The groups that should be used.
+        """
+        def get_group_name(group):
+            if isinstance(group, str):
+                return group
+            return group.name
+        xpaths = ["(state/@name='{0}')".format('review')]
+        for group in groups:
+            name = get_group_name(group)
+            xpaths.append(
+                "(review[@by_group='{0}' and @state='new'])".format(name)
+            )
+        xpath = " and ".join(xpaths)
+        params = {'match': xpath}
+        search = "/".join(["search", cls.endpoint])
+        return remote.get(search, cls.parse, params)
+
+    @classmethod
     def by_id(cls, remote, req_id):
-        pass
+        endpoint = "/".join([cls.endpoint, req_id])
+        return remote.get(endpoint, cls.parse)
 
     @classmethod
     def parse(cls, remote, xml):
-        super(Request, cls).parse(remote, xml, cls.endpoint)
-        
+        return super(Request, cls).parse(remote, xml, cls.endpoint)
 
-class Assignment(object):
-    """Stores the current association between a user, a group and a request.
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __str__(self):
+        return self.id
+
+    def unicode(self):
+        return str(self)
+
+
+class Template(object):
+    """Facade to filesystem-based templates.
+    The templates can be found in:
+
+    ``/mounts/qam/testreports/``
     """
-    def __init__(self, group, request, user):
-        self.group = group
+    template_base_path = "/mounts/qam/testreports/"
+    template_name_regex = "SUSE:Maintenance:(\d+):{request_id}"
+
+    def __init__(self, directory, request):
+        """Create a new template from the given directory.
+        """
+        self.directory = directory
         self.request = request
-        self.user = user
-        self.state = None
+        self.log_entries = {}
+        self.parse_log()
+
+    def parse_log(self):
+        """Parses the header of the log into the log_entries dictionary.
+        """
+        log_path = os.path.join(self.directory, "log")
+        if not os.path.exists(log_path):
+            raise AttributeError("Template does not contain log file.")
+        with open(log_path, 'r') as log_file:
+            for line in log_file:
+                # We end parsing at the results block.
+                # We only need the header information.
+                if "Test results by" in line:
+                    break
+                try:
+                    key, value = line.split(":", 1)
+                    if key == 'Packages':
+                        value = [v.strip() for v in value.split(",")]
+                    elif key == 'Products':
+                        value = value.replace("SLE-","").strip()
+                    else:
+                        value = value.strip()
+                    self.log_entries[key] = value
+                except ValueError:
+                    pass
+    
+    @classmethod
+    def for_request(cls, request):
+        """Load the template for the given request.
+        """
+        request_id = request.id
+        regex = re.compile(
+            Template.template_name_regex.format(request_id=request_id)
+        )
+        for dir in os.listdir(Template.template_base_path):
+            if re.match(regex, dir):
+                fullpath = os.path.join(Template.template_base_path, dir)
+                return Template(fullpath, request)
+        logger.error(
+            "No template could be found for request {0}".format(
+                request
+            )
+        )
