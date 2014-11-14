@@ -11,6 +11,7 @@ try:
 except ImportError:
     import cElementTree as ET
 import osc.core
+import osc.oscerr
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -212,35 +213,57 @@ class User(XmlFactoryMixin):
         return super(User, cls).parse(remote, xml, cls.endpoint)
             
 
-class Request(XmlFactoryMixin):
+class Request(osc.core.Request, XmlFactoryMixin):
     endpoint = 'request'
 
-    open_states = ['new', 'review']
+    OPEN_STATES = ['new', 'review']
+    REVIEW_USER = 'BY_USER'
+    REVIEW_GROUP = 'BY_GROUP'
+    REVIEW_OTHER = 'BY_OTHER'
     
-    def __init__(self, remote, **kwargs):
-        super(Request, self).__init__(**kwargs)
+    def __init__(self, remote):
         self.remote = remote
+        super(Request, self).__init__()
         self._groups = None
 
-    def open_reviews(self):
-        def name_review(r):
-            if r.exists('by_group'):
+    def review_action(self, params):
+        pass
+
+    def review_add(self, user=None, group=None):
+        """Will add a new reviewrequest for the given user or group.
+
+        """
+        params = {'addreview': 't'}
+        if not user and not group:
+            raise AttributeError("Specify group or user for new review.")
+        if user:
+            params['by_user'] = user.login
+        if group:
+            params['by_group'] = group.name
+
+    def review_list_open(self):
+        def set_name_review(r):
+            if r.by_group != None:
                 r.name = r.by_group
-            elif r.exists('by_user'):
+                r.review_type = Request.REVIEW_GROUP
+            elif r.by_user != None:
                 r.name = r.by_user
-            elif r.exists('who'):
+                r.review_type = Request.REVIEW_USER
+            elif r.who:
                 r.name = r.who
+                r.review_type = Request.REVIEW_OTHER
             else:
                 r.name = ''
-        if not self.review:
+                r.review_type = Request.REVIEW_OTHER
+        if not self.reviews:
             return []
-        if isinstance(self.review, list):
-            open_reviews = [r for r in self.review if hasattr(r, 'state') and
-                            r.state in Request.open_states]
+        if isinstance(self.reviews, list):
+            open_reviews = [r for r in self.reviews if hasattr(r, 'state') and
+                            r.state in Request.OPEN_STATES]
             for r in open_reviews:
-                name_review(r)
+                set_name_review(r)
         else:
-            name_review(self.review)
+            set_name_review(self.review)
             open_reviews = [self.review]
         return open_reviews
 
@@ -256,22 +279,25 @@ class Request(XmlFactoryMixin):
     def for_user(cls, remote, user):
         params={'user': user.login,
                 'view': 'collection',
-                'types': 'review'}
+                'types': 'review',}
         return remote.get(cls.endpoint, cls.parse, params)
 
     @classmethod
-    def open_for_groups(cls, remote, groups):
+    def open_for_groups(cls, remote, groups, **kwargs):
         """Will return all requests of the given type for the given groups
         that are still open: the state of the review should be in state 'new'.
 
         Args:
             - remote: The remote facade to use.
             - groups: The groups that should be used.
+            - **kwargs: additional parameters for the search.
         """
         def get_group_name(group):
             if isinstance(group, str):
                 return group
             return group.name
+        # if not kwargs:
+        #     kwargs = {'withfullhistory': '1'}
         xpaths = ["(state/@name='{0}')".format('review')]
         for group in groups:
             name = get_group_name(group)
@@ -280,23 +306,34 @@ class Request(XmlFactoryMixin):
             )
         xpath = " and ".join(xpaths)
         params = {'match': xpath}
+        params.update(kwargs)
         search = "/".join(["search", cls.endpoint])
         return remote.get(search, cls.parse, params)
 
     @classmethod
     def by_id(cls, remote, req_id):
         endpoint = "/".join([cls.endpoint, req_id])
-        return remote.get(endpoint, cls.parse)
+        return remote.get(endpoint, cls.parse)[0]
 
     @classmethod
     def parse(cls, remote, xml):
-        return super(Request, cls).parse(remote, xml, cls.endpoint)
+        et = ET.fromstring(xml)
+        requests = []
+        for request in et.iter(cls.endpoint):
+            try:
+                req = Request(remote)
+                req.read(request)
+                requests.append(req)
+            except osc.oscerr.APIError, e:
+                logger.error(e.msg)
+                pass
+        return requests
 
     def __eq__(self, other):
-        return self.id == other.id
+        return self.reqid == other.reqid
 
     def __str__(self):
-        return self.id
+        return self.reqid
 
     def unicode(self):
         return str(self)
@@ -347,7 +384,7 @@ class Template(object):
     def for_request(cls, request):
         """Load the template for the given request.
         """
-        request_id = request.id
+        request_id = request.reqid
         regex = re.compile(
             Template.template_name_regex.format(request_id=request_id)
         )
