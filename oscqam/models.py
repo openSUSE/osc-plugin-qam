@@ -45,15 +45,13 @@ class XmlFactoryMixin(object):
     Otherwise it will parse the children into another node and set the property
     to a list of these new parsed nodes.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, remote, attributes, children):
         """Will set every element in kwargs to a property of the class.
         """
-        for kwarg in kwargs:
-            setattr(self, kwarg, kwargs[kwarg])
+        attributes.update(children)
+        for kwarg in attributes:
+            setattr(self, kwarg, attributes[kwarg])
 
-    def exists(self, attr):
-        return hasattr(self, attr) and getattr(self, attr)
-    
     @staticmethod
     def listify(dictionary, key):
         """Will wrap an existing dictionary key in a list.
@@ -97,7 +95,7 @@ class XmlFactoryMixin(object):
                 else:
                     kwargs[key] = value
             kwargs.update(attribs)
-            objects.append(wrapper_cls(remote, **kwargs))
+            objects.append(wrapper_cls(remote, attribs, kwargs))
         return objects
     
     @classmethod
@@ -111,22 +109,60 @@ class Group(XmlFactoryMixin):
     """
     endpoint = 'group'
     
-    def __init__(self, remote, **kwargs):
-        super(Group, self).__init__(**kwargs)
+    def __init__(self, remote, attributes, children):
+        super(Group, self).__init__(remote, attributes, children)
         self.remote = remote
 
     @classmethod
     def all(cls, remote):
-        return remote.get(cls.endpoint, Group.parse)
+        group_entries = remote.get(cls.endpoint, Group.parse_entry)
+        groups = [Group.for_name(remote, g.name) for g in group_entries]
+        return groups
+
+    @classmethod
+    def for_name(cls, remote, group_name):
+        url = '/'.join([Group.endpoint, group_name])
+        group = remote.get(url, Group.parse)
+        if group:
+            # We set name to title to ensure equality.  This allows us to
+            # prevent having to query *all* groups we need via this method,
+            # which could use very many requests.
+            group[0].name = group[0].title
+            return group[0]
+        else:
+            raise AttributeError(
+                "No group found for name: {0}".format(
+                    group_name
+                )
+            )
 
     @classmethod
     def for_user(cls, remote, user):
         params = {'login': user.login}
-        return remote.get(cls.endpoint, Group.parse, params)
+        group_entries = remote.get(cls.endpoint, Group.parse_entry, params)
+        groups = [Group.for_name(remote, g.name) for g in group_entries]
+        return groups
 
     @classmethod
     def parse(cls, remote, xml):
+        return super(Group, cls).parse(remote, xml, 'group')
+
+    @classmethod
+    def parse_entry(cls, remote, xml):
         return super(Group, cls).parse(remote, xml, 'entry')
+
+    def __hash__(self):
+        # We don't want to hash to the same as only the string.
+        return hash(self.name) + hash(type(self))
+        
+    def __eq__(self, other):
+        return self.name == other.name
+        
+    def __str__(self):
+        return self.name
+
+    def __unicode__(self):
+        return str(self).encode('utf-8')
 
 
 class User(XmlFactoryMixin):
@@ -136,8 +172,8 @@ class User(XmlFactoryMixin):
     endpoint = 'person'
     qam_regex = re.compile(".*qam.*")
     
-    def __init__(self, remote, **kwargs):
-        super(User, self).__init__(**kwargs)
+    def __init__(self, remote, attributes, children):
+        super(User, self).__init__(remote, attributes, children)
         self.remote = remote
         self._groups = None
                                     
