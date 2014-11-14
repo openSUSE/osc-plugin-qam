@@ -17,7 +17,7 @@ class RemoteAction(object):
 
 class ListAction(RemoteAction):
     def __call__(self):
-        """Return all requests that match the parameters of thie RequestAction.
+        """Return all requests that match the parameters of the RequestAction.
 
         """
         qam_groups = self.user.qam_groups
@@ -29,24 +29,42 @@ class ListAction(RemoteAction):
 
 
 class AssignAction(RemoteAction):
-    def __init__(self, remote, user, group, request):
-        """Action to assign a user to a request.
-
-        Will ensure that the action is atomically performed or not performed
-        at all.
-
-        """
+    def __init__(self, remote, user, request_id):
         super(AssignAction, self).__init__(remote, user)
-        self.group = group
-        self.request = request
+        self.request = Request.by_id(self.remote, request_id)
+    
+    def __call__(self, group_to_replace=None):
+        if group_to_replace:
+            pass
+            # Easy we were told what group to assign.
+        else:
+            self.infer_group()
 
-    def __call__(self):
-        self.request.add(self.user)
-        self.request.accept(self.group)
+    def infer_group(self):
+        qam_groups = set(self.user.qam_groups)
+        reviews = [review for review in self.request.review_list_open() if
+                   review.review_type == Request.REVIEW_GROUP]
+        open_groups = set([Group.for_name(self.remote, review.name) for review
+                           in reviews])
+        both = qam_groups.intersection(open_groups)
+        if not both:
+            return
+        else:
+            if len(both) > 1:
+                # TODO: Too many groups possible: as for clarification.
+                pass
+            else:
+                group = both.pop()
+                # TODO: Ensure that the user actually wants this?
+                self.assign(group)
+        
+    def assign(self, group):
+        self.request.review_add(user=self.user)
+        self.request.review_accept(group=group)
 
     def rollback(self):
-        self.request.reopen(self.group)
-        self.request.accept(self.user)
+        self.request.review_reopen(self.group)
+        self.request.review_accept(user=self.user)
 
 
 class RequestAction(object):

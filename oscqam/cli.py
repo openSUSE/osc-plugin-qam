@@ -3,7 +3,7 @@ import sys
 from osc import cmdln
 import osc.conf
 
-from oscqam.actions import ListAction
+from oscqam.actions import AssignAction, ListAction
 from oscqam.models import RemoteFacade
 
 
@@ -17,7 +17,7 @@ def output(template):
             "Rating"]
     for key in keys:
         print "{0}: {1}".format(key, entries[key])
-    names = [r.name for r in template.request.open_reviews()]
+    names = [r.name for r in template.request.review_list_open()]
     print "Unassigned Roles: {0}".format(names)
 
 
@@ -26,7 +26,6 @@ class QamInterpreter(cmdln.Cmdln):
         self.apiurl = osc.conf.config['apiurl']
         self.api = RemoteFacade(self.apiurl)
         self.affected_user = None
-        self.request_id = None
         if opts.user:
             self.affected_user = opts.user
         else:
@@ -53,15 +52,16 @@ class QamInterpreter(cmdln.Cmdln):
             output(template)
         return
 
-    @cmdln.option('-r', '--request',
-                  help='Request-id of the request to use in the process.')
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
-    def do_assign(self, subcmd, opts):
+    def do_assign(self, subcmd, opts, request_id):
         """${cmd_name}: Assign the configured (or passed user) to the request.
 
         """
         self._set_required_params(opts)
+        self.request_id = request_id
+        action = AssignAction(self.api, self.affected_user, self.request_id)
+        success = action()
         pass
 
 def do_qam(self, subcmd, opts, arg=None):
