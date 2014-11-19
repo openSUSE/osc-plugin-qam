@@ -2,7 +2,19 @@ from functools import wraps
 from .models import Group, User, Request, Template
 
 
-class RemoteAction(object):
+class UninferableError(Exception):
+    """Error to raise when the program should try to auto-infer some values, but
+    can not do so due to ambiguity.
+
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class OscAction(object):
+    """Base class for actions that need to interface with the open build service.
+
+    """
     def __init__(self, remote, user):
         self.remote = remote
         self.all_groups = Group.all(remote)
@@ -48,11 +60,11 @@ class AssignAction(RemoteAction):
                            in reviews])
         both = qam_groups.intersection(open_groups)
         if not both:
-            return
+            raise UninferableError("No matching qam-groups found for user.")
         else:
             if len(both) > 1:
-                # TODO: Too many groups possible: as for clarification.
-                pass
+                error = "User could review more than one group: %s" % both
+                raise UninferableError(error)
             else:
                 group = both.pop()
                 # TODO: Ensure that the user actually wants this?
