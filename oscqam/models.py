@@ -23,7 +23,7 @@ class RemoteFacade(object):
         """
         self.remote = remote
         
-    def get(self, endpoint, callback, params=None):
+    def get(self, endpoint, params=None):
         """Retrieve information at the given endpoint with the parameters.
 
         Call the callback function with the result.
@@ -34,7 +34,15 @@ class RemoteFacade(object):
         url = '/'.join([self.remote, endpoint])
         remote = osc.core.http_GET(url, data=params)
         xml = remote.read()
-        return callback(self, xml)
+        return xml
+
+    def post(self, endpoint, params=None):
+        if params:
+            params = urllib.urlencode(params)
+        url = '/'.join([self.remote, endpoint])
+        remote = osc.core.http_POST(url, data=params)
+        xml = remote.read()
+        return xml
 
 
 class XmlFactoryMixin(object):
@@ -116,14 +124,14 @@ class Group(XmlFactoryMixin):
 
     @classmethod
     def all(cls, remote):
-        group_entries = remote.get(cls.endpoint, Group.parse_entry)
+        group_entries = Group.parse(remote, remote.get(cls.endpoint))
         groups = [Group.for_name(remote, g.name) for g in group_entries]
         return groups
 
     @classmethod
     def for_name(cls, remote, group_name):
         url = '/'.join([Group.endpoint, group_name])
-        group = remote.get(url, Group.parse)
+        group = Group.parse(remote, remote.get(url))
         if group:
             # We set name to title to ensure equality.  This allows us to
             # prevent having to query *all* groups we need via this method,
@@ -140,7 +148,8 @@ class Group(XmlFactoryMixin):
     @classmethod
     def for_user(cls, remote, user):
         params = {'login': user.login}
-        group_entries = remote.get(cls.endpoint, Group.parse_entry, params)
+        group_entries = Group.parse_entry(remote, remote.get(cls.endpoint,
+                                                             params))
         groups = [Group.for_name(remote, g.name) for g in group_entries]
         return groups
 
@@ -203,7 +212,7 @@ class User(XmlFactoryMixin):
     @classmethod
     def by_name(cls, remote, name):
         url = '/'.join([User.endpoint, name])
-        users = remote.get(url, User.parse)
+        users = User.parse(remote, remote.get(url))
         if users:
             return users[0]
         raise AttributeError("User not found.")
@@ -234,7 +243,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if group:
             params['by_group'] = group.name
         url = "/".join([Request.endpoint, self.reqid])
-        self.remote.get(url, params)
+        self.remote.post(url, params)
 
     def review_accept(self, user=None, group=None):
         params = {'changestate': 'accept'}
@@ -293,7 +302,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params={'user': user.login,
                 'view': 'collection',
                 'types': 'review',}
-        return remote.get(cls.endpoint, cls.parse, params)
+        return cls.parse(remote, remote.get(cls.endpoint, params))
 
     @classmethod
     def open_for_groups(cls, remote, groups, **kwargs):
@@ -321,12 +330,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params = {'match': xpath}
         params.update(kwargs)
         search = "/".join(["search", cls.endpoint])
-        return remote.get(search, cls.parse, params)
+        return cls.parse(remote, remote.get(search, params))
 
     @classmethod
     def by_id(cls, remote, req_id):
         endpoint = "/".join([cls.endpoint, req_id])
-        return remote.get(endpoint, cls.parse)[0]
+        return cls.parse(remote, remote.get(endpoint))[0]
 
     @classmethod
     def parse(cls, remote, xml):
