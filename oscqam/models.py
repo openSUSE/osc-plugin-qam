@@ -226,20 +226,33 @@ class Request(osc.core.Request, XmlFactoryMixin):
         super(Request, self).__init__()
         self._groups = None
 
-    def review_action(self, params):
-        pass
+    def review_action(self, params, user=None, group=None):
+        if not user and not group:
+            raise AttributeError("group or user required for this action.")
+        if user:
+            params['by_user'] = user.login
+        if group:
+            params['by_group'] = group.name
+        url = "/".join([Request.endpoint, self.reqid])
+        self.remote.get(url, params)
+
+    def review_accept(self, user=None, group=None):
+        params = {'changestate': 'accept'}
+        self.review_accept(params, user, group)
 
     def review_add(self, user=None, group=None):
         """Will add a new reviewrequest for the given user or group.
 
         """
         params = {'addreview': 't'}
-        if not user and not group:
-            raise AttributeError("Specify group or user for new review.")
-        if user:
-            params['by_user'] = user.login
-        if group:
-            params['by_group'] = group.name
+        self.review_action(params, user, group)
+
+    def review_reopen(self, user=None, group=None):
+        """Will reopen a reviewrequest for the given user or group.
+
+        """
+        params = {'changestate': 'reopen'}
+        self.review_action(params, user, group)
 
     def review_list_open(self):
         def set_name_review(r):
