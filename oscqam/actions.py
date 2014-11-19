@@ -27,7 +27,7 @@ class OscAction(object):
         pass
 
 
-class ListAction(RemoteAction):
+class ListAction(OscAction):
     def __call__(self):
         """Return all requests that match the parameters of the RequestAction.
 
@@ -40,7 +40,7 @@ class ListAction(RemoteAction):
         return templates
 
 
-class AssignAction(RemoteAction):
+class AssignAction(OscAction):
     def __init__(self, remote, user, request_id):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
