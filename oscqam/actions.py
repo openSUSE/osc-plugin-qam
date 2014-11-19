@@ -47,18 +47,21 @@ class AssignAction(OscAction):
     
     def __call__(self, group_to_replace=None):
         if group_to_replace:
-            pass
-            # Easy we were told what group to assign.
+            self.assign(group_to_replace)
         else:
             self.infer_group()
 
     def infer_group(self):
-        qam_groups = set(self.user.qam_groups)
+        """Based on the given user and request id search for a group that
+        the user could do the review for.
+
+        """
+        user_groups = set(self.user.qam_groups)
         reviews = [review for review in self.request.review_list_open() if
                    review.review_type == Request.REVIEW_GROUP]
         open_groups = set([Group.for_name(self.remote, review.name) for review
                            in reviews])
-        both = qam_groups.intersection(open_groups)
+        both = user_groups.intersection(open_groups)
         if not both:
             raise UninferableError("No matching qam-groups found for user.")
         else:
@@ -75,5 +78,5 @@ class AssignAction(OscAction):
         self.request.review_accept(group=group)
 
     def rollback(self):
-        self.request.review_reopen(self.group)
+        self.request.review_reopen(group=self.group)
         self.request.review_accept(user=self.user)
