@@ -65,27 +65,3 @@ class AssignAction(RemoteAction):
     def rollback(self):
         self.request.review_reopen(self.group)
         self.request.review_accept(user=self.user)
-
-
-class RequestAction(object):
-    def __init__(self, remote, user, requestid):
-        self.request = Request.by_id(self.remote, requestid)
-
-    def assign(self):
-        action = AssignAction(self.user, self.group, self.request)
-        action()
-
-    def unassign(self):
-        pass
-
-    def approve(self):
-        pass
-
-    def reject(self):
-        pass
-
-    def comment(self):
-        pass
-
-    def history(self):
-        pass
