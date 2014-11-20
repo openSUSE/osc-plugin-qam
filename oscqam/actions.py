@@ -105,4 +105,49 @@ class AssignAction(OscAction):
         )
 
 
+class UnassignAction(OscAction):
+    """Will unassign the user from the request and reopen the request for
+    the group the user assign himself for.
+    """
+    GROUP_NOT_INFERRED_MSG = "Can not auto-detect which group is affected."
+
+    def __init__(self, remote, user, request_id):
+        super(UnassignAction, self).__init__(remote, user)
+        self.request = Request.by_id(self.remote, request_id)
+
+    def action(self):
+        group_to_readd = self.infer_group()
+        if not group_to_readd or len(group_to_readd) > 1:
+            raise UninferableError(UnassignAction.GROUP_NOT_INFERRED_MSG)
+        group_to_readd = Group.for_name(self.remote, group_to_readd[0])
+        self.unassign(group_to_readd)
+
+    def infer_group(self):
+        """Search for the group the given user started a review for.
+
+        """
+        # TODO: This should be extended to take into account reviews that
+        # might be done by > 1 person, which requires:
+        # 1) Storing the history of a review.
+        # 2) Checking in history which group was accepted.
+        group_reviews = [r for r in self.request.reviews
+                         if r.by_group != None]
+        reviews_for_user_group = []
+        for group_review in group_reviews:
+            if group_review.state == 'accepted':
+                if group_review.who == self.user.login:
+                    reviews_for_user_group.append(group_review.by_group)
+        return reviews_for_user_group
+
+    def unassign(self, group):
+        self.request.review_reopen(group=group)
         self.request.review_accept(user=self.user)
+
+
+class ApproveAction(OscAction):
+    def __init__(self, remote, user, request_id):
+        super(ApproveAction, self).__init__(remote, user)
+        self.request = Request.by_id(self.remote, request_id)
+    
+    def action(self):
+        pass

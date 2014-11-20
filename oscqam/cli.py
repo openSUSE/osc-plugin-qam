@@ -3,7 +3,7 @@ import sys
 from osc import cmdln
 import osc.conf
 
-from oscqam.actions import AssignAction, ListAction
+from oscqam.actions import ApproveAction, AssignAction, ListAction, UnassignAction
 from oscqam.models import RemoteFacade
 
 
@@ -62,7 +62,25 @@ class QamInterpreter(cmdln.Cmdln):
         self.request_id = request_id
         action = AssignAction(self.api, self.affected_user, self.request_id)
         success = action()
-        pass
+
+    @cmdln.option('-u', '--user',
+                  help='User to assign for this request.')
+    def do_unassign(self, subcmd, opts, request_id):
+        """${cmd_name}: Assign the configured (or passed user) to the request.
+
+        """
+        self._set_required_params(opts)
+        self.request_id = request_id
+        action = UnassignAction(self.api, self.affected_user, self.request_id)
+        success = action()
+
+    @cmdln.option('-u', '--user',
+                  help='User to assign for this request.')
+    def do_approve(self, subcmd, opts, request_id):
+        self._set_required_params(opts)
+        self.request_id = request_id
+        action = ApproveAction(self.api, self.affected_user, self.request_id)
+        success = action()
 
 def do_qam(self, subcmd, opts, arg=None):
     """Start the QA-Maintenance specific submode of osc for request handling.
