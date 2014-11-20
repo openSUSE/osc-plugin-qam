@@ -1,5 +1,6 @@
+from __future__ import print_function
 from functools import wraps
-from .models import Group, User, Request, Template
+from .models import Group, User, Request, Template, RemoteError
 
 
 class UninferableError(Exception):
@@ -21,7 +22,17 @@ class OscAction(object):
         self.user = User.by_name(self.remote, user)
         self.undo_stack = []
 
-    def __call__(self, apiurl, **kwargs):
+    def __call__(self, *args, **kwargs):
+        """Will attempt the encapsulated action and call the rollback function if an
+        Error is encountered.
+
+        """
+        try:
+            self.action(*args, **kwargs)
+        except RemoteError:
+            self.rollback()
+
+    def action(self, *args, **kwargs):
         pass
 
     def rollback(self):
@@ -30,7 +41,7 @@ class OscAction(object):
 
 
 class ListAction(OscAction):
-    def __call__(self):
+    def action(self):
         """Return all requests that match the parameters of the RequestAction.
 
         """
@@ -51,7 +62,7 @@ class AssignAction(OscAction):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
 
-    def __call__(self, group_to_replace=None):
+    def action(self, group_to_replace=None):
         if group_to_replace:
             self.assign(group_to_replace)
         else:
@@ -79,7 +90,7 @@ class AssignAction(OscAction):
                 msg = AssignAction.ASSIGN_USER_MSG.format(
                     user=self.user, group=group, request=self.request
                 )
-                print msg
+                print(msg)
                 # TODO: Ensure that the user actually wants this?
                 self.assign(group)
 
