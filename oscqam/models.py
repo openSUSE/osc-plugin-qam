@@ -128,7 +128,7 @@ class XmlFactoryMixin(object):
             kwargs.update(attribs)
             objects.append(wrapper_cls(remote, attribs, kwargs))
         return objects
-    
+
     @classmethod
     def parse(cls, remote, xml, tag):
         root = ET.fromstring(xml)
@@ -139,7 +139,7 @@ class Group(XmlFactoryMixin):
     """A group object from the build service.
     """
     endpoint = 'group'
-    
+
     def __init__(self, remote, attributes, children):
         super(Group, self).__init__(remote, attributes, children)
         self.remote = remote
@@ -186,10 +186,10 @@ class Group(XmlFactoryMixin):
     def __hash__(self):
         # We don't want to hash to the same as only the string.
         return hash(self.name) + hash(type(self))
-        
+
     def __eq__(self, other):
         return self.name == other.name
-        
+
     def __str__(self):
         return self.name
 
@@ -203,12 +203,12 @@ class User(XmlFactoryMixin):
     """
     endpoint = 'person'
     qam_regex = re.compile(".*qam.*")
-    
+
     def __init__(self, remote, attributes, children):
         super(User, self).__init__(remote, attributes, children)
         self.remote = remote
         self._groups = None
-                                    
+
     @property
     def groups(self):
         """Read-only property for groups a user is part of.
@@ -242,7 +242,7 @@ class User(XmlFactoryMixin):
     @classmethod
     def parse(cls, remote, xml):
         return super(User, cls).parse(remote, xml, cls.endpoint)
-            
+
 
 class Request(osc.core.Request, XmlFactoryMixin):
     endpoint = 'request'
@@ -251,7 +251,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     REVIEW_USER = 'BY_USER'
     REVIEW_GROUP = 'BY_GROUP'
     REVIEW_OTHER = 'BY_OTHER'
-    
+
     def __init__(self, remote):
         self.remote = remote
         super(Request, self).__init__()
@@ -289,7 +289,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
                   'newstate': 'new'}
         self.review_action(params, user, group)
 
-    def review_list_open(self):
+    def review_list(self):
+        """Returns all reviews as a list.
+        """
         def set_name_review(r):
             if r.by_group != None:
                 r.name = r.by_group
@@ -306,14 +308,18 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if not self.reviews:
             return []
         if isinstance(self.reviews, list):
-            open_reviews = [r for r in self.reviews if hasattr(r, 'state') and
-                            r.state in Request.OPEN_STATES]
-            for r in open_reviews:
+            for r in self.reviews:
                 set_name_review(r)
+            reviews = self.reviews
         else:
             set_name_review(self.review)
-            open_reviews = [self.review]
-        return open_reviews
+            reviews = [self.review]
+        return reviews
+
+    def review_list_open(self):
+        """Return only open reviews.
+        """
+        return [r for r in self.review_list() if r.state in Request.OPEN_STATES]
 
     @property
     def groups(self):
@@ -361,6 +367,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
     @classmethod
     def by_id(cls, remote, req_id):
         endpoint = "/".join([cls.endpoint, req_id])
+        # withfullhistory=1 breaks osc.core RequestState (history-elements
+        # have not name)
         return cls.parse(remote, remote.get(endpoint))[0]
 
     @classmethod
@@ -427,7 +435,7 @@ class Template(object):
                     self.log_entries[key] = value
                 except ValueError:
                     pass
-    
+
     @classmethod
     def for_request(cls, request):
         """Load the template for the given request.
