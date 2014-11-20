@@ -19,12 +19,14 @@ class OscAction(object):
         self.remote = remote
         self.all_groups = Group.all(remote)
         self.user = User.by_name(self.remote, user)
+        self.undo_stack = []
 
     def __call__(self, apiurl, **kwargs):
         pass
 
-    def rollback(self, *args, **kwargs):
-        pass
+    def rollback(self):
+        for action in self.undo_stack:
+            action()
 
 
 class ListAction(OscAction):
@@ -75,8 +77,13 @@ class AssignAction(OscAction):
         
     def assign(self, group):
         self.request.review_add(user=self.user)
+        self.undo_stack.append(
+            lambda: self.request.review_accept(user=self.user)
+        )
         self.request.review_accept(group=group)
+        self.undo_stack.append(
+            lambda: self.request.review_reopen(group=group)
+        )
 
-    def rollback(self):
-        self.request.review_reopen(group=self.group)
+
         self.request.review_accept(user=self.user)
