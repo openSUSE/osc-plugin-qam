@@ -28,7 +28,7 @@ class OscAction(object):
 
         """
         try:
-            self.action(*args, **kwargs)
+            return self.action(*args, **kwargs)
         except RemoteError:
             self.rollback()
 
@@ -145,8 +145,29 @@ class UnassignAction(OscAction):
 
 
 class ApproveAction(OscAction):
+    """Approve a request for a user and group.
+    
+    Attempts to automatically find the group that the user assigned himself
+    for and will approve that group if possible.
+
+    """
     def __init__(self, remote, user, request_id):
         super(ApproveAction, self).__init__(remote, user)
+        self.request = Request.by_id(self.remote, request_id)
+    
+    def action(self):
+        pass
+
+
+class RejectAction(OscAction):
+    """Reject a request for a user and group.
+    
+    Attempts to automatically find the group that the user assigned himself
+    for and will reject that group if possible.
+
+    """
+    def __init__(self, remote, user, request_id):
+        super(RejectAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
     
     def action(self):
