@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import urllib
+import urllib2
 try:
     from xml.etree import cElementTree as ET
 except ImportError:
@@ -17,12 +18,31 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
+class RemoteError(Exception):
+    """Indicates an error while communicating with the remote service.
+
+    """
+    def __init__(self,url, ret_code, msg, headers, fp):
+        self.url = url
+        self.ret_code = ret_code
+        self.msg = msg
+        self.headers = headers
+        self.fp = fp
+
+
 class RemoteFacade(object):
     def __init__(self, remote):
         """Initialize a new RemoteOscRemote that points to the given remote.
         """
         self.remote = remote
-        
+
+    def _check_for_error(self, answer):
+        ret_code = answer.getcode()
+        if ret_code >= 400 and ret_code < 600:
+            raise urllib2.HTTPError(url, ret_code, answer.msg, answer.headers,
+                                    answer.fp)
+
+
     def get(self, endpoint, params=None):
         """Retrieve information at the given endpoint with the parameters.
 
@@ -33,6 +53,7 @@ class RemoteFacade(object):
             params = urllib.urlencode(params)
         url = '/'.join([self.remote, endpoint])
         remote = osc.core.http_GET(url, data=params)
+        self._check_for_error(remote)
         xml = remote.read()
         return xml
 
@@ -41,6 +62,7 @@ class RemoteFacade(object):
             params = urllib.urlencode(params)
         url = '/'.join([self.remote, endpoint])
         remote = osc.core.http_POST(url, data=params)
+        self._check_for_error(remote)
         xml = remote.read()
         return xml
 
