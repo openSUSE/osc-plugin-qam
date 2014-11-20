@@ -43,6 +43,10 @@ class ListAction(OscAction):
 
 
 class AssignAction(OscAction):
+    ASSIGN_USER_MSG = ("Will assign {user} to {group} for {request}: " +
+                       "there is no other possibility.")
+    MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}" 
+    
     def __init__(self, remote, user, request_id):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
@@ -59,7 +63,7 @@ class AssignAction(OscAction):
 
         """
         user_groups = set(self.user.qam_groups)
-        reviews = [review for review in self.request.review_list_open() if
+        reviews = [review for review in self.request.review_list() if
                    review.review_type == Request.REVIEW_GROUP]
         open_groups = set([Group.for_name(self.remote, review.name) for review
                            in reviews])
@@ -68,10 +72,14 @@ class AssignAction(OscAction):
             raise UninferableError("No matching qam-groups found for user.")
         else:
             if len(both) > 1:
-                error = "User could review more than one group: %s" % both
+                error = AssignAction.MULTIPLE_GROUPS_MSG.format(group=both)
                 raise UninferableError(error)
             else:
                 group = both.pop()
+                msg = AssignAction.ASSIGN_USER_MSG.format(
+                    user=self.user, group=group, request=self.request
+                )
+                print msg
                 # TODO: Ensure that the user actually wants this?
                 self.assign(group)
         
