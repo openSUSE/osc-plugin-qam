@@ -265,13 +265,14 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if group:
             params['by_group'] = group.name
         url_params = urllib.urlencode(params)
-        url = "/".join([Request.endpoint, self.reqid, url_params])
+        url = "/".join([Request.endpoint, self.reqid])
+        url += "?" + url_params
         self.remote.post(url, comment)
 
     def review_accept(self, user=None, group=None):
         params = {'cmd': 'changereviewstate',
                   'newstate': 'accepted'}
-        self.review_accept(params, user, group)
+        self.review_action(params, user, group)
 
     def review_add(self, user=None, group=None):
         """Will add a new reviewrequest for the given user or group.
