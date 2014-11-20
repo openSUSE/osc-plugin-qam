@@ -45,12 +45,12 @@ class ListAction(OscAction):
 class AssignAction(OscAction):
     ASSIGN_USER_MSG = ("Will assign {user} to {group} for {request}: " +
                        "there is no other possibility.")
-    MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}" 
-    
+    MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
+
     def __init__(self, remote, user, request_id):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
-    
+
     def __call__(self, group_to_replace=None):
         if group_to_replace:
             self.assign(group_to_replace)
@@ -82,7 +82,7 @@ class AssignAction(OscAction):
                 print msg
                 # TODO: Ensure that the user actually wants this?
                 self.assign(group)
-        
+
     def assign(self, group):
         self.request.review_add(user=self.user)
         self.undo_stack.append(
