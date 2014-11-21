@@ -269,33 +269,33 @@ class Request(osc.core.Request, XmlFactoryMixin):
         url += "?" + url_params
         self.remote.post(url, comment)
 
-    def review_accept(self, user=None, group=None):
+    def review_accept(self, user=None, group=None, comment=None):
         params = {'cmd': 'changereviewstate',
                   'newstate': 'accepted'}
-        self.review_action(params, user, group)
+        self.review_action(params, user, group, comment)
 
-    def review_add(self, user=None, group=None):
+    def review_add(self, user=None, group=None, comment=None):
         """Will add a new reviewrequest for the given user or group.
 
         """
         params = {'cmd': 'addreview'}
-        self.review_action(params, user, group)
+        self.review_action(params, user, group, comment)
 
-    def review_decline(self, user=None, group=None):
+    def review_decline(self, user=None, group=None, comment=None):
         """Will decline the reviewrequest for the given user or group.
 
         """
         params = {'cmd': 'changereviewstate',
                   'newstate': 'declined'}
-        self.review_action(params, user, group)
+        self.review_action(params, user, group, comment)
 
-    def review_reopen(self, user=None, group=None):
+    def review_reopen(self, user=None, group=None, comment=None):
         """Will reopen a reviewrequest for the given user or group.
 
         """
         params = {'cmd': 'changereviewstate',
                   'newstate': 'new'}
-        self.review_action(params, user, group)
+        self.review_action(params, user, group, comment)
 
     def review_list(self):
         """Returns all reviews as a list.
