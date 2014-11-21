@@ -42,7 +42,7 @@ class OscAction(object):
 
 class ListAction(OscAction):
     def action(self):
-        """Return all requests that match the parameters of the RequestAction.
+        """Return all reviews that match the parameters of the RequestAction.
 
         """
         qam_groups = self.user.qam_groups
@@ -109,7 +109,7 @@ class AssignAction(OscAction):
 
 
 class UnassignAction(OscAction):
-    """Will unassign the user from the request and reopen the request for
+    """Will unassign the user from the review and reopen the request for
     the group the user assign himself for.
     """
     GROUP_NOT_INFERRED_MSG = "Can not auto-detect which group is affected."
@@ -149,11 +149,19 @@ class UnassignAction(OscAction):
         )
         print(msg)
         self.request.review_reopen(group=group)
+        self.undo_stack.append(
+            lambda: self.request.review_accept(group=group,
+                                               comment='Reverting due to error.')
+        )
         self.request.review_accept(user=self.user)
+        self.undo_stack.append(
+            lambda: self.request.review_reopen(user=self.user,
+                                               comment='Reverting due to error.')
+        )
 
 
 class ApproveAction(OscAction):
-    """Approve a request for a user and group.
+    """Approve a review for a user and group.
     
     Attempts to automatically find the group that the user assigned himself
     for and will approve that group if possible.
