@@ -54,8 +54,8 @@ class ListAction(OscAction):
 
 
 class AssignAction(OscAction):
-    ASSIGN_USER_MSG = ("Will assign {user} to {group} for {request}: " +
-                       "there is no other possibility.")
+    ASSIGN_USER_MSG = ("Will assign {user} to {group} for {request}.")
+    AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
     def __init__(self, remote, user, request_id):
@@ -66,7 +66,9 @@ class AssignAction(OscAction):
         if group_to_replace:
             self.assign(group_to_replace)
         else:
-            self.infer_group()
+            group = self.infer_group()
+            # TODO: Ensure that the user actually wants this?
+            self.assign(group)
 
     def infer_group(self):
         """Based on the given user and request id search for a group that
@@ -87,14 +89,15 @@ class AssignAction(OscAction):
                 raise UninferableError(error)
             else:
                 group = both.pop()
-                msg = AssignAction.ASSIGN_USER_MSG.format(
-                    user=self.user, group=group, request=self.request
-                )
+                msg = AssignAction.AUTO_INFER_MSG.format(group=group)
                 print(msg)
-                # TODO: Ensure that the user actually wants this?
-                self.assign(group)
+                return group
 
     def assign(self, group):
+        msg = AssignAction.ASSIGN_USER_MSG.format(
+            user=self.user, group=group, request=self.request
+        )
+        print(msg)
         self.request.review_add(user=self.user)
         self.undo_stack.append(
             lambda: self.request.review_accept(user=self.user)
@@ -110,6 +113,7 @@ class UnassignAction(OscAction):
     the group the user assign himself for.
     """
     GROUP_NOT_INFERRED_MSG = "Can not auto-detect which group is affected."
+    UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
 
     def __init__(self, remote, user, request_id):
         super(UnassignAction, self).__init__(remote, user)
@@ -140,6 +144,10 @@ class UnassignAction(OscAction):
         return reviews_for_user_group
 
     def unassign(self, group):
+        msg = UnassignAction.UNASSIGN_USER_MSG.format(
+            user=self.user, group=group, request=self.request
+        )
+        print(msg)
         self.request.review_reopen(group=group)
         self.request.review_accept(user=self.user)
 
