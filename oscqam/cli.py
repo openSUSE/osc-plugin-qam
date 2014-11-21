@@ -3,7 +3,8 @@ import sys
 from osc import cmdln
 import osc.conf
 
-from oscqam.actions import ApproveAction, AssignAction, ListAction, UnassignAction
+from oscqam.actions import (ApproveAction, AssignAction, ListAction,
+                            UnassignAction, RejectAction)
 from oscqam.models import RemoteFacade
 
 
@@ -33,6 +34,25 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
+    def do_approve(self, subcmd, opts, request_id):
+        self._set_required_params(opts)
+        self.request_id = request_id
+        action = ApproveAction(self.api, self.affected_user, self.request_id)
+        success = action()
+
+    @cmdln.option('-u', '--user',
+                  help='User to assign for this request.')
+    def do_assign(self, subcmd, opts, request_id):
+        """${cmd_name}: Assign the configured (or passed user) to the request.
+
+        """
+        self._set_required_params(opts)
+        self.request_id = request_id
+        action = AssignAction(self.api, self.affected_user, self.request_id)
+        success = action()
+
+    @cmdln.option('-u', '--user',
+                  help='User to assign for this request.')
     def do_list(self, subcmd, opts):
         """${cmd_name}: Show a list of all open requests currently running.
         The command either uses the configured user or the user passed via
@@ -54,13 +74,10 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
-    def do_assign(self, subcmd, opts, request_id):
-        """${cmd_name}: Assign the configured (or passed user) to the request.
-
-        """
+    def do_reject(self, subcmd, opts, request_id):
         self._set_required_params(opts)
         self.request_id = request_id
-        action = AssignAction(self.api, self.affected_user, self.request_id)
+        action = RejectAction(self.api, self.affected_user, self.request_id)
         success = action()
 
     @cmdln.option('-u', '--user',
@@ -72,14 +89,6 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = UnassignAction(self.api, self.affected_user, self.request_id)
-        success = action()
-
-    @cmdln.option('-u', '--user',
-                  help='User to assign for this request.')
-    def do_approve(self, subcmd, opts, request_id):
-        self._set_required_params(opts)
-        self.request_id = request_id
-        action = ApproveAction(self.api, self.affected_user, self.request_id)
         success = action()
 
 def do_qam(self, subcmd, opts, arg=None):

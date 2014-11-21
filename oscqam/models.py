@@ -281,6 +281,14 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params = {'cmd': 'addreview'}
         self.review_action(params, user, group)
 
+    def review_decline(self, user=None, group=None):
+        """Will decline the reviewrequest for the given user or group.
+
+        """
+        params = {'cmd': 'changereviewstate',
+                  'newstate': 'declined'}
+        self.review_action(params, user, group)
+
     def review_reopen(self, user=None, group=None):
         """Will reopen a reviewrequest for the given user or group.
 

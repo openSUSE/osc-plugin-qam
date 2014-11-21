@@ -159,12 +159,17 @@ class ApproveAction(OscAction):
     for and will approve that group if possible.
 
     """
+    APPROVE_MSG = "Will approve {request} for {user}."
+    
     def __init__(self, remote, user, request_id):
         super(ApproveAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
     
     def action(self):
-        pass
+        msg = ApproveAction.APPROVE_MSG.format(user=self.user,
+                                               request=self.request)
+        print(msg)
+        self.request.review_accept(user=self.user)
 
 
 class RejectAction(OscAction):
@@ -174,9 +179,14 @@ class RejectAction(OscAction):
     for and will reject that group if possible.
 
     """
+    DECLINE_MSG = "Will decline {request} for {user}."
+    
     def __init__(self, remote, user, request_id):
         super(RejectAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
     
     def action(self):
-        pass
+        msg = ApproveAction.DECLINE_MSG.format(user=self.user,
+                                               request=self.request)
+        print(msg)
+        self.request.review_decline(user=self.user)
