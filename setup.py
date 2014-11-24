@@ -11,5 +11,6 @@ setup(
     'abstractions.',
     long_description=open("README.txt").read(),
     url='https://wiki.innerweb.novell.com/index.php/RD-OPS_QA/Maintenance/osc-for-qam',
+    install_requires=['osc'],
     packages=['oscqam'],
 )
