@@ -193,8 +193,25 @@ class RejectAction(OscAction):
         super(RejectAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
     
-    def action(self):
-        msg = ApproveAction.DECLINE_MSG.format(user=self.user,
+    def action(self, comment=None):
+        msg = RejectAction.DECLINE_MSG.format(user=self.user,
                                                request=self.request)
+        # Check in the template if the result is FAILED.
+        # If not: bugger user to change it.
+        # If: Can take either comment from template or require
+        # message.
         print(msg)
         self.request.review_decline(user=self.user)
+
+
+class CommentAction(OscAction):
+    """Add a comment to a review.
+    
+    """
+    def __init__(self, remote, user, request_id, comment):
+        super(CommentAction, self).__init__(remote, user)
+        self.comment = comment
+        self.request = Request.by_id(self.remote, request_id)
+
+    def action(self):
+        self.request.add_comment(comment, user=self.user)

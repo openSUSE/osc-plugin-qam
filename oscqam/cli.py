@@ -86,6 +86,8 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
+    @cmdln.option('-m', '--message',
+                  help='Message to use for rejection-comment.')
     def do_reject(self, subcmd, opts, request_id):
         """${cmd_name}: Reject the request for the user.
         
