@@ -4,7 +4,7 @@ from osc import cmdln
 import osc.conf
 
 from oscqam.actions import (ApproveAction, AssignAction, ListAction,
-                            UnassignAction, RejectAction)
+                            UnassignAction, RejectAction, ActionError)
 from oscqam.models import RemoteFacade
 
 
@@ -97,7 +97,11 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = RejectAction(self.api, self.affected_user, self.request_id)
-        success = action()
+        try:
+            success = action()
+        except ActionError, e:
+            print("Error occurred while performing an action.")
+            print(e.msg)
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')

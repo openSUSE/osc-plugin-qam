@@ -409,6 +409,9 @@ class Template(object):
 
     ``/mounts/qam/testreports/``
     """
+    STATUS_SUCCESS = 0
+    STATUS_FAILURE = 1
+    STATUS_UNKNOWN = 2
     template_base_path = "/mounts/qam/testreports/"
     template_name_regex = "SUSE:Maintenance:(\d+):{request_id}"
 
@@ -419,6 +422,15 @@ class Template(object):
         self.request = request
         self.log_entries = {}
         self.parse_log()
+
+    @property
+    def status(self):
+        summary = self.log_entries['SUMMARY']
+        if summary.upper() == "PASSED":
+            return Template.STATUS_SUCCESS
+        elif summary.upper() == "FAILED":
+            return Template.STATUS_FAILURE
+        return Template.STATUS_UNKNOWN
 
     def parse_log(self):
         """Parses the header of the log into the log_entries dictionary.

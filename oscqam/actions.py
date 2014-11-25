@@ -3,13 +3,20 @@ from functools import wraps
 from .models import Group, User, Request, Template, RemoteError
 
 
-class UninferableError(Exception):
-    """Error to raise when the program should try to auto-infer some values, but
-    can not do so due to ambiguity.
+class ActionError(Exception):
+    """General error to raise when an error occurred while performing one of the
+    actions.
 
     """
     def __init__(self, msg):
         self.msg = msg
+
+
+class UninferableError(ActionError):
+    """Error to raise when the program should try to auto-infer some values, but
+    can not do so due to ambiguity.
+
+    """
 
 
 class OscAction(object):
@@ -192,16 +199,34 @@ class RejectAction(OscAction):
     def __init__(self, remote, user, request_id):
         super(RejectAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
+        self._template = None
+
+    @property
+    def template(self):
+        if not self._template:
+            self._template = Template.for_request(self.request)
+        return self._template
     
     def action(self, comment=None):
+        comment = self.get_failure()
         msg = RejectAction.DECLINE_MSG.format(user=self.user,
                                                request=self.request)
-        # Check in the template if the result is FAILED.
-        # If not: bugger user to change it.
-        # If: Can take either comment from template or require
-        # message.
         print(msg)
         self.request.review_decline(user=self.user)
+
+    def get_failure(self):
+        """Get the failure message from the template.
+
+        If the template says the test did not fail this will raise en error.
+
+        """
+        status = self.template.status
+        if status != Template.STATUS_FAILURE:
+            msg = "Request-Status not 'FAILED': please check report: {p}".format(
+                p=self.template.directory
+            )
+            raise ActionError(msg)
+        return self.template.log_entries['comment']
 
 
 class CommentAction(OscAction):
