@@ -32,6 +32,16 @@ class QamInterpreter(cmdln.Cmdln):
         else:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
 
+    def _run_action(func):
+        """Run the given action and catch (expected) errors that might occur.
+
+        """
+        try:
+            return func()
+        except ActionError, e:
+            print("Error occurred while performing an action.")
+            print(e.msg)
+
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
     def do_approve(self, subcmd, opts, request_id):
@@ -44,7 +54,7 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = ApproveAction(self.api, self.affected_user, self.request_id)
-        success = action()
+        success = self._run_action(action)
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
@@ -58,7 +68,7 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = AssignAction(self.api, self.affected_user, self.request_id)
-        success = action()
+        success = self._run_action(action)
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
@@ -71,18 +81,12 @@ class QamInterpreter(cmdln.Cmdln):
         The list will only contain requests that are part of the qam-groups.
 
         """
-        # Products: DESKTOP 12 (x86_64), SDK 12 (x86_64, s390x, ppc64le), WE 12 (x86_64)               <--- from template, remove SLE-
-        # Sources: webkitgtk, webkitgtk3                                                               <--- from template
-        # Bugs: 899922                                                                                 <--- from template
-        # Category: recommended                                                                        <--- from template
-        # Rating: important                                                                            <--- from template
-        # Coordinator: "Leonardo Chiquitto" <lchiquitto@suse.com>                                      <--- from template
         self._set_required_params(opts)
         action = ListAction(self.api, self.affected_user)
-        templates = action()
-        for template in templates:
-            output(template)
-        return
+        templates = self._run_action(action)
+        if templates:
+            for template in templates:
+                output(template)
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
@@ -97,11 +101,7 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = RejectAction(self.api, self.affected_user, self.request_id)
-        try:
-            success = action()
-        except ActionError, e:
-            print("Error occurred while performing an action.")
-            print(e.msg)
+        self._run_action(action)
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
@@ -114,7 +114,7 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = UnassignAction(self.api, self.affected_user, self.request_id)
-        success = action()
+        success = self._run_action(action)
 
     @cmdln.alias('q')
     def do_quit(self, subcmd, opts):
