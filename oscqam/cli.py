@@ -41,7 +41,7 @@ class QamInterpreter(cmdln.Cmdln):
         else:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
 
-    def _run_action(func):
+    def _run_action(self, func):
         """Run the given action and catch (expected) errors that might occur.
 
         """
