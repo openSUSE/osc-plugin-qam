@@ -3,7 +3,7 @@
 %define unmangled_version 0.1
 %define unmangled_version 0.1
 %define release 1
-%define OSCPLUGINPATH /var/lib/osc-plugins/
+%define OSCPLUGINPATH /usr/lib/osc-plugins/
 %define OSCQAMPATH %{python_sitelib}/oscqam/
 
 Summary: Plugin for OSC to support the workflow for the QA maintenance department when using the new request / review osc abstractions.
