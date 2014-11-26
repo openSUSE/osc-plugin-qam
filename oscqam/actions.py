@@ -65,13 +65,14 @@ class AssignAction(OscAction):
     AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
-    def __init__(self, remote, user, request_id):
+    def __init__(self, remote, user, request_id, group=None):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
+        self.group = group
 
-    def action(self, group_to_replace=None):
-        if group_to_replace:
-            self.assign(group_to_replace)
+    def action(self):
+        if self.group:
+            self.assign(self.group)
         else:
             group = self.infer_group()
             # TODO: Ensure that the user actually wants this?
@@ -125,12 +126,16 @@ class UnassignAction(OscAction):
     GROUP_NOT_INFERRED_MSG = "Can not auto-detect which group is affected."
     UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
 
-    def __init__(self, remote, user, request_id):
+    def __init__(self, remote, user, request_id, group=None):
         super(UnassignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
+        self.group = group
 
     def action(self):
-        group_to_readd = self.infer_group()
+        if self.group:
+            group_to_readd = self.group
+        else:
+            group_to_readd = self.infer_group()
         if not group_to_readd or len(group_to_readd) > 1:
             raise UninferableError(UnassignAction.GROUP_NOT_INFERRED_MSG)
         group_to_readd = Group.for_name(self.remote, group_to_readd[0])
@@ -171,18 +176,15 @@ class UnassignAction(OscAction):
 
 
 class ApproveAction(OscAction):
-    """Approve a review for a user and group.
-    
-    Attempts to automatically find the group that the user assigned himself
-    for and will approve that group if possible.
+    """Approve a review for a user.
 
     """
     APPROVE_MSG = "Will approve {request} for {user}."
-    
+
     def __init__(self, remote, user, request_id):
         super(ApproveAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
-    
+
     def action(self):
         msg = ApproveAction.APPROVE_MSG.format(user=self.user,
                                                request=self.request)
@@ -192,13 +194,13 @@ class ApproveAction(OscAction):
 
 class RejectAction(OscAction):
     """Reject a request for a user and group.
-    
+
     Attempts to automatically find the group that the user assigned himself
     for and will reject that group if possible.
 
     """
     DECLINE_MSG = "Will decline {request} for {user}."
-    
+
     def __init__(self, remote, user, request_id, message=None):
         super(RejectAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
@@ -210,7 +212,7 @@ class RejectAction(OscAction):
         if not self._template:
             self._template = Template.for_request(self.request)
         return self._template
-    
+
     def action(self):
         comment = self.get_failure()
         if self.message or not comment:
@@ -239,7 +241,7 @@ class RejectAction(OscAction):
 
 class CommentAction(OscAction):
     """Add a comment to a review.
-    
+
     """
     def __init__(self, remote, user, request_id, comment):
         super(CommentAction, self).__init__(remote, user)

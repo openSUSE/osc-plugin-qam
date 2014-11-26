@@ -23,6 +23,15 @@ def output(template):
 
 
 class QamInterpreter(cmdln.Cmdln):
+    """Usage: osc qam [command] [opts] [args]
+
+    openSUSE build service command-line tool qam extensions.
+
+    ${command_list}
+    ${help_list}
+    """
+    name = 'osc-qam'
+
     def _set_required_params(self, opts):
         self.apiurl = osc.conf.config['apiurl']
         self.api = RemoteFacade(self.apiurl)
@@ -58,23 +67,31 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
+    @cmdln.option('-g', '--group',
+                  help='Group to assign the user for.')
     def do_assign(self, subcmd, opts, request_id):
         """${cmd_name}: Assign the request to the user.
 
         The command either uses the user that runs the osc command or the user
         that was passed as part of the command via the -u flag.
 
+        It will attempt to automatically find a group that is not currently
+        reviewed, but that the user could review for.  If no group can be
+        automatically determined a group must be passed as an argument.
+
         """
         self._set_required_params(opts)
         self.request_id = request_id
-        action = AssignAction(self.api, self.affected_user, self.request_id)
+        group = opts.group if opts.group else None
+        action = AssignAction(self.api, self.affected_user, self.request_id,
+                              group)
         success = self._run_action(action)
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
     def do_list(self, subcmd, opts):
         """${cmd_name}: Show a list of all open requests currently running.
-        
+
         The command either uses the configured user or the user passed via
         the `-u` flag.
 
@@ -94,7 +111,7 @@ class QamInterpreter(cmdln.Cmdln):
                   help='Message to use for rejection-comment.')
     def do_reject(self, subcmd, opts, request_id):
         """${cmd_name}: Reject the request for the user.
-        
+
         The command either uses the configured user or the user passed via
         the `-u` flag.
         """
@@ -106,22 +123,31 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
+    @cmdln.option('-g', '--group',
+                  help='Group to reassign to this request.')
     def do_unassign(self, subcmd, opts, request_id):
         """${cmd_name}: Assign the request to the user.
-        
+
         The command either uses the configured user or the user passed via
         the `-u` flag.
+
+        It will attempt to automatically find the group that the user is
+        reviewing for.  If the group can not be automatically determined it
+        must be passed as an argument.
+
         """
         self._set_required_params(opts)
         self.request_id = request_id
-        action = UnassignAction(self.api, self.affected_user, self.request_id)
+        group = opts.group if opts.group else None
+        action = UnassignAction(self.api, self.affected_user, self.request_id,
+                                group)
         success = self._run_action(action)
 
     @cmdln.alias('q')
     def do_quit(self, subcmd, opts):
         """${cmd_name}: Quit the qam-subinterpreter."""
         self.stop = True
-        
+
 
 def do_qam(self, subcmd, opts, *args):
     """Start the QA-Maintenance specific submode of osc for request handling.
@@ -134,5 +160,3 @@ def do_qam(self, subcmd, opts, *args):
         return interp.onecmd(list(args))
     else:
         return interp.cmdloop()
-        
-    
