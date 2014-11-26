@@ -57,11 +57,9 @@ class RemoteFacade(object):
         xml = remote.read()
         return xml
 
-    def post(self, endpoint, params=None):
-        if params:
-            params = urllib.urlencode(params)
+    def post(self, endpoint, data=None):
         url = '/'.join([self.remote, endpoint])
-        remote = osc.core.http_POST(url, data=params)
+        remote = osc.core.http_POST(url, data=data)
         self._check_for_error(remote)
         xml = remote.read()
         return xml

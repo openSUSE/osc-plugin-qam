@@ -1,6 +1,12 @@
 from __future__ import print_function
+import logging
 from functools import wraps
 from .models import Group, User, Request, Template, RemoteError
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+PREFIX = "[oscqam]"
 
 
 class ActionError(Exception):
@@ -61,6 +67,7 @@ class ListAction(OscAction):
 
 
 class AssignAction(OscAction):
+    ASSIGN_COMMENT = "{prefix}::assign::{user.login}::{group.name}"
     ASSIGN_USER_MSG = ("Will assign {user} to {group} for {request}.")
     AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
@@ -109,13 +116,20 @@ class AssignAction(OscAction):
             user=self.user, group=group, request=self.request
         )
         print(msg)
-        self.request.review_add(user=self.user)
+        comment = AssignAction.ASSIGN_COMMENT.format(
+            prefix=PREFIX, user=self.user, group=group
+        )
+        undo_comment = UnassignAction.UNASSIGN_COMMENT.format(
+            prefix=PREFIX, user=self.user, group=group
+        )
+        self.request.review_add(user=self.user, comment=comment)
         self.undo_stack.append(
             lambda: self.request.review_accept(user=self.user)
         )
-        self.request.review_accept(group=group)
+        self.request.review_accept(group=group, comment=comment)
         self.undo_stack.append(
-            lambda: self.request.review_reopen(group=group)
+            lambda: self.request.review_reopen(group=group,
+                                               comment=undo_comment)
         )
 
 
@@ -123,6 +137,7 @@ class UnassignAction(OscAction):
     """Will unassign the user from the review and reopen the request for
     the group the user assign himself for.
     """
+    UNASSIGN_COMMENT = "{prefix}::unassign::{user.login}::{group.name}"
     GROUP_NOT_INFERRED_MSG = "Can not auto-detect which group is affected."
     UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
 
@@ -145,10 +160,15 @@ class UnassignAction(OscAction):
         """Search for the group the given user started a review for.
 
         """
-        # TODO: This should be extended to take into account reviews that
-        # might be done by > 1 person, which requires:
-        # 1) Storing the history of a review.
-        # 2) Checking in history which group was accepted.
+        def check_history(review):
+            if not hasattr(review, 'history'):
+                logger.warn("Review object missing history node.")
+                return
+            for history in review.history:
+                if PREFIX in history.description:
+                    _, action, user, group = history.description.split("::")
+                    if user == self.user.login and action == 'assign':
+                        return review.by_group
         group_reviews = [r for r in self.request.reviews
                          if r.by_group != None]
         reviews_for_user_group = []
@@ -156,6 +176,10 @@ class UnassignAction(OscAction):
             if group_review.state == 'accepted':
                 if group_review.who == self.user.login:
                     reviews_for_user_group.append(group_review.by_group)
+                else:
+                    hist_group = check_history(group_review)
+                    if hist_group:
+                        reviews_for_user_group.append(hist_group)
         return reviews_for_user_group
 
     def unassign(self, group):
@@ -163,15 +187,21 @@ class UnassignAction(OscAction):
             user=self.user, group=group, request=self.request
         )
         print(msg)
-        self.request.review_reopen(group=group)
+        comment = UnassignAction.UNASSIGN_COMMENT.format(
+            prefix=PREFIX, user=self.user, group=group
+        )
+        undo_comment = AssignAction.ASSIGN_COMMENT.format(
+            prefix=PREFIX, user=self.user, group=group
+        )
+        self.request.review_reopen(group=group,
+                                   comment=comment)
         self.undo_stack.append(
             lambda: self.request.review_accept(group=group,
-                                               comment='Reverting due to error.')
+                                               comment=undo_comment)
         )
-        self.request.review_accept(user=self.user)
+        self.request.review_accept(user=self.user, comment=comment)
         self.undo_stack.append(
-            lambda: self.request.review_reopen(user=self.user,
-                                               comment='Reverting due to error.')
+            lambda: self.request.review_reopen(user=self.user)
         )
 
 
