@@ -6,17 +6,16 @@
 %define OSCPLUGINPATH /usr/lib/osc-plugins/
 %define OSCQAMPATH %{python_sitelib}/oscqam/
 
-Summary: Plugin for OSC to support the workflow for the QA maintenance department when using the new request / review osc abstractions.
+Summary: Plugin for OSC to support the workflow of the QA maintenance department.
 Name: %{name}
 Version: 0.1
 Release: 0
 Source0: %{sourcename}-%{unmangled_version}.tar.gz
-License: UNKNOWN
+License: SUSE-NonFree
 Group: Productivity/Other
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
 BuildArch: noarch
-Vendor: UNKNOWN <UNKNOWN>
 Url: https://wiki.innerweb.novell.com/index.php/RD-OPS_QA/Maintenance/osc-for-qam
 BuildRequires: python-devel
 BuildRequires: python-setuptools
