@@ -89,7 +89,7 @@ class QamInterpreter(cmdln.Cmdln):
                 output(template)
 
     @cmdln.option('-u', '--user',
-                  help='User to assign for this request.')
+                  help='User that rejects this request.')
     @cmdln.option('-m', '--message',
                   help='Message to use for rejection-comment.')
     def do_reject(self, subcmd, opts, request_id):
@@ -100,7 +100,8 @@ class QamInterpreter(cmdln.Cmdln):
         """
         self._set_required_params(opts)
         self.request_id = request_id
-        action = RejectAction(self.api, self.affected_user, self.request_id)
+        message = opts.message if opts.message else None
+        action = RejectAction(self.api, self.affected_user, self.request_id, message)
         self._run_action(action)
 
     @cmdln.option('-u', '--user',

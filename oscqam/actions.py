@@ -199,10 +199,11 @@ class RejectAction(OscAction):
     """
     DECLINE_MSG = "Will decline {request} for {user}."
     
-    def __init__(self, remote, user, request_id):
+    def __init__(self, remote, user, request_id, message=None):
         super(RejectAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
         self._template = None
+        self.message = message
 
     @property
     def template(self):
@@ -210,17 +211,21 @@ class RejectAction(OscAction):
             self._template = Template.for_request(self.request)
         return self._template
     
-    def action(self, comment=None):
+    def action(self):
         comment = self.get_failure()
+        if self.message or not comment:
+            comment = self.message
         msg = RejectAction.DECLINE_MSG.format(user=self.user,
-                                               request=self.request)
+                                              request=self.request)
         print(msg)
-        self.request.review_decline(user=self.user)
+        if not comment:
+            raise ActionError("Must provide a message for reject.")
+        self.request.review_decline(user=self.user, comment=comment)
 
     def get_failure(self):
         """Get the failure message from the template.
 
-        If the template says the test did not fail this will raise en error.
+        If the template says the test did not fail this will raise an error.
 
         """
         status = self.template.status
