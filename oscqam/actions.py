@@ -89,7 +89,10 @@ class AssignAction(OscAction):
                            in reviews])
         both = user_groups.intersection(open_groups)
         if not both:
-            raise UninferableError("No matching qam-groups found for user.")
+            err = "No matching qam-groups found for user: {u}".format(
+                u=self.user
+            )
+            raise UninferableError(err)
         else:
             if len(both) > 1:
                 error = AssignAction.MULTIPLE_GROUPS_MSG.format(group=both)
