@@ -471,3 +471,19 @@ class Template(object):
                 request
             )
         )
+
+
+def monkeypatch():
+    """Monkey patch retaining of history into the review class.
+    """
+    def monkey_patched_init(obj, review_node):
+        logger.debug("Monkeypatched init")
+        original_init(obj, review_node)
+        obj.statehistory = []
+        for hist_state in review_node.findall('history'):
+            obj.statehistory.append(osc.core.RequestHistory(hist_state))
+    logger.warn("Careful - your osc-version requires monkey patching.")
+    original_init = osc.core.ReviewState.__init__
+    osc.core.ReviewState.__init__ = monkey_patched_init
+
+monkeypatch()

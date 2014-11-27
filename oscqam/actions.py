@@ -153,7 +153,8 @@ class UnassignAction(OscAction):
             group_to_readd = self.infer_group()
         if not group_to_readd or len(group_to_readd) > 1:
             raise UninferableError(UnassignAction.GROUP_NOT_INFERRED_MSG)
-        group_to_readd = Group.for_name(self.remote, group_to_readd[0])
+        group_to_readd = group_to_readd.pop()
+        group_to_readd = Group.for_name(self.remote, group_to_readd)
         self.unassign(group_to_readd)
 
     def infer_group(self):
@@ -161,25 +162,29 @@ class UnassignAction(OscAction):
 
         """
         def check_history(review):
-            if not hasattr(review, 'history'):
+            if not hasattr(review, 'statehistory'):
                 logger.warn("Review object missing history node.")
                 return
-            for history in review.history:
-                if PREFIX in history.description:
-                    _, action, user, group = history.description.split("::")
-                    if user == self.user.login and action == 'assign':
-                        return review.by_group
+            for history in review.statehistory:
+                if PREFIX in history.comment:
+                    try:
+                        _, action, user, group = history.comment.split("::")
+                        if user == self.user.login and action == 'assign':
+                            return review.by_group
+                    except ValueError:
+                        logger.debug("Could not unpack comment: %s",
+                                     history.comment)
         group_reviews = [r for r in self.request.reviews
                          if r.by_group != None]
-        reviews_for_user_group = []
+        reviews_for_user_group = set()
         for group_review in group_reviews:
             if group_review.state == 'accepted':
                 if group_review.who == self.user.login:
-                    reviews_for_user_group.append(group_review.by_group)
+                    reviews_for_user_group.add(group_review.by_group)
                 else:
                     hist_group = check_history(group_review)
                     if hist_group:
-                        reviews_for_user_group.append(hist_group)
+                        reviews_for_user_group.add(hist_group)
         return reviews_for_user_group
 
     def unassign(self, group):
