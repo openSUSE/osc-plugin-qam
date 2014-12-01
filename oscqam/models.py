@@ -2,6 +2,7 @@
 everything in a consistent state.
 
 """
+import contextlib
 import logging
 import os
 import re
@@ -339,7 +340,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def for_user(cls, remote, user):
         params={'user': user.login,
                 'view': 'collection',
-                'types': 'review',}
+                'types': 'review'}
         return cls.parse(remote, remote.get(cls.endpoint, params))
 
     @classmethod
@@ -356,8 +357,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
             if isinstance(group, str):
                 return group
             return group.name
-        # if not kwargs:
-        #     kwargs = {'withfullhistory': '1'}
+        if not kwargs:
+            kwargs = {'withfullhistory': '1'}
         xpaths = ["(state/@name='{0}')".format('review')]
         for group in groups:
             name = get_group_name(group)
@@ -375,7 +376,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         endpoint = "/".join([cls.endpoint, req_id])
         # withfullhistory=1 breaks osc.core RequestState (history-elements
         # have not name)
-        return cls.parse(remote, remote.get(endpoint))[0]
+        return cls.parse(remote, remote.get(endpoint, {'withfullhistory': 1}))[0]
 
     @classmethod
     def parse(cls, remote, xml):
@@ -402,22 +403,23 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
 
 class Template(object):
-    """Facade to filesystem-based templates.
+    """Facade to web-based templates.
     The templates can be found in:
 
-    ``/mounts/qam/testreports/``
+    ``http://qam.suse.de/testreports/``
     """
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
     STATUS_UNKNOWN = 2
-    template_base_path = "/mounts/qam/testreports/"
-    template_name_regex = "SUSE:Maintenance:(\d+):{request_id}"
+    base_url = "http://qam.suse.de/testreports/"
 
-    def __init__(self, directory, request):
+    def __init__(self, project_name, request):
         """Create a new template from the given directory.
         """
-        self.directory = directory
+        self.project = project_name
         self.request = request
+        self.web_path = (Template.base_url + self.project + ":" +
+                         self.request.reqid)
         self.log_entries = {}
         self.parse_log()
 
@@ -433,11 +435,10 @@ class Template(object):
     def parse_log(self):
         """Parses the header of the log into the log_entries dictionary.
         """
-        log_path = os.path.join(self.directory, "log")
-        if not os.path.exists(log_path):
-            raise AttributeError("Template does not contain log file.")
-        with open(log_path, 'r') as log_file:
-            for line in log_file:
+        log_path = self.web_path + "/" + "log"
+        with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
+            lines = log_file.read()
+            for line in lines.splitlines():
                 # We end parsing at the results block.
                 # We only need the header information.
                 if "Test results by" in line:
@@ -447,7 +448,7 @@ class Template(object):
                     if key == 'Packages':
                         value = [v.strip() for v in value.split(",")]
                     elif key == 'Products':
-                        value = value.replace("SLE-","").strip()
+                        value = value.replace("SLE-", "").strip()
                     else:
                         value = value.strip()
                     self.log_entries[key] = value
@@ -458,31 +459,20 @@ class Template(object):
     def for_request(cls, request):
         """Load the template for the given request.
         """
-        request_id = request.reqid
-        regex = re.compile(
-            Template.template_name_regex.format(request_id=request_id)
-        )
-        for dir in os.listdir(Template.template_base_path):
-            if re.match(regex, dir):
-                fullpath = os.path.join(Template.template_base_path, dir)
-                return Template(fullpath, request)
-        logger.error(
-            "No template could be found for request {0}".format(
-                request
-            )
-        )
+        request_project = request.actions[0].src_project
+        return Template(request_project, request)
 
 
 def monkeypatch():
     """Monkey patch retaining of history into the review class.
     """
     def monkey_patched_init(obj, review_node):
-        logger.debug("Monkeypatched init")
+        # logger.debug("Monkeypatched init")
         original_init(obj, review_node)
         obj.statehistory = []
         for hist_state in review_node.findall('history'):
             obj.statehistory.append(osc.core.RequestHistory(hist_state))
-    logger.warn("Careful - your osc-version requires monkey patching.")
+    # logger.warn("Careful - your osc-version requires monkey patching.")
     original_init = osc.core.ReviewState.__init__
     osc.core.ReviewState.__init__ = monkey_patched_init
 
