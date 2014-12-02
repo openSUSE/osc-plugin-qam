@@ -62,7 +62,14 @@ class ListAction(OscAction):
         user_requests = set(Request.for_user(self.remote, self.user))
         group_requests = set(Request.open_for_groups(self.remote, qam_groups))
         all_requests = user_requests.union(group_requests)
+        for request in all_requests:
+            request.origin = []
+            if request in user_requests:
+                request.origin.append(self.user.login)
+            if request in group_requests:
+                request.origin.extend(request.groups)
         templates = [Template.for_request(req) for req in all_requests]
+        templates = [template for template in templates if templates != None]
         return templates
 
 
