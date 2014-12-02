@@ -20,6 +20,7 @@ def output(template):
         print "{0}: {1}".format(key, entries[key])
     names = [r.name for r in template.request.review_list_open()]
     print "Unassigned Roles: {0}".format(names)
+    print "Origin: {0}".format(template.request.origin)
 
 
 class QamInterpreter(cmdln.Cmdln):
