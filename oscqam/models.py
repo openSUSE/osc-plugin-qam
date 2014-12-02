@@ -23,7 +23,7 @@ class RemoteError(Exception):
     """Indicates an error while communicating with the remote service.
 
     """
-    def __init__(self,url, ret_code, msg, headers, fp):
+    def __init__(self, url, ret_code, msg, headers, fp):
         self.url = url
         self.ret_code = ret_code
         self.msg = msg
@@ -40,9 +40,8 @@ class RemoteFacade(object):
     def _check_for_error(self, answer):
         ret_code = answer.getcode()
         if ret_code >= 400 and ret_code < 600:
-            raise urllib2.HTTPError(url, ret_code, answer.msg, answer.headers,
-                                    answer.fp)
-
+            raise urllib2.HTTPError(answer.url, ret_code, answer.msg,
+                                    answer.headers, answer.fp)
 
     def get(self, endpoint, params=None):
         """Retrieve information at the given endpoint with the parameters.
