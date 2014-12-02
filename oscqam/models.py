@@ -436,31 +436,38 @@ class Template(object):
         """Parses the header of the log into the log_entries dictionary.
         """
         log_path = self.web_path + "/" + "log"
-        with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
-            lines = log_file.read()
-            for line in lines.splitlines():
-                # We end parsing at the results block.
-                # We only need the header information.
-                if "Test results by" in line:
-                    break
-                try:
-                    key, value = line.split(":", 1)
-                    if key == 'Packages':
-                        value = [v.strip() for v in value.split(",")]
-                    elif key == 'Products':
-                        value = value.replace("SLE-", "").strip()
-                    else:
-                        value = value.strip()
-                    self.log_entries[key] = value
-                except ValueError:
-                    pass
+        try:
+            with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
+                lines = log_file.read()
+                for line in lines.splitlines():
+                    # We end parsing at the results block.
+                    # We only need the header information.
+                    if "Test results by" in line:
+                        break
+                    try:
+                        key, value = line.split(":", 1)
+                        if key == 'Packages':
+                            value = [v.strip() for v in value.split(",")]
+                        elif key == 'Products':
+                            value = value.replace("SLE-", "").strip()
+                        else:
+                            value = value.strip()
+                        self.log_entries[key] = value
+                    except ValueError:
+                        pass
+        except urllib2.URLError:
+            logger.error("URL not found: %s", log_path)
+            raise AttributeError("URL does not exist")
 
     @classmethod
     def for_request(cls, request):
         """Load the template for the given request.
         """
         request_project = request.actions[0].src_project
-        return Template(request_project, request)
+        try:
+            return Template(request_project, request)
+        except AttributeError:
+            return None
 
 
 def monkeypatch():
