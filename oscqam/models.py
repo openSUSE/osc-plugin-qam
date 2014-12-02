@@ -300,10 +300,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
         """Returns all reviews as a list.
         """
         def set_name_review(r):
-            if r.by_group != None:
+            if r.by_group is not None:
                 r.name = r.by_group
                 r.review_type = Request.REVIEW_GROUP
-            elif r.by_user != None:
+            elif r.by_user is not None:
                 r.name = r.by_user
                 r.review_type = Request.REVIEW_USER
             elif r.who:
@@ -326,21 +326,20 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def review_list_open(self):
         """Return only open reviews.
         """
-        return [r for r in self.review_list() if r.state in Request.OPEN_STATES]
+        return [r for r in self.review_list() if r.state in
+                Request.OPEN_STATES]
 
     @property
     def groups(self):
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
-        if not self._groups:
-            self._groups = Group.for_request(self.remote, self)
-        return self._groups
+        return [review.by_group for review in self.reviews if review.by_group]
 
     @classmethod
     def for_user(cls, remote, user):
-        params={'user': user.login,
-                'view': 'collection',
-                'types': 'review'}
+        params = {'user': user.login,
+                  'view': 'collection',
+                  'states': 'new,review'}
         return cls.parse(remote, remote.get(cls.endpoint, params))
 
     @classmethod
@@ -393,7 +392,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return requests
 
     def __eq__(self, other):
-        return self.reqid == other.reqid
+        project = self.actions[0].src_project
+        other_project = other.actions[0].src_project
+        return (self.reqid == other.reqid and
+                project == other_project)
+
+    def __hash__(self):
+        return hash(self.actions[0].src_project) + hash(self.reqid)
 
     def __str__(self):
         return self.reqid
