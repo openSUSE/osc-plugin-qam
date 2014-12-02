@@ -49,10 +49,11 @@ class RemoteFacade(object):
         Call the callback function with the result.
 
         """
+        url = '/'.join([self.remote, endpoint])
         if params:
             params = urllib.urlencode(params)
-        url = '/'.join([self.remote, endpoint])
-        remote = osc.core.http_GET(url, data=params)
+            url = url + "?" + params
+        remote = osc.core.http_GET(url)
         self._check_for_error(remote)
         xml = remote.read()
         return xml
