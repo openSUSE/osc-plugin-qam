@@ -4,7 +4,7 @@ import unittest
 from oscqam import models
 
 
-path = os.path.dirname(__file__)
+path = os.path.join(os.path.dirname(__file__), 'data')
 
 
 class XmlFactoryMixinTests(unittest.TestCase):
@@ -15,14 +15,14 @@ class XmlFactoryMixinTests(unittest.TestCase):
         absolute_path = os.path.join(path, filename)
         with open(absolute_path, 'r') as xml_file:
             return xml_file.read()
-    
+
     def test_parse_flat_xml(self):
         xml = self._load_xml("flat.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
         john = persons[0]
         self.assertEqual(john.firstname, 'John')
         self.assertEqual(john.lastname, 'Smith')
-        
+
     def test_parse_nested_xml(self):
         xml = self._load_xml("nested.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
@@ -50,7 +50,7 @@ class XmlFactoryMixinTests(unittest.TestCase):
         john = persons[0]
         self.assertEqual(john.firstname, 'John')
         self.assertEqual(john.lastname, 'Smith')
-        
+
     def test_parse_multi_attributes(self):
         xml = self._load_xml("attributes_multi.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
@@ -60,7 +60,7 @@ class XmlFactoryMixinTests(unittest.TestCase):
         clara = persons[1]
         self.assertEqual(clara.firstname, 'Clara')
         self.assertEqual(clara.lastname, 'Oswald')
-        
+
     def test_parse_nested_and_attributes(self):
         xml = self._load_xml("nested_attributes.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')

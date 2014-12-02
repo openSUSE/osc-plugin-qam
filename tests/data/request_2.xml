@@ -1,0 +1,14 @@
+<request id="12345">
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:130" package="update-test-trival.SUSE_SLE-12_Update"/>
+    <target project="SUSE:SLE-12:Update" package="update-test-trival.130"/>
+  </action>
+  <review state="review" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-sle">
+  </review>
+  <review state="new" by_user="anonymous">
+    <comment>Do not approve/release.</comment>
+  </review>
+  <state name="review" who="anonymous" when="2014-12-01T14:46:23">
+    <comment>In review</comment>
+  </state>
+</request>
