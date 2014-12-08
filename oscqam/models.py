@@ -4,7 +4,6 @@ everything in a consistent state.
 """
 import contextlib
 import logging
-import os
 import re
 import urllib
 import urllib2
@@ -267,6 +266,11 @@ class Request(osc.core.Request, XmlFactoryMixin):
         url = "/".join([Request.endpoint, self.reqid])
         url += "?" + url_params
         self.remote.post(url, comment)
+
+    def review_assign(self, group, reviewer, comment=None):
+        params = {'cmd': 'assignreview',
+                  'reviewer': reviewer.login}
+        self.review_action(params, group=group, comment=comment)
 
     def review_accept(self, user=None, group=None, comment=None):
         params = {'cmd': 'changereviewstate',

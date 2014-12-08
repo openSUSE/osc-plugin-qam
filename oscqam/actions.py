@@ -136,18 +136,9 @@ class AssignAction(OscAction):
         comment = AssignAction.ASSIGN_COMMENT.format(
             prefix=PREFIX, user=self.user, group=group
         )
-        undo_comment = UnassignAction.UNASSIGN_COMMENT.format(
-            prefix=PREFIX, user=self.user, group=group
-        )
-        self.request.review_add(user=self.user, comment=comment)
-        self.undo_stack.append(
-            lambda: self.request.review_accept(user=self.user)
-        )
-        self.request.review_accept(group=group, comment=comment)
-        self.undo_stack.append(
-            lambda: self.request.review_reopen(group=group,
-                                               comment=undo_comment)
-        )
+        self.request.review_assign(reviewer=self.user,
+                                   group=group,
+                                   comment=comment)
 
 
 class UnassignAction(OscAction):
