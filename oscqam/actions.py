@@ -54,13 +54,11 @@ class OscAction(object):
 
 
 class ListAction(OscAction):
-    def action(self):
-        """Return all reviews that match the parameters of the RequestAction.
+    def merge_requests(self, user_requests, group_requests):
+        """Merge the requests together and set a field 'origin' to determine
+        where the request came from.
 
         """
-        qam_groups = self.user.qam_groups
-        user_requests = set(Request.for_user(self.remote, self.user))
-        group_requests = set(Request.open_for_groups(self.remote, qam_groups))
         all_requests = user_requests.union(group_requests)
         for request in all_requests:
             request.origin = []
@@ -68,8 +66,19 @@ class ListAction(OscAction):
                 request.origin.append(self.user.login)
             if request in group_requests:
                 request.origin.extend(request.groups)
+        return all_requests
+
+    def action(self):
+        """Return all reviews that match the parameters of the RequestAction.
+
+        """
+        qam_groups = self.user.qam_groups
+        user_requests = set(Request.for_user(self.remote, self.user))
+        group_requests = set(Request.open_for_groups(self.remote, qam_groups))
+        all_requests = self.merge_requests(user_requests, group_requests)
         templates = [Template.for_request(req) for req in all_requests]
-        templates = [template for template in templates if templates != None]
+        templates = [template for template in templates
+                     if templates is not None]
         return templates
 
 
