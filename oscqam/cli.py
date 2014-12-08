@@ -64,7 +64,7 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = ApproveAction(self.api, self.affected_user, self.request_id)
-        success = self._run_action(action)
+        self._run_action(action)
 
     @cmdln.option('-u', '--user',
                   help='User to assign for this request.')
@@ -88,7 +88,7 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = AssignAction(self.api, self.affected_user, self.request_id,
                               group)
-        success = self._run_action(action)
+        self._run_action(action)
 
     @cmdln.option('-u', '--user',
                   help='User to list requests for.')
@@ -151,7 +151,7 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = UnassignAction(self.api, self.affected_user, self.request_id,
                                 group)
-        success = self._run_action(action)
+        self._run_action(action)
 
     @cmdln.alias('q')
     def do_quit(self, subcmd, opts):
@@ -164,7 +164,6 @@ def do_qam(self, subcmd, opts, *args):
     """
     osc.conf.get_config()
     interp = QamInterpreter()
-    interp.prompt = self.prompt[:-1]+":QAM"
     interp.optparser = cmdln.SubCmdOptionParser()
     if args:
         return interp.onecmd(list(args))
