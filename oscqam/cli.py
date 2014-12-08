@@ -102,7 +102,7 @@ class QamInterpreter(cmdln.Cmdln):
         ${cmd_option_list}
         """
         self._set_required_params(opts)
-        only_review = opts.review
+        only_review = opts.review if opts.review else False
         action = ListAction(self.api, self.affected_user, only_review)
         templates = self._run_action(action)
         if templates:

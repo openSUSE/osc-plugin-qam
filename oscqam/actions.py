@@ -53,6 +53,10 @@ class OscAction(object):
 
 
 class ListAction(OscAction):
+    def __init__(self, remote, user, only_review=False):
+        super(ListAction, self).__init__(remote, user)
+        self.only_review = only_review
+
     def merge_requests(self, user_requests, group_requests):
         """Merge the requests together and set a field 'origin' to determine
         where the request came from.
@@ -67,14 +71,27 @@ class ListAction(OscAction):
                 request.origin.extend(request.groups)
         return all_requests
 
+    def in_review_by_user(self, reviews):
+        for review in reviews:
+            if (review.by_user == self.user.login
+                    and review.state == 'new'):
+                return True
+        return False
+
     def action(self):
         """Return all reviews that match the parameters of the RequestAction.
 
         """
-        qam_groups = self.user.qam_groups
         user_requests = set(Request.for_user(self.remote, self.user))
-        group_requests = set(Request.open_for_groups(self.remote, qam_groups))
-        all_requests = self.merge_requests(user_requests, group_requests)
+        if self.only_review:
+            all_requests = set([request for request in user_requests
+                                if self.in_review_by_user(request.review_list())])
+            all_requests = self.merge_requests(all_requests, [])
+        else:
+            qam_groups = self.user.qam_groups
+            group_requests = set(Request.open_for_groups(self.remote,
+                                                         qam_groups))
+            all_requests = self.merge_requests(user_requests, group_requests)
         templates = [Template.for_request(req) for req in all_requests]
         templates = [template for template in templates
                      if templates is not None]
