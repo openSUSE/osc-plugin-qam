@@ -1,6 +1,5 @@
 from __future__ import print_function
 import logging
-from functools import wraps
 from .models import Group, User, Request, Template, RemoteError
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -183,7 +182,7 @@ class UnassignAction(OscAction):
                         logger.debug("Could not unpack comment: %s",
                                      history.comment)
         group_reviews = [r for r in self.request.reviews
-                         if r.by_group != None]
+                         if r.by_group is not None]
         reviews_for_user_group = set()
         for group_review in group_reviews:
             if group_review.state == 'accepted':
