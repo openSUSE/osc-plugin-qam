@@ -141,6 +141,11 @@ class Group(XmlFactoryMixin):
     def __init__(self, remote, attributes, children):
         super(Group, self).__init__(remote, attributes, children)
         self.remote = remote
+        if 'title' in children:
+            # We set name to title to ensure equality.  This allows us to
+            # prevent having to query *all* groups we need via this method,
+            # which could use very many requests.
+            self.name = children['title']
 
     @classmethod
     def all(cls, remote):
@@ -153,10 +158,6 @@ class Group(XmlFactoryMixin):
         url = '/'.join([Group.endpoint, group_name])
         group = Group.parse(remote, remote.get(url))
         if group:
-            # We set name to title to ensure equality.  This allows us to
-            # prevent having to query *all* groups we need via this method,
-            # which could use very many requests.
-            group[0].name = group[0].title
             return group[0]
         else:
             raise AttributeError(

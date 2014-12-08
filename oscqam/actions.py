@@ -109,13 +109,19 @@ class AssignAction(OscAction):
         reviews = [review for review in self.request.review_list() if
                    review.review_type == Request.REVIEW_GROUP and
                    review.state.lower() == 'new']
-        open_groups = set([Group.for_name(self.remote, review.name) for review
-                           in reviews])
+        review_groups = [Group.for_name(self.remote, review.name) for review
+                         in reviews]
+        open_groups = set(review_groups)
         both = user_groups.intersection(open_groups)
         if not both:
-            err = "No matching qam-groups found for user: {u}".format(
-                u=self.user
-            )
+            ug = [g.name for g in user_groups]
+            rg = [g.name for g in open_groups]
+            err = "No matching qam-groups found for user: {u}. " + \
+                  "(User-groups: {ug}, review-groups: {rg})".format(
+                      u=self.user,
+                      ug=ug,
+                      rg=rg,
+                  )
             raise UninferableError(err)
         else:
             if len(both) > 1:
