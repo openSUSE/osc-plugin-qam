@@ -108,7 +108,8 @@ class AssignAction(OscAction):
         """
         user_groups = set(self.user.qam_groups)
         reviews = [review for review in self.request.review_list() if
-                   review.review_type == Request.REVIEW_GROUP]
+                   review.review_type == Request.REVIEW_GROUP and
+                   review.state.lower() == 'new']
         open_groups = set([Group.for_name(self.remote, review.name) for review
                            in reviews])
         both = user_groups.intersection(open_groups)
