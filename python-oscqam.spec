@@ -98,6 +98,7 @@ python setup.py install --single-version-externally-managed -O1 --root=%{buildro
 %py_compile %{buildroot}%{OSCQAMPATH}
 
 ln -s %{OSCQAMPATH}cli.py %{buildroot}%{OSCPLUGINPATH}cli.py
+%py_compile %{buildroot}%{OSCPLUGINPATH}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
