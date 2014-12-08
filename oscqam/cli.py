@@ -1,5 +1,3 @@
-import sys
-
 from osc import cmdln
 import osc.conf
 
@@ -60,6 +58,8 @@ class QamInterpreter(cmdln.Cmdln):
         The command either uses the user that runs the osc command or the user
         that was passed as part of the command via the -u flag.
 
+        ${cmd_usage}
+        ${cmd_option_list}
         """
         self._set_required_params(opts)
         self.request_id = request_id
@@ -80,6 +80,8 @@ class QamInterpreter(cmdln.Cmdln):
         reviewed, but that the user could review for.  If no group can be
         automatically determined a group must be passed as an argument.
 
+        ${cmd_usage}
+        ${cmd_option_list}
         """
         self._set_required_params(opts)
         self.request_id = request_id
@@ -89,18 +91,19 @@ class QamInterpreter(cmdln.Cmdln):
         success = self._run_action(action)
 
     @cmdln.option('-u', '--user',
-                  help='User to assign for this request.')
+                  help='User to list requests for.')
+    @cmdln.option('-r', '--review', action='store_true',
+                  help='Show all requests that are in review by the user.')
     def do_list(self, subcmd, opts):
         """${cmd_name}: Show a list of all open requests currently running.
-
-        The command either uses the configured user or the user passed via
-        the `-u` flag.
-
         The list will only contain requests that are part of the qam-groups.
 
+        ${cmd_usage}
+        ${cmd_option_list}
         """
         self._set_required_params(opts)
-        action = ListAction(self.api, self.affected_user)
+        only_review = opts.review
+        action = ListAction(self.api, self.affected_user, only_review)
         templates = self._run_action(action)
         if templates:
             for template in templates:
@@ -115,11 +118,15 @@ class QamInterpreter(cmdln.Cmdln):
 
         The command either uses the configured user or the user passed via
         the `-u` flag.
+
+        ${cmd_usage}
+        ${cmd_option_list}
         """
         self._set_required_params(opts)
         self.request_id = request_id
         message = opts.message if opts.message else None
-        action = RejectAction(self.api, self.affected_user, self.request_id, message)
+        action = RejectAction(self.api, self.affected_user, self.request_id,
+                              message)
         self._run_action(action)
 
     @cmdln.option('-u', '--user',
@@ -136,6 +143,8 @@ class QamInterpreter(cmdln.Cmdln):
         reviewing for.  If the group can not be automatically determined it
         must be passed as an argument.
 
+        ${cmd_usage}
+        ${cmd_option_list}
         """
         self._set_required_params(opts)
         self.request_id = request_id
