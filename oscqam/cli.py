@@ -160,6 +160,14 @@ class QamInterpreter(cmdln.Cmdln):
         self.stop = True
 
 
+@cmdln.option('-g', '--group',
+              help='Group to use for the command.')
+@cmdln.option('-m', '--message',
+              help='Message to use for the command.')
+@cmdln.option('-r', '--review', action='store_true',
+              help='Parameter for list command.')
+@cmdln.option('-u', '--user',
+              help='User to use for the command.')
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
