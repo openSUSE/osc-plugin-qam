@@ -1,3 +1,4 @@
+import sys
 from osc import cmdln
 import osc.conf
 
@@ -159,13 +160,21 @@ class QamInterpreter(cmdln.Cmdln):
         self.stop = True
 
 
-def do_qam(self, subcmd, opts, *args):
+@cmdln.option('-g', '--group',
+              help='Group to use for the command.')
+@cmdln.option('-m', '--message',
+              help='Message to use for the command.')
+@cmdln.option('-r', '--review', action='store_true',
+              help='Parameter for list command.')
+@cmdln.option('-u', '--user',
+              help='User to use for the command.')
+def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
     osc.conf.get_config()
     interp = QamInterpreter()
     interp.optparser = cmdln.SubCmdOptionParser()
     if args:
-        return interp.onecmd(list(args))
+        return interp.onecmd(sys.argv[3:])
     else:
         return interp.cmdloop()
