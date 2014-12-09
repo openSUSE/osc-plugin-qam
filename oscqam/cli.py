@@ -175,6 +175,7 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
     interp = QamInterpreter()
     interp.optparser = cmdln.SubCmdOptionParser()
     if args:
-        return interp.onecmd(sys.argv[3:])
+        index = sys.argv.index('qam')
+        return interp.onecmd(sys.argv[index + 1:])
     else:
         return interp.cmdloop()
