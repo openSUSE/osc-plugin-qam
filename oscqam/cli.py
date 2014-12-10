@@ -20,6 +20,8 @@ def output(template):
     names = [r.name for r in template.request.review_list_open()]
     print "Unassigned Roles: {0}".format(names)
     print "Origin: {0}".format(template.request.origin)
+    packages = [p for p in template.request.packages]
+    print "Package-Streams: {0}".format(packages)
 
 
 class QamInterpreter(cmdln.Cmdln):

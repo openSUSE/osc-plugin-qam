@@ -255,6 +255,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self.remote = remote
         super(Request, self).__init__()
         self._groups = None
+        self._packages = None
 
     def review_action(self, params, user=None, group=None, comment=None):
         if not user and not group:
@@ -339,6 +340,20 @@ class Request(osc.core.Request, XmlFactoryMixin):
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
         return [review.by_group for review in self.reviews if review.by_group]
+
+    @property
+    def packages(self):
+        """Collects all packages of the actions that are part of the request.
+        """
+        if not self._packages:
+            packages = set()
+            for action in self.actions:
+                pkg = action.src_package
+                if pkg != "patchinfo":
+                    packages.add(pkg)
+            self._packages = packages
+        return self._packages
+        
 
     @classmethod
     def for_user(cls, remote, user):
