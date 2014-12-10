@@ -418,7 +418,14 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 project == other_project)
 
     def __hash__(self):
-        return hash(self.actions[0].src_project) + hash(self.reqid)
+        hash_parts = [self.reqid]
+        action = self.actions[0]
+        if hasattr(action, 'src_project'):
+            hash_parts.append(action.src_project)
+        else:
+            logger.info("Action has no src-project: reqid: {0}", self.reqid)
+        hashes = [hash(part) for part in hash_parts]
+        return sum(hashes)
 
     def __str__(self):
         return self.reqid
