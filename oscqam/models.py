@@ -353,7 +353,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
                     packages.add(pkg)
             self._packages = packages
         return self._packages
-        
+
+    @property
+    def src_project(self):
+        for action in self.actions:
+            if hasattr(action, 'src_project'):
+                return action.src_project
+        logger.info("This project has no source project: %s", self.reqid)
 
     @classmethod
     def for_user(cls, remote, user):
@@ -419,11 +425,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     def __hash__(self):
         hash_parts = [self.reqid]
-        action = self.actions[0]
-        if hasattr(action, 'src_project'):
-            hash_parts.append(action.src_project)
-        else:
-            logger.info("Action has no src-project: reqid: {0}", self.reqid)
+        if self.src_project:
+            hash_parts.append(self.src_project)
         hashes = [hash(part) for part in hash_parts]
         return sum(hashes)
 
@@ -495,7 +498,10 @@ class Template(object):
     def for_request(cls, request):
         """Load the template for the given request.
         """
-        request_project = request.actions[0].src_project
+        request_project = request.src_project
+        if not request_project:
+            logger.info("No source project found.")
+            return None
         try:
             return Template(request_project, request)
         except AttributeError:
