@@ -1,0 +1,18 @@
+<collection matches="40">
+  <request id="47159">
+    <action type="maintenance_release">
+      <source project="" package="mutt.SUSE_SLE-12_Update"/>
+      <target project="SUSE:SLE-12:Update" package="mutt.209"/>
+    </action>
+    <priority>important</priority>
+    <state name="review" who="anon1" when="2014-12-05T14:53:50">
+      <comment></comment>
+    </state>
+    <review state="new" by_group="qam-sle"/>
+    <history who="anon1" when="2014-12-05T14:53:52">
+      <description>Request created</description>
+      <comment>requesting release</comment>
+    </history>
+    <description>requesting release</description>
+  </request>
+</collection>
