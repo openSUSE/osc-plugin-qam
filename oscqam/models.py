@@ -363,10 +363,16 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     @classmethod
     def for_user(cls, remote, user):
+        """Will return all requests for the user if they are part of a
+        SUSE:Maintenance project.
+        
+        """
         params = {'user': user.login,
                   'view': 'collection',
                   'states': 'new,review'}
-        return cls.parse(remote, remote.get(cls.endpoint, params))
+        requests =  cls.parse(remote, remote.get(cls.endpoint, params))
+        requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
+        return requests
 
     @classmethod
     def open_for_groups(cls, remote, groups, **kwargs):
@@ -394,7 +400,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params = {'match': xpath}
         params.update(kwargs)
         search = "/".join(["search", cls.endpoint])
-        return cls.parse(remote, remote.get(search, params))
+        requests = cls.parse(remote, remote.get(search, params))
+        requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
+        return requests
 
     @classmethod
     def by_id(cls, remote, req_id):
