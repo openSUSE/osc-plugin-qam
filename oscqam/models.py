@@ -356,10 +356,25 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     @property
     def src_project(self):
+        """Will return the src_project or an empty string if no src_project
+        can be found in the request.
+
+        """
         for action in self.actions:
             if hasattr(action, 'src_project'):
-                return action.src_project
-        logger.info("This project has no source project: %s", self.reqid)
+                prj = action.src_project
+                if prj:
+                    return prj
+                else:
+                    logger.info("This project has no source project: %s",
+                                self.reqid)
+                    return ''
+        return ''
+
+    @classmethod
+    def filter_by_project(cls, filter, requests):
+        requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
+        return requests
 
     @classmethod
     def for_user(cls, remote, user):
@@ -371,8 +386,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                   'view': 'collection',
                   'states': 'new,review'}
         requests =  cls.parse(remote, remote.get(cls.endpoint, params))
-        requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
-        return requests
+        return cls.filter_by_project("SUSE:Maintenance", requests)
 
     @classmethod
     def open_for_groups(cls, remote, groups, **kwargs):
@@ -401,8 +415,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params.update(kwargs)
         search = "/".join(["search", cls.endpoint])
         requests = cls.parse(remote, remote.get(search, params))
-        requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
-        return requests
+        return cls.filter_by_project("SUSE:Maintenance", requests)
 
     @classmethod
     def by_id(cls, remote, req_id):
