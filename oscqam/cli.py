@@ -1,6 +1,8 @@
+import os
 import sys
 import logging
 from osc import cmdln
+import osc.commandline
 import osc.conf
 
 from oscqam.actions import (ApproveAction, AssignAction, ListAction,
@@ -43,7 +45,7 @@ class QamInterpreter(cmdln.Cmdln):
     name = 'osc-qam'
 
     def _set_required_params(self, opts):
-        self.apiurl = osc.conf.config['apiurl']
+        self.apiurl = osc.commandline.store_read_apiurl(os.curdir)
         self.api = RemoteFacade(self.apiurl)
         self.affected_user = None
         if opts.user:
