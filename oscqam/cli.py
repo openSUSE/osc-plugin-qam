@@ -1,10 +1,15 @@
 import sys
+import logging
 from osc import cmdln
 import osc.conf
 
 from oscqam.actions import (ApproveAction, AssignAction, ListAction,
                             UnassignAction, RejectAction, ActionError)
 from oscqam.models import RemoteFacade
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def output(template):
@@ -16,7 +21,10 @@ def output(template):
     keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs", "Category",
             "Rating"]
     for key in keys:
-        print "{0}: {1}".format(key, entries[key])
+        if key in entries:
+            print "{0}: {1}".format(key, entries[key])
+        else:
+            logger.debug("Missing key: %s", key)
     names = [r.name for r in template.request.review_list_open()]
     print "Unassigned Roles: {0}".format(names)
     print "Origin: {0}".format(template.request.origin)
