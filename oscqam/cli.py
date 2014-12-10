@@ -42,10 +42,14 @@ class QamInterpreter(cmdln.Cmdln):
     ${command_list}
     ${help_list}
     """
+    def __init__(self, parent_cmdln):
+        "docstring"
+        self.parent_cmdln = parent_cmdln
+        
     name = 'osc-qam'
-
+    
     def _set_required_params(self, opts):
-        self.apiurl = osc.commandline.store_read_apiurl(os.curdir)
+        self.apiurl = self.parent_cmdln.get_api_url()
         self.api = RemoteFacade(self.apiurl)
         self.affected_user = None
         if opts.user:
@@ -184,7 +188,7 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
     osc.conf.get_config()
-    interp = QamInterpreter()
+    interp = QamInterpreter(self)
     interp.optparser = cmdln.SubCmdOptionParser()
     if args:
         index = sys.argv.index('qam')
