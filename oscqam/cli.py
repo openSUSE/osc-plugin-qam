@@ -20,17 +20,22 @@ def output(template):
     entries = template.log_entries
     print "-----------------------"
     keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs", "Category",
-            "Rating"]
+            "Rating", "Unassigned Roles", "Package-Streams"]
+    length = max([len(k) for k in keys])
+    str_template = "{{0:{length}s}}: {{1}}".format(length=length)
     for key in keys:
-        if key in entries:
-            print "{0}: {1}".format(key, entries[key])
-        else:
+        try:
+            if key == "Unassigned Roles":
+                names = [r.name for r in template.request.review_list_open()]
+                value = " ".join(names)
+            elif key == "Package-Streams":
+                packages = [p for p in template.request.packages]
+                value = " ".join(packages)
+            else:
+                value = entries[key]
+            print str_template.format(key, value)
+        except KeyError:
             logger.debug("Missing key: %s", key)
-    names = [r.name for r in template.request.review_list_open()]
-    print "Unassigned Roles: {0}".format(names)
-    print "Origin: {0}".format(template.request.origin)
-    packages = [p for p in template.request.packages]
-    print "Package-Streams: {0}".format(packages)
 
 
 class QamInterpreter(cmdln.Cmdln):
@@ -137,6 +142,7 @@ class QamInterpreter(cmdln.Cmdln):
             '': 3
         }
         if templates:
+            templates = [t for t in templates if t is not None]
             sort_by_rating = templates.sort(key=sort_by_rating)
             group_rating = itertools.groupby(templates, group_by_rating)
             for key, group in group_rating:
