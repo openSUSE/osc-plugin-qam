@@ -1,6 +1,6 @@
-import os
-import sys
+import itertools
 import logging
+import sys
 from osc import cmdln
 import osc.commandline
 import osc.conf
@@ -17,9 +17,8 @@ logger.setLevel(logging.DEBUG)
 def output(template):
     if not template:
         return
-    print
-    print "-----------------------"
     entries = template.log_entries
+    print "-----------------------"
     keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs", "Category",
             "Rating"]
     for key in keys:
@@ -45,9 +44,9 @@ class QamInterpreter(cmdln.Cmdln):
     def __init__(self, parent_cmdln):
         "docstring"
         self.parent_cmdln = parent_cmdln
-        
+
     name = 'osc-qam'
-    
+
     def _set_required_params(self, opts):
         self.apiurl = self.parent_cmdln.get_api_url()
         self.api = RemoteFacade(self.apiurl)
@@ -118,13 +117,34 @@ class QamInterpreter(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        def group_by_rating(template):
+            entries = template.log_entries
+            rating = entries["Rating"]
+            return rating
+
+        def sort_by_rating(template):
+            entries = template.log_entries
+            rating = entries["Rating"]
+            return mapping.get(rating, 10)
         self._set_required_params(opts)
         only_review = opts.review if opts.review else False
         action = ListAction(self.api, self.affected_user, only_review)
         templates = self._run_action(action)
+        mapping = {
+            'important': 0,
+            'moderate': 1,
+            'low': 2,
+            '': 3
+        }
         if templates:
-            for template in templates:
-                output(template)
+            sort_by_rating = templates.sort(key=sort_by_rating)
+            group_rating = itertools.groupby(templates, group_by_rating)
+            for key, group in group_rating:
+                templates = list(group)
+                templates.sort(key=lambda t: int(t.request.reqid))
+                # for template in group:
+                for template in templates:
+                    output(template)
 
     @cmdln.option('-u', '--user',
                   help='User that rejects this request.')
