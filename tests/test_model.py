@@ -27,6 +27,10 @@ class ModelTests(unittest.TestCase):
             'request_search_none_proj.xml'
         )).read()
         cls.req_no_src = open(os.path.join(path, 'request_no_src.xml')).read()
+        cls.req_assign = open(os.path.join(path, 'request_assign.xml')).read()
+        cls.req_unassign = open(os.path.join(
+            path, 'request_unassign.xml'
+        )).read()
 
     def setUp(self):
         self.remote = MockRemote()
@@ -62,3 +66,15 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(requests[0].src_project, '')
         requests = Request.filter_by_project("SUSE:Maintenance", requests)
         self.assertEqual(len(requests), 0)
+
+    def test_assigned_roles_request(self):
+        request = Request.parse(self.remote, self.req_assign)[0]
+        assigned = request.assigned_roles
+        self.assertEqual(len(assigned), 1)
+        self.assertEqual(assigned[0].user, 'anonymous')
+        self.assertEqual(assigned[0].group, 'qam-sle')
+
+    def test_unassigned_removes_roles(self):
+        request = Request.parse(self.remote, self.req_unassign)[0]
+        assigned = request.assigned_roles
+        self.assertEqual(len(assigned), 0)

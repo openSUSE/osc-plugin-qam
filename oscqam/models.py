@@ -244,6 +244,23 @@ class User(XmlFactoryMixin):
 
 
 class Request(osc.core.Request, XmlFactoryMixin):
+    """Wrapper around osc request object to add logic required by the
+    qam-plugin.
+    """
+    class Assignment(object):
+        """Minimal class to store an assignment of a user for a group.
+        """
+        def __init__(self, user, group):
+            self.user = user
+            self.group = group
+
+        def __hash__(self):
+            return hash(self.user) + hash(self.group)
+
+        def __eq__(self, other):
+            return (self.user == other.user and
+                    self.group == other.group)
+
     endpoint = 'request'
 
     OPEN_STATES = ['new', 'review']
@@ -256,6 +273,49 @@ class Request(osc.core.Request, XmlFactoryMixin):
         super(Request, self).__init__()
         self._groups = None
         self._packages = None
+        self._assigned_roles = None
+
+    @property
+    def assigned_roles(self):
+        if not self._assigned_roles:
+            self._assigned_roles = self._infer_assignment()
+        return self._assigned_roles
+
+    @property
+    def groups(self):
+        # Maybe use a invalidating cache as a trade-off between current
+        # information and slow response.
+        return [review.by_group for review in self.reviews if review.by_group]
+
+    @property
+    def packages(self):
+        """Collects all packages of the actions that are part of the request.
+        """
+        if not self._packages:
+            packages = set()
+            for action in self.actions:
+                pkg = action.src_package
+                if pkg != "patchinfo":
+                    packages.add(pkg)
+            self._packages = packages
+        return self._packages
+
+    @property
+    def src_project(self):
+        """Will return the src_project or an empty string if no src_project
+        can be found in the request.
+
+        """
+        for action in self.actions:
+            if hasattr(action, 'src_project'):
+                prj = action.src_project
+                if prj:
+                    return prj
+                else:
+                    logger.info("This project has no source project: %s",
+                                self.reqid)
+                    return ''
+        return ''
 
     def review_action(self, params, user=None, group=None, comment=None):
         if not user and not group:
@@ -275,6 +335,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self.review_action(params, group=group, comment=comment)
 
     def review_accept(self, user=None, group=None, comment=None):
+        comment = "[qamosc]::accept::{user}::{group}".format(
+            user=user, group=group
+        )
         params = {'cmd': 'changereviewstate',
                   'newstate': 'accepted'}
         self.review_action(params, user, group, comment)
@@ -335,42 +398,6 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return [r for r in self.review_list() if r.state in
                 Request.OPEN_STATES]
 
-    @property
-    def groups(self):
-        # Maybe use a invalidating cache as a trade-off between current
-        # information and slow response.
-        return [review.by_group for review in self.reviews if review.by_group]
-
-    @property
-    def packages(self):
-        """Collects all packages of the actions that are part of the request.
-        """
-        if not self._packages:
-            packages = set()
-            for action in self.actions:
-                pkg = action.src_package
-                if pkg != "patchinfo":
-                    packages.add(pkg)
-            self._packages = packages
-        return self._packages
-
-    @property
-    def src_project(self):
-        """Will return the src_project or an empty string if no src_project
-        can be found in the request.
-
-        """
-        for action in self.actions:
-            if hasattr(action, 'src_project'):
-                prj = action.src_project
-                if prj:
-                    return prj
-                else:
-                    logger.info("This project has no source project: %s",
-                                self.reqid)
-                    return ''
-        return ''
-
     @classmethod
     def filter_by_project(cls, filter, requests):
         requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
@@ -384,8 +411,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
         """
         params = {'user': user.login,
                   'view': 'collection',
-                  'states': 'new,review'}
-        requests =  cls.parse(remote, remote.get(cls.endpoint, params))
+                  'states': 'new,review',
+                  'withfullhistory': '1'}
+        requests = cls.parse(remote, remote.get(cls.endpoint, params))
         return cls.filter_by_project("SUSE:Maintenance", requests)
 
     @classmethod
@@ -411,7 +439,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 "(review[@by_group='{0}' and @state='new'])".format(name)
             )
         xpath = " and ".join(xpaths)
-        params = {'match': xpath}
+        params = {'match': xpath,
+                  'withfullhistory': '1'}
         params.update(kwargs)
         search = "/".join(["search", cls.endpoint])
         requests = cls.parse(remote, remote.get(search, params))
@@ -437,6 +466,68 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 logger.error(e.msg)
                 pass
         return requests
+
+    def _infer_assignment(self):
+        def is_assignment(event):
+            return "Review got assigned" in event.description
+
+        def is_unassignment(event):
+            return ("Review got reopened" in event.description and
+                    "unassign" in event.comment)
+
+        def is_accepted(event):
+            return ("Review got accepted in event.description" and
+                    (not event.comment or
+                     "[qamosc]::accept" in event.comment))
+        assignments = []
+        unassignment_user_regex = re.compile(
+            "\[oscqam\]::unassign::(?P<user>\w+)::.*"
+        )
+        unassignment_group_regex = re.compile(
+            "\[oscqam\]::unassign::.+::(?P<group>.*)"
+        )
+        assignment_user_regex = re.compile(
+            "review assigend to user (?P<user>\w+)"
+        )
+        assignment_group_regex = re.compile("review for group (?P<group>.+)")
+        prev_event = None
+        was_unassignment = False
+        for curr_event in self.statehistory:
+            if is_assignment(curr_event):
+                user_match = assignment_user_regex.match(prev_event.comment)
+                group_match = assignment_group_regex.match(curr_event.comment)
+                if not user_match or not group_match:
+                    logger.error("Assign incorrect format: %s. %s",
+                                 prev_event.comment, curr_event.comment)
+                    continue
+                assignment = self.Assignment(user_match.group('user'),
+                                             group_match.group('group'))
+                assignments.append(assignment)
+            elif is_unassignment(curr_event):
+                # Kind of ugly and *should* use a state-machine here.
+                was_unassignment = True
+            elif was_unassignment:
+                user_match = unassignment_user_regex.match(prev_event.comment)
+                group_match = unassignment_group_regex.match(curr_event.comment)
+                if not user_match or not group_match:
+                    logger.error("Unassign incorrect format: %s. %s",
+                                 prev_event.comment, curr_event.comment)
+                    was_unassignment = False
+                    continue
+                assignment = self.Assignment(user_match.group('user'),
+                                             group_match.group('group'))
+                if assignment in assignments:
+                    assignments.remove(assignment)
+            elif is_accepted(curr_event):
+                user = curr_event.who
+                possible = [a for a in assignments if a.user == user]
+                if possible:
+                    group = possible[0].group
+                    assignment = self.Assignment(user, group)
+                    if assignment in assignments:
+                        assignments.remove(assignment)
+            prev_event = curr_event
+        return assignments
 
     def __eq__(self, other):
         project = self.actions[0].src_project
