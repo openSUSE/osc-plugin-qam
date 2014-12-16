@@ -3,7 +3,7 @@ import logging
 from .models import Group, User, Request, Template, RemoteError
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 PREFIX = "[oscqam]"
 

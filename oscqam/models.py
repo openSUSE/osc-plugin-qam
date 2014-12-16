@@ -15,7 +15,7 @@ import osc.core
 import osc.oscerr
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class RemoteError(Exception):
@@ -497,7 +497,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 user_match = assignment_user_regex.match(prev_event.comment)
                 group_match = assignment_group_regex.match(curr_event.comment)
                 if not user_match or not group_match:
-                    logger.error("Assign incorrect format: %s. %s",
+                    logger.debug("Assign incorrect format: %s. %s",
                                  prev_event.comment, curr_event.comment)
                     continue
                 assignment = self.Assignment(user_match.group('user'),
@@ -510,7 +510,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 user_match = unassignment_user_regex.match(prev_event.comment)
                 group_match = unassignment_group_regex.match(curr_event.comment)
                 if not user_match or not group_match:
-                    logger.error("Unassign incorrect format: %s. %s",
+                    logger.debug("Unassign incorrect format: %s. %s",
                                  prev_event.comment, curr_event.comment)
                     was_unassignment = False
                     continue
