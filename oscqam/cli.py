@@ -20,7 +20,7 @@ def output(template):
     entries = template.log_entries
     print "-----------------------"
     keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs", "Category",
-            "Rating", "Unassigned Roles", "Package-Streams"]
+            "Rating", "Unassigned Roles", "Assigned Roles", "Package-Streams"]
     length = max([len(k) for k in keys])
     str_template = "{{0:{length}s}}: {{1}}".format(length=length)
     for key in keys:
@@ -31,6 +31,11 @@ def output(template):
             elif key == "Package-Streams":
                 packages = [p for p in template.request.packages]
                 value = " ".join(packages)
+            elif key == "Assigned Roles":
+                roles = template.request.assigned_roles
+                assigns = ["{r.user} ({r.group})".format(r=r)
+                           for r in roles]
+                value = ", ".join(assigns)
             else:
                 value = entries[key]
             print str_template.format(key, value)
