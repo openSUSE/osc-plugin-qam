@@ -51,8 +51,8 @@ class QamInterpreter(cmdln.Cmdln):
     ${command_list}
     ${help_list}
     """
-    def __init__(self, parent_cmdln):
-        "docstring"
+    def __init__(self, parent_cmdln, *args, **kwargs):
+        cmdln.Cmdln.__init__(self, *args, **kwargs)
         self.parent_cmdln = parent_cmdln
 
     name = 'osc-qam'
