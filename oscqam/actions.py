@@ -298,7 +298,7 @@ class RejectAction(OscAction):
         status = self.template.status
         if status != Template.STATUS_FAILURE:
             msg = "Request-Status not 'FAILED': please check report: {p}".format(
-                p=self.template.directory
+                p=self.template.web_path
             )
             raise ActionError(msg)
         return self.template.log_entries['comment']
