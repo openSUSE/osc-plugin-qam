@@ -58,6 +58,7 @@ class QamInterpreter(cmdln.Cmdln):
     name = 'osc-qam'
 
     def _set_required_params(self, opts):
+        self.parent_cmdln.postoptparse()
         self.apiurl = self.parent_cmdln.get_api_url()
         self.api = RemoteFacade(self.apiurl)
         self.affected_user = None
