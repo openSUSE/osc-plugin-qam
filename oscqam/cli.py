@@ -55,7 +55,7 @@ class QamInterpreter(cmdln.Cmdln):
         cmdln.Cmdln.__init__(self, *args, **kwargs)
         self.parent_cmdln = parent_cmdln
 
-    name = 'osc-qam'
+    name = 'osc qam'
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
