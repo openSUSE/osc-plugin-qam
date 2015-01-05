@@ -1,6 +1,7 @@
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 %define sourcename oscqam
 %define name python-oscqam
-%define unmangled_version 0.1
 %define unmangled_version 0.1
 %define release 1
 %define OSCPLUGINPATH /usr/lib/osc-plugins/
@@ -15,7 +16,9 @@ License: SUSE-NonFree
 Group: Productivity/Other
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
+%if 0%{?suse_version} >= 1120
 BuildArch: noarch
+%endif
 Url: https://wiki.innerweb.novell.com/index.php/RD-OPS_QA/Maintenance/osc-for-qam
 BuildRequires: python-devel
 BuildRequires: python-setuptools
