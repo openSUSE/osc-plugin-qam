@@ -1,6 +1,7 @@
 import itertools
 import logging
 import sys
+import urllib2
 from osc import cmdln
 import osc.commandline
 import osc.conf
@@ -75,6 +76,9 @@ class QamInterpreter(cmdln.Cmdln):
             return func()
         except ActionError, e:
             print("Error occurred while performing an action.")
+            print(e.msg)
+        except urllib2.HTTPError:
+            print("Error occurred on the server.")
             print(e.msg)
 
     @cmdln.option('-u', '--user',
