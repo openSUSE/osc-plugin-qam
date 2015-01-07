@@ -18,6 +18,16 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
+def et_iter(elementtree, tag):
+    """This function is used to make the iter call work in
+    version < 2.7 as well.
+    """
+    if hasattr(elementtree, 'iter'):
+        return elementtree.iter(tag)
+    else:
+        return elementtree.getiterator(tag)
+
+
 class RemoteError(Exception):
     """Indicates an error while communicating with the remote service.
 
@@ -99,7 +109,7 @@ class XmlFactoryMixin(object):
         if not wrapper_cls:
             wrapper_cls = cls
         objects = []
-        for request in et.iter(tag):
+        for request in et_iter(et, tag):
             attribs = {}
             for attribute in request.attrib:
                 attribs[attribute] = request.attrib[attribute]
@@ -108,8 +118,9 @@ class XmlFactoryMixin(object):
                 key = child.tag
                 subchildren = list(child)
                 if subchildren or child.attrib:
-                    # Prevent that all children have the same class as the parent.
-                    # This might lead to providing methods that make no sense.
+                    # Prevent that all children have the same class as the
+                    # parent.  This might lead to providing methods that make
+                    # no sense.
                     value = cls.parse_et(remote, child, key, XmlFactoryMixin)
                     if len(value) == 1:
                         value = value[0]
@@ -457,7 +468,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def parse(cls, remote, xml):
         et = ET.fromstring(xml)
         requests = []
-        for request in et.iter(cls.endpoint):
+        for request in et_iter(et, cls.endpoint):
             try:
                 req = Request(remote)
                 req.read(request)
