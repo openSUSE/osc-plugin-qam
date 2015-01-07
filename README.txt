@@ -1,8 +1,8 @@
-Overview
-========
+Installation
+============
 
-This package provides the plugin for the _osc tool that adds additional
-features to support the QA-Maintenance workflow.
+Overview
+--------
 
 The plugin provides the following new features:
 
@@ -28,31 +28,82 @@ The plugin provides the following new features:
   - reject [-u user] <request_id>: will reject a started review of the user
     for the given request_id.
 
-
 Installation
-============
+------------
 
-Either install the package with your package manager or use the following pip
-command:
-
-Development
-===========
-
-The oscqam plugin uses pytest_ library to run the test. To setup the project
-correctly for usage with it, install it using pip:
+To install the plugin add the repository for your distribution from here:
+http://download.suse.de/ibs/home:/bergmannf/.
 
 .. code:: bash
 
-          cd <src_directory_oscqam>
-          pip install --user -e .
+          zypper ar -f http://download.suse.de/ibs/home:/bergmannf/<distro> home:bergmannf
+          zypper in python-oscqam
 
-Now running the tests with ``py.test`` should work:
+Currently supported distributions are:
+
+- openSUSE 13.1
+    
+- openSUSE 13.2
+    
+- openSUSE Factory
+    
+- SLE 12
+    
+- SLE-11-SP3 (The plugin requires a fairly recent osc-version: use this
+    repository
+    http://download.opensuse.org/repositories/openSUSE:/Tools/SLE_11_SP3/)
+
+After the package is installed a new command is now available for osc: ``osc
+qam``.
+
+Running the command without any further arguments will start an interactive
+session. This is the easier way to see all commands and get help for a
+specific command:
 
 .. code:: bash
 
-          cd <src_directory_oscqam>
-          py.test ./tests
+          osc qam
+          osc-qam> help
+          Usage: osc qam [command] [opts] [args]
+          
+          openSUSE build service command-line tool qam extensions.
+          
+          commands:
+             approve       Approve the request for the user.
+             assign        Assign the request to the user.
+             help (?, h)   give detailed help on a specific sub-command
+             list          Show a list of all open requests currently running. The l...
+             man           generates a man page
+             quit (q)      Quit the qam-subinterpreter.
+             reject        Reject the request for the user.
+             unassign      Assign the request to the user.
+          
+          osc-qam> help approve
+          approve: Approve the request for the user.
+          
+          The command either uses the user that runs the osc command or the user
+          that was passed as part of the command via the -u flag.
+          
+          Usage:
+             osc-qam approve REQUEST_ID 
+          
+          Options:
+             -h, --help          show this help message and exit
+             -u USER, --user=USER
+                                 User to assign for this request.
 
+Instead of running the commands in the interactive session it is also possible
+to just write out the complete command following the osc qam part:
 
-_osc: https://github.com/openSUSE/osc
-_py.test: http://pytest.org/
+The interactive command sequence to list open requests:
+
+.. code:: bash
+
+          osc qam
+          osc-qam> list
+
+The single command to list open requests:
+
+.. code:: bash
+          
+          osc qam list
