@@ -81,13 +81,13 @@ class QamInterpreter(cmdln.Cmdln):
             print("Error occurred on the server.")
             print(e.msg)
 
-    @cmdln.option('-u', '--user',
+    @cmdln.option('-U', '--user',
                   help='User to assign for this request.')
     def do_approve(self, subcmd, opts, request_id):
         """${cmd_name}: Approve the request for the user.
 
         The command either uses the user that runs the osc command or the user
-        that was passed as part of the command via the -u flag.
+        that was passed as part of the command via the -U flag.
 
         ${cmd_usage}
         ${cmd_option_list}
@@ -97,15 +97,15 @@ class QamInterpreter(cmdln.Cmdln):
         action = ApproveAction(self.api, self.affected_user, self.request_id)
         self._run_action(action)
 
-    @cmdln.option('-u', '--user',
+    @cmdln.option('-U', '--user',
                   help='User to assign for this request.')
-    @cmdln.option('-g', '--group',
+    @cmdln.option('-G', '--group',
                   help='Group to assign the user for.')
     def do_assign(self, subcmd, opts, request_id):
         """${cmd_name}: Assign the request to the user.
 
         The command either uses the user that runs the osc command or the user
-        that was passed as part of the command via the -u flag.
+        that was passed as part of the command via the -U flag.
 
         It will attempt to automatically find a group that is not currently
         reviewed, but that the user could review for.  If no group can be
@@ -121,9 +121,9 @@ class QamInterpreter(cmdln.Cmdln):
                               group)
         self._run_action(action)
 
-    @cmdln.option('-u', '--user',
+    @cmdln.option('-U', '--user',
                   help='User to list requests for.')
-    @cmdln.option('-r', '--review', action='store_true',
+    @cmdln.option('-R', '--review', action='store_true',
                   help='Show all requests that are in review by the user.')
     def do_list(self, subcmd, opts):
         """${cmd_name}: Show a list of all open requests currently running.
@@ -162,9 +162,9 @@ class QamInterpreter(cmdln.Cmdln):
                 for template in templates:
                     output(template)
 
-    @cmdln.option('-u', '--user',
+    @cmdln.option('-U', '--user',
                   help='User that rejects this request.')
-    @cmdln.option('-m', '--message',
+    @cmdln.option('-M', '--message',
                   help='Message to use for rejection-comment.')
     def do_reject(self, subcmd, opts, request_id):
         """${cmd_name}: Reject the request for the user.
@@ -182,9 +182,9 @@ class QamInterpreter(cmdln.Cmdln):
                               message)
         self._run_action(action)
 
-    @cmdln.option('-u', '--user',
+    @cmdln.option('-U', '--user',
                   help='User to assign for this request.')
-    @cmdln.option('-g', '--group',
+    @cmdln.option('-G', '--group',
                   help='Group to reassign to this request.')
     def do_unassign(self, subcmd, opts, request_id):
         """${cmd_name}: Assign the request to the user.
@@ -207,18 +207,19 @@ class QamInterpreter(cmdln.Cmdln):
         self._run_action(action)
 
     @cmdln.alias('q')
+    @cmdln.alias('Q')
     def do_quit(self, subcmd, opts):
         """${cmd_name}: Quit the qam-subinterpreter."""
         self.stop = True
 
 
-@cmdln.option('-g', '--group',
+@cmdln.option('-G', '--group',
               help='Group to use for the command.')
-@cmdln.option('-m', '--message',
+@cmdln.option('-M', '--message',
               help='Message to use for the command.')
-@cmdln.option('-r', '--review', action='store_true',
+@cmdln.option('-R', '--review', action='store_true',
               help='Parameter for list command.')
-@cmdln.option('-u', '--user',
+@cmdln.option('-U', '--user',
               help='User to use for the command.')
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
