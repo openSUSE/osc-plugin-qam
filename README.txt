@@ -53,8 +53,18 @@ Currently supported distributions are:
     repository
     http://download.opensuse.org/repositories/openSUSE:/Tools/SLE_11_SP3/)
 
-After the package is installed a new command is now available for osc: ``osc
+Usage
+-----
+
+After the package is installed a new command is now available for osc: ``ibs
 qam``.
+
+.. note::
+
+   The plugin is currently only useful for the *internal* buildservice, so
+   whenever this document uses ``ibs qam``, you should actually use your alias
+   that uses ``https://api.suse.de`` or add the flag
+   ``--apiurl=https://api.suse.de``.
 
 Running the command without any further arguments will start an interactive
 session. This is the easier way to see all commands and get help for a
@@ -62,7 +72,7 @@ specific command:
 
 .. code:: bash
 
-          osc qam
+          ibs qam
           osc-qam> help
           Usage: osc qam [command] [opts] [args]
           
@@ -99,11 +109,11 @@ The interactive command sequence to list open requests:
 
 .. code:: bash
 
-          osc qam
+          ibs qam
           osc-qam> list
 
 The single command to list open requests:
 
 .. code:: bash
           
-          osc qam list
+          ibs qam list
