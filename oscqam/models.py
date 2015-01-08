@@ -460,9 +460,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
     @classmethod
     def by_id(cls, remote, req_id):
         endpoint = "/".join([cls.endpoint, req_id])
-        # withfullhistory=1 breaks osc.core RequestState (history-elements
-        # have not name)
-        return cls.parse(remote, remote.get(endpoint, {'withfullhistory': 1}))[0]
+        req = cls.parse(remote, remote.get(endpoint, {'withfullhistory': 1}))
+        return req[0]
 
     @classmethod
     def parse(cls, remote, xml):
