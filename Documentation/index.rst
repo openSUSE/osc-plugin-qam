@@ -16,6 +16,7 @@ Contents:
 
    install
    devel
+   todo
 
 Indices and tables
 ==================
