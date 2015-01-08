@@ -32,11 +32,11 @@ Installation
 ------------
 
 To install the plugin add the repository for your distribution from here:
-http://download.suse.de/ibs/home:/bergmannf/.
+http://download.suse.de/ibs/QA:/Maintenance/
 
 .. code:: bash
 
-          zypper ar -f http://download.suse.de/ibs/home:/bergmannf/<distro> home:bergmannf
+          zypper ar -f http://download.suse.de/ibs/QA:/Maintenance/ qa_maintenance_tools
           zypper in python-oscqam
 
 Currently supported distributions are:

@@ -31,11 +31,9 @@ Now running the tests with ``py.test`` should work:
 Release
 -------
 
-Before the release of version 1.0 the plugin is only build in a homeproject:
-https://build.suse.de/package/show/home:bergmannf/python-oscqam.
-
-After the initial release the project will be part of the official
-QA-Maintenance_ project.
+The current version of the plugin can be installed from the official
+QA-Maintenance_ project in the internal build service:
+https://build.suse.de/package/show/QA:Maintenance/python-oscqam
 
 The plugin should keep building for at least the supported versions.
 
