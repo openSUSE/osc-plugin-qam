@@ -9,7 +9,7 @@ setup(
     description='Plugin for OSC to support the workflow for the QA ' +
     'maintenance department when using the new request / review osc ' +
     'abstractions.',
-    long_description=open("README.txt").read(),
+    long_description=open("README.rst").read(),
     url='https://wiki.innerweb.novell.com/index.php/RD-OPS_QA/Maintenance/osc-for-qam',
     install_requires=['osc'],
     packages=['oscqam'],
