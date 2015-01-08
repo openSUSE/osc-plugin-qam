@@ -409,6 +409,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return [r for r in self.review_list() if r.state in
                 Request.OPEN_STATES]
 
+    def add_comment(self, comment):
+        """Adds a comment to this request.
+        """
+        endpoint = '/comments/request/{id}'.format(id=self.reqid)
+        self.remote.post(endpoint, comment)
+
     @classmethod
     def filter_by_project(cls, filter, requests):
         requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
@@ -418,7 +424,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def for_user(cls, remote, user):
         """Will return all requests for the user if they are part of a
         SUSE:Maintenance project.
-        
+
         """
         params = {'user': user.login,
                   'view': 'collection',

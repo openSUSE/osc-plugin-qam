@@ -7,7 +7,8 @@ import osc.commandline
 import osc.conf
 
 from oscqam.actions import (ApproveAction, AssignAction, ListAction,
-                            UnassignAction, RejectAction, ActionError)
+                            UnassignAction, RejectAction, ActionError,
+                            CommentAction)
 from oscqam.models import RemoteFacade
 
 logging.basicConfig()
@@ -63,7 +64,7 @@ class QamInterpreter(cmdln.Cmdln):
         self.apiurl = self.parent_cmdln.get_api_url()
         self.api = RemoteFacade(self.apiurl)
         self.affected_user = None
-        if opts.user:
+        if hasattr(opts, 'user') and opts.user:
             self.affected_user = opts.user
         else:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
@@ -204,6 +205,20 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = UnassignAction(self.api, self.affected_user, self.request_id,
                                 group)
+        self._run_action(action)
+
+    def do_comment(self, subcmd, opts, request_id, comment):
+        """${cmd_name}: Add a comment to a request.
+
+        The command will add a comment to the given request.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        self._set_required_params(opts)
+        self.request_id = request_id
+        action = CommentAction(self.api, self.affected_user, self.request_id,
+                               comment)
         self._run_action(action)
 
     @cmdln.alias('q')

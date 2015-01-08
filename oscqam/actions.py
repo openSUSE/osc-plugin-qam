@@ -305,7 +305,7 @@ class RejectAction(OscAction):
 
 
 class CommentAction(OscAction):
-    """Add a comment to a review.
+    """Add a comment to a request.
 
     """
     def __init__(self, remote, user, request_id, comment):
@@ -314,4 +314,4 @@ class CommentAction(OscAction):
         self.request = Request.by_id(self.remote, request_id)
 
     def action(self):
-        self.request.add_comment(comment, user=self.user)
+        self.request.add_comment(self.comment)
