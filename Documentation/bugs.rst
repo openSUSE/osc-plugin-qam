@@ -16,7 +16,7 @@ with the plugin as a current workaround:
 
 After installing rlwrap the following command will restore readline functionality:
 
-.. code:: bash
+.. code-block:: bash
 
           rlwrap osc --apiurl=https://api.suse.de/ qam
 

@@ -18,7 +18,7 @@ Contents:
    devel
    todo
    bugs
-   
+
 Indices and tables
 ==================
 

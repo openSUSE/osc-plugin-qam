@@ -26,13 +26,13 @@ that should be addressed in the future:
       ones to allow readline support.
       However this might lead to problems, as osc probably did not include the
       wrapper object just for fun.
-   
+
 2. openSUSE support
 -------------------
 
    The openSUSE build service uses a different template format that needs some
    adjustments in ``models.py``.
-   
+
 3. Change to server-side unassign
 ---------------------------------
 

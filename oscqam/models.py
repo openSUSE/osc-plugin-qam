@@ -487,7 +487,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     @classmethod
     def parse_request_id(cls, request_id):
-        """Will extract the request_id from a string if required.
+        """Extract the request_id from a string if required.
+
+        The method will extract the request-id of a complete request string
+        (e.g. SUSE:Maintenance:123:45678 has a request id of 45678) if
+        needed.
+
         """
         reqid = cls.COMPLETE_REQUEST_ID_SRE.match(request_id)
         if reqid:

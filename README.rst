@@ -1,5 +1,5 @@
-Installation
-============
+Getting started
+===============
 
 Overview
 --------
@@ -36,19 +36,19 @@ http://download.suse.de/ibs/QA:/Maintenance/
 
 .. code:: bash
 
-          zypper ar -f http://download.suse.de/ibs/QA:/Maintenance/ qa_maintenance_tools
+          zypper ar -f http://download.suse.de/ibs/QA:/Maintenance/<distribution> qa_maintenance_tools
           zypper in python-oscqam
 
 Currently supported distributions are:
 
 - openSUSE 13.1
-    
+
 - openSUSE 13.2
-    
+
 - openSUSE Factory
-    
+
 - SLE 12
-    
+
 - SLE-11-SP3 (The plugin requires a fairly recent osc-version: use this
     repository
     http://download.opensuse.org/repositories/openSUSE:/Tools/SLE_11_SP3/)
@@ -70,14 +70,14 @@ Running the command without any further arguments will start an interactive
 session. This is the easier way to see all commands and get help for a
 specific command:
 
-.. code:: bash
+.. code-block:: bash
 
           ibs qam
           osc-qam> help
           Usage: osc qam [command] [opts] [args]
-          
+
           openSUSE build service command-line tool qam extensions.
-          
+
           commands:
              approve       Approve the request for the user.
              assign        Assign the request to the user.
@@ -87,16 +87,16 @@ specific command:
              quit (q)      Quit the qam-subinterpreter.
              reject        Reject the request for the user.
              unassign      Assign the request to the user.
-          
+
           osc-qam> help approve
           approve: Approve the request for the user.
-          
+
           The command either uses the user that runs the osc command or the user
           that was passed as part of the command via the -u flag.
-          
+
           Usage:
-             osc-qam approve REQUEST_ID 
-          
+             osc-qam approve REQUEST_ID
+
           Options:
              -h, --help          show this help message and exit
              -u USER, --user=USER
@@ -107,13 +107,13 @@ to just write out the complete command following the osc qam part:
 
 The interactive command sequence to list open requests:
 
-.. code:: bash
+.. code-block:: bash
 
           ibs qam
           osc-qam> list
 
 The single command to list open requests:
 
-.. code:: bash
-          
+.. code-block:: bash
+
           ibs qam list
