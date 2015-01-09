@@ -239,11 +239,34 @@ class QamInterpreter(cmdln.Cmdln):
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
+    osc_stdout = None
+    retval = None
+
+    def restore_orig_stdout():
+        """osc is replacing the stdout with their own writer-class.
+
+        This prevents readline from working, which is annoying for a
+        interactive commandline application.
+
+        """
+        osc_stdout = sys.stdout
+        sys.stdout = osc_stdout.__dict__['writer']
+
+    def restore_osc_stdout():
+        """When the plugin has finished running restore the osc-state.
+
+        """
+        sys.stdout = osc_stdout
     osc.conf.get_config()
-    interp = QamInterpreter(self)
-    interp.optparser = cmdln.SubCmdOptionParser()
-    if args:
-        index = sys.argv.index('qam')
-        return interp.onecmd(sys.argv[index + 1:])
-    else:
-        return interp.cmdloop()
+    restore_orig_stdout()
+    try:
+        interp = QamInterpreter(self)
+        interp.optparser = cmdln.SubCmdOptionParser()
+        if args:
+            index = sys.argv.index('qam')
+            retval = interp.onecmd(sys.argv[index + 1:])
+        else:
+            retval = interp.cmdloop()
+    finally:
+        restore_osc_stdout()
+    return retval
