@@ -78,3 +78,8 @@ class ModelTests(unittest.TestCase):
         request = Request.parse(self.remote, self.req_unassign)[0]
         assigned = request.assigned_roles
         self.assertEqual(len(assigned), 0)
+
+    def test_parse_request_id(self):
+        test_id = "SUSE:Maintenance:123:45678"
+        req_id = Request.parse_request_id(test_id)
+        self.assertEqual(req_id, "45678")

@@ -278,6 +278,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     REVIEW_USER = 'BY_USER'
     REVIEW_GROUP = 'BY_GROUP'
     REVIEW_OTHER = 'BY_OTHER'
+    COMPLETE_REQUEST_ID_REGEX = re.compile("SUSE:Maintenance:\d+:(?P<req>\d+)")
 
     def __init__(self, remote):
         self.remote = remote
@@ -465,6 +466,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     @classmethod
     def by_id(cls, remote, req_id):
+        req_id = cls.parse_request_id(req_id)
         endpoint = "/".join([cls.endpoint, req_id])
         req = cls.parse(remote, remote.get(endpoint, {'withfullhistory': 1}))
         return req[0]
@@ -482,6 +484,15 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 logger.error(e.msg)
                 pass
         return requests
+
+    @classmethod
+    def parse_request_id(cls, request_id):
+        """Will extract the request_id from a string if required.
+        """
+        reqid = cls.COMPLETE_REQUEST_ID_REGEX.match(request_id)
+        if reqid:
+            return reqid.group('req')
+        return request_id
 
     def _infer_assignment(self):
         def is_assignment(event):
