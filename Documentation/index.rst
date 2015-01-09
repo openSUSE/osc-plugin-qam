@@ -17,7 +17,8 @@ Contents:
    install
    devel
    todo
-
+   bugs
+   
 Indices and tables
 ==================
 
