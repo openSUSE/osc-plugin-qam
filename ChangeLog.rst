@@ -4,6 +4,7 @@ ChangeLog
 0.2.0
 =====
 
+- With upstream osc-version it is now possible to use the readline shortcuts.
 - Can use complete request_id in plugin now as well:
   e.g. ibs qam assign SUSE:Maintenance:123:45678
 
