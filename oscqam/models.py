@@ -212,7 +212,7 @@ class User(XmlFactoryMixin):
 
     """
     endpoint = 'person'
-    qam_regex = re.compile(".*qam.*")
+    QAM_SRE = re.compile(".*qam.*")
 
     def __init__(self, remote, attributes, children):
         super(User, self).__init__(remote, attributes, children)
@@ -233,7 +233,7 @@ class User(XmlFactoryMixin):
     def qam_groups(self):
         """Return only the groups that are part of the qam-workflow."""
         return [group for group in self.groups
-                if User.qam_regex.match(group.name)]
+                if User.QAM_SRE.match(group.name)]
 
     def __str__(self):
         return unicode(self)
@@ -278,7 +278,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     REVIEW_USER = 'BY_USER'
     REVIEW_GROUP = 'BY_GROUP'
     REVIEW_OTHER = 'BY_OTHER'
-    COMPLETE_REQUEST_ID_REGEX = re.compile("SUSE:Maintenance:\d+:(?P<req>\d+)")
+    COMPLETE_REQUEST_ID_SRE = re.compile("SUSE:Maintenance:\d+:(?P<req>\d+)")
 
     def __init__(self, remote):
         self.remote = remote
@@ -489,7 +489,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def parse_request_id(cls, request_id):
         """Will extract the request_id from a string if required.
         """
-        reqid = cls.COMPLETE_REQUEST_ID_REGEX.match(request_id)
+        reqid = cls.COMPLETE_REQUEST_ID_SRE.match(request_id)
         if reqid:
             return reqid.group('req')
         return request_id
