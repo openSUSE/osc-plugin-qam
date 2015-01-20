@@ -1,7 +1,8 @@
 from setuptools import setup
+from oscqam import __version__
 
 package = 'python-oscqam'
-version = '0.2.0'
+version = __version__
 
 setup(
     name=package,
