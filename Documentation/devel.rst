@@ -7,6 +7,36 @@ Hosting
 The plugin is hosted on the internal ``git``-repository:
 http://git.suse.de/?p=fbergmann/oscqam.git
 
+Working from source
+-------------------
+
+After checking out the source code it is required to setup the plugin, so
+``osc`` can find and use it.
+
+By default ``osc`` will look in the following paths for plugins:
+
+- ``/usr/lib/osc-plugins``
+             
+- ``/usr/local/lib/osc-plugins``
+  
+- ``/var/lib/osc-plugins``
+  
+- ``~/.osc-plugins``
+
+To make ``oscqam`` available to ``osc`` the start-up point needs to be
+available in one of these paths and the modules from oscqam need to be
+importable.
+
+An easy way is to symlink the ``oscqam`` folder and ``cli.py`` file into
+e.g. ``~/.osc-plugins`` and set the ``PYTHONPATH`` to include this folder:
+
+.. code-block:: bash
+                
+                git clone git@git.suse.de:fbergmann/oscqam.git oscqam
+                ln -s "$PWD/oscqam/cli.py" ~/.osc-plugins/oscqam/cli.py
+                ln -s "$PWD/oscqam/oscqam" ~/.osc-plugin/oscqam
+                export PYTHONPATH="~/.osc-plugins:$PYTHONPATH"
+
 Testing
 -------
 
