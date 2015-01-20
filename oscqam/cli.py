@@ -140,6 +140,8 @@ class QamInterpreter(cmdln.Cmdln):
                   help='User to list requests for.')
     @cmdln.option('-R', '--review', action='store_true',
                   help='Show all requests that are in review by the user.')
+    @cmdln.option('-v', '--verbose', action='store_true', default=False,
+                  help='Generate verbose output.')
     def do_list(self, subcmd, opts):
         """${cmd_name}: Show a list of all open requests currently running.
         The list will only contain requests that are part of the qam-groups.
@@ -152,14 +154,15 @@ class QamInterpreter(cmdln.Cmdln):
         action = ListAction(self.api, self.affected_user, only_review)
         templates = self._run_action(action)
         keys = ["ReviewRequestID", "SRCRPMs", "Rating", "Products"]
-        badcols = set(opts.columns) - set(self.all_keys)
-        if len(badcols):
-            print("Unknown columns: %s" % (", ".join(map(repr, badcols))))
-            return
-        elif opts.columns:
-            keys = opts.columns
-        else:
+        if opts.verbose:
             keys = self.all_keys
+        else:
+            badcols = set(opts.columns) - set(self.all_keys)
+            if len(badcols):
+                print("Unknown columns: %s" % (", ".join(map(repr, badcols))))
+                return
+            elif opts.columns:
+                keys = opts.columns
 
         if templates:
             requests = group_sort_requests(templates)
@@ -244,6 +247,8 @@ class QamInterpreter(cmdln.Cmdln):
               help='Parameter for list command.')
 @cmdln.option('-U', '--user',
               help='User to use for the command.')
+@cmdln.option('-v', '--verbose', action='store_true',
+              help='Generate verbose output.')
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
