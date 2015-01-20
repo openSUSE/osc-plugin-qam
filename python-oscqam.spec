@@ -24,7 +24,7 @@ Source0:        %{name}-%{version}.tar.gz
 BuildRequires: python-devel
 BuildRequires: python-setuptools
 BuildRequires: osc
-Requires: osc
+Requires: osc >= 0.148.0
 Requires: python-PrettyTable
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %py_requires
