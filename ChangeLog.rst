@@ -1,5 +1,13 @@
 ChangeLog 
-##########
+#########
+
+0.3.0
+=====
+
+- Default list output is less verbose.
+- To obtain original output use verbose (-v flag).
+- List output can be generated as a table (-T flag).
+- Configure data to output in list command (-C parameter).
 
 0.2.0
 =====
