@@ -638,6 +638,37 @@ class Template(object):
             logger.error("URL not found: %s", log_path)
             raise AttributeError("URL does not exist")
 
+    def values(self, keys):
+        """Return the values for keys.
+
+        :type keys: [str]
+        :param keys: Identifiers for the data to be returned from the template
+                     or associated request.
+
+        :returns: [str]
+        """
+        data = []
+        entries = self.log_entries
+        for key in keys:
+            try:
+                if key == "Unassigned Roles":
+                    names = [r.name for r in self.request.review_list_open()]
+                    value = " ".join(names)
+                elif key == "Package-Streams":
+                    packages = [p for p in self.request.packages]
+                    value = " ".join(packages)
+                elif key == "Assigned Roles":
+                    roles = self.request.assigned_roles
+                    assigns = ["{r.user} ({r.group})".format(r = r)
+                               for r in roles]
+                    value = ", ".join(assigns)
+                else:
+                    value = entries[key]
+                data.append(value)
+            except KeyError:
+                logger.debug("Missing key: %s", key)
+        return data
+
     @classmethod
     def for_request(cls, request):
         """Load the template for the given request.

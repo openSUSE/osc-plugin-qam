@@ -1,3 +1,4 @@
+from __future__ import print_function
 import itertools
 import logging
 import sys
@@ -16,33 +17,38 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def output(template):
-    if not template:
-        return
-    entries = template.log_entries
-    print "-----------------------"
-    keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs", "Category",
-            "Rating", "Unassigned Roles", "Assigned Roles", "Package-Streams"]
+def group_sort_requests(requests):
+    """Sort request according to rating and request id.
+
+    First sort by Rating and group, then sort each group by request id.
+    """
+    def group_by_rating(request):
+        return request.log_entries["Rating"]
+
+    def sort_by_rating(request):
+        return mapping.get(request.log_entries["Rating"], 10)
+    mapping = {
+        'important': 0,
+        'moderate': 1,
+        'low': 2,
+        '': 3
+    }
+    requests = filter(None, requests)
+    sort_by_rating = sorted(requests, key = sort_by_rating)
+    group_rating = itertools.groupby(sort_by_rating, group_by_rating)
+    return [(key, sorted(list(group), key = lambda t: int(t.request.reqid)))
+            for key, group in group_rating]
+
+
+def verbose_output(data, keys):
+    """Output the data in verbose format."""
     length = max([len(k) for k in keys])
     str_template = "{{0:{length}s}}: {{1}}".format(length=length)
-    for key in keys:
-        try:
-            if key == "Unassigned Roles":
-                names = [r.name for r in template.request.review_list_open()]
-                value = " ".join(names)
-            elif key == "Package-Streams":
-                packages = [p for p in template.request.packages]
-                value = " ".join(packages)
-            elif key == "Assigned Roles":
-                roles = template.request.assigned_roles
-                assigns = ["{r.user} ({r.group})".format(r=r)
-                           for r in roles]
-                value = ", ".join(assigns)
-            else:
-                value = entries[key]
-            print str_template.format(key, value)
-        except KeyError:
-            logger.debug("Missing key: %s", key)
+    for row in data:
+        for i, datum in enumerate(row):
+            key = keys[i]
+            print(str_template.format(key, datum))
+        print("-----------------------")
 
 
 class QamInterpreter(cmdln.Cmdln):
@@ -58,6 +64,9 @@ class QamInterpreter(cmdln.Cmdln):
         self.parent_cmdln = parent_cmdln
 
     name = 'osc qam'
+    all_keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
+                "Category", "Rating", "Unassigned Roles",
+                "Assigned Roles", "Package-Streams"]
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
@@ -133,35 +142,16 @@ class QamInterpreter(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        def group_by_rating(template):
-            entries = template.log_entries
-            rating = entries["Rating"]
-            return rating
-
-        def sort_by_rating(template):
-            entries = template.log_entries
-            rating = entries["Rating"]
-            return mapping.get(rating, 10)
         self._set_required_params(opts)
         only_review = opts.review if opts.review else False
         action = ListAction(self.api, self.affected_user, only_review)
         templates = self._run_action(action)
-        mapping = {
-            'important': 0,
-            'moderate': 1,
-            'low': 2,
-            '': 3
-        }
         if templates:
-            templates = [t for t in templates if t is not None]
-            sort_by_rating = templates.sort(key=sort_by_rating)
-            group_rating = itertools.groupby(templates, group_by_rating)
-            for key, group in group_rating:
-                templates = list(group)
-                templates.sort(key=lambda t: int(t.request.reqid))
-                # for template in group:
-                for template in templates:
-                    output(template)
+            requests = group_sort_requests(templates)
+            requests = [request.values(self.all_keys)
+                        for group in requests
+                        for request in group[1]]
+            verbose_output(requests, self.all_keys)
 
     @cmdln.option('-U', '--user',
                   help='User that rejects this request.')
