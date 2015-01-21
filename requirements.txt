@@ -3,3 +3,4 @@ pycurl
 urlgrabber
 pytest
 mock
+prettytable

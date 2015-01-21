@@ -25,6 +25,7 @@ BuildRequires: python-devel
 BuildRequires: python-setuptools
 BuildRequires: osc
 Requires: osc
+Requires: python-PrettyTable
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %py_requires
 %if 0%{?suse_version} && 0%{?suse_version} <= 1110

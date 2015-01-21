@@ -1,8 +1,10 @@
 from __future__ import print_function
+import os
 import itertools
 import logging
 import sys
 import urllib2
+import prettytable
 from osc import cmdln
 import osc.commandline
 import osc.conf
@@ -43,12 +45,30 @@ def group_sort_requests(requests):
 def verbose_output(data, keys):
     """Output the data in verbose format."""
     length = max([len(k) for k in keys])
+    output = []
     str_template = "{{0:{length}s}}: {{1}}".format(length=length)
     for row in data:
         for i, datum in enumerate(row):
             key = keys[i]
-            print(str_template.format(key, datum))
-        print("-----------------------")
+            output.append(str_template.format(key, datum))
+        output.append("-----------------------")
+    return os.linesep.join(output)
+
+
+def tabular_output(data, headers):
+    """Format data for output in a table.
+
+    Args:
+        - headers: Headers of the table.
+        - data: The data to be printed as a table. The data is expected to be
+                provided as a list of lists: [[row1], [row2], [row3]]
+    """
+    table_formatter = prettytable.PrettyTable(headers)
+    table_formatter.align = 'l'
+    table_formatter.border = True
+    for row in data:
+        table_formatter.add_row(row)
+    return table_formatter
 
 
 class QamInterpreter(cmdln.Cmdln):
@@ -140,6 +160,8 @@ class QamInterpreter(cmdln.Cmdln):
                   help='User to list requests for.')
     @cmdln.option('-R', '--review', action='store_true',
                   help='Show all requests that are in review by the user.')
+    @cmdln.option('-T', '--tabular', action='store_true', default=False,
+                  help='Output the list in a tabular format.')
     @cmdln.option('-v', '--verbose', action='store_true', default=False,
                   help='Generate verbose output.')
     def do_list(self, subcmd, opts):
@@ -151,6 +173,7 @@ class QamInterpreter(cmdln.Cmdln):
         """
         self._set_required_params(opts)
         only_review = opts.review if opts.review else False
+        formatter = tabular_output if opts.tabular else verbose_output
         action = ListAction(self.api, self.affected_user, only_review)
         templates = self._run_action(action)
         keys = ["ReviewRequestID", "SRCRPMs", "Rating", "Products"]
@@ -169,7 +192,7 @@ class QamInterpreter(cmdln.Cmdln):
             requests = [request.values(keys)
                         for group in requests
                         for request in group[1]]
-            verbose_output(requests, keys)
+            print(formatter(requests, keys))
 
     @cmdln.option('-U', '--user',
                   help='User that rejects this request.')
@@ -245,6 +268,8 @@ class QamInterpreter(cmdln.Cmdln):
               help='Message to use for the command.')
 @cmdln.option('-R', '--review', action='store_true',
               help='Parameter for list command.')
+@cmdln.option('-T', '--tabular', action='store_true',
+              help='Create tabular output for list command.')
 @cmdln.option('-U', '--user',
               help='User to use for the command.')
 @cmdln.option('-v', '--verbose', action='store_true',
