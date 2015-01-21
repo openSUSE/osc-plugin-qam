@@ -67,6 +67,7 @@ class QamInterpreter(cmdln.Cmdln):
     all_keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
                 "Category", "Rating", "Unassigned Roles",
                 "Assigned Roles", "Package-Streams"]
+    all_columns_string = ", ".join(all_keys)
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
@@ -131,6 +132,10 @@ class QamInterpreter(cmdln.Cmdln):
                               group)
         self._run_action(action)
 
+    @cmdln.option('-C', '--columns', action='append', default=[],
+                  help='Define the columns to output for the list command in' +
+                  ' cumulative fashion (pass flag multiple times).' +
+                  '[Available columns: ' + all_columns_string + ']')
     @cmdln.option('-U', '--user',
                   help='User to list requests for.')
     @cmdln.option('-R', '--review', action='store_true',
@@ -146,12 +151,22 @@ class QamInterpreter(cmdln.Cmdln):
         only_review = opts.review if opts.review else False
         action = ListAction(self.api, self.affected_user, only_review)
         templates = self._run_action(action)
+        keys = ["ReviewRequestID", "SRCRPMs", "Rating", "Products"]
+        badcols = set(opts.columns) - set(self.all_keys)
+        if len(badcols):
+            print("Unknown columns: %s" % (", ".join(map(repr, badcols))))
+            return
+        elif opts.columns:
+            keys = opts.columns
+        else:
+            keys = self.all_keys
+
         if templates:
             requests = group_sort_requests(templates)
-            requests = [request.values(self.all_keys)
+            requests = [request.values(keys)
                         for group in requests
                         for request in group[1]]
-            verbose_output(requests, self.all_keys)
+            verbose_output(requests, keys)
 
     @cmdln.option('-U', '--user',
                   help='User that rejects this request.')
@@ -218,6 +233,9 @@ class QamInterpreter(cmdln.Cmdln):
         self.stop = True
 
 
+@cmdln.option('-C', '--columns', action='append',
+              help='Define the columns to output for the list command in' +
+              ' cumulative fashion (pass flag multiple times).')
 @cmdln.option('-G', '--group',
               help='Group to use for the command.')
 @cmdln.option('-M', '--message',
