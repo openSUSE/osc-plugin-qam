@@ -18,6 +18,7 @@ Contents:
    devel
    todo
    bugs
+   ChangeLog
 
 Indices and tables
 ==================
