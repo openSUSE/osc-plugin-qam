@@ -42,6 +42,20 @@ def group_sort_requests(requests):
             for key, group in group_rating]
 
 
+def output_list(sep, value):
+    """Join lists on the given separator and return strings unaltered.
+
+    :param sep: Separator to join a list on.
+    :type list_transform: str
+
+    :param value: Output value.
+    :type value: L{str} or list(L{str})
+
+    :return: str
+    """
+    return sep.join(value) if isinstance(value, list) else value
+
+
 def verbose_output(data, keys):
     """Output the data in verbose format."""
     length = max([len(k) for k in keys])
@@ -50,6 +64,7 @@ def verbose_output(data, keys):
     for row in data:
         for i, datum in enumerate(row):
             key = keys[i]
+            datum = output_list(", ", datum)
             output.append(str_template.format(key, datum))
         output.append("-----------------------")
     return os.linesep.join(output)
@@ -67,6 +82,7 @@ def tabular_output(data, headers):
     table_formatter.align = 'l'
     table_formatter.border = True
     for row in data:
+        row = [output_list(os.linesep, value) for value in row]
         table_formatter.add_row(row)
     return table_formatter
 

@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.3.1
+=====
+
+- Tabular output will split lists into multiple lines.
+
 0.3.0
 =====
 
