@@ -653,6 +653,37 @@ class Template(object):
 
         :type log: str
         """
+        def split_packages(package_line):
+            """Parse a 'Packages' line from a template-log into a list of individual
+            packages.
+
+            :type package_line: str
+
+            :returns: [str]
+
+            """
+            return [v.strip() for v in package_line.split(",")]
+
+        def split_products(product_line):
+            """Split products into a list and strip SLE-prefix from each product.
+
+            :type product_line: str
+
+            :returns: [str]
+            """
+            products = map(str.strip, product_line.split("),"))
+            products = [p if p.endswith(")") else p + ")" for p in products]
+            return [re.sub("^SLE-", "", product, 1) for product in products]
+
+        def split_srcrpms(srcrpm_line):
+            """Parse 'SRCRPMs' from a template-log into a list.
+
+            :type srcrpm_line: str
+
+            :returns: [str]
+            """
+            return map(str.strip, srcrpm_line.split(","))
+
         for line in log.splitlines():
             # We end parsing at the results block.
             # We only need the header information.
@@ -663,9 +694,11 @@ class Template(object):
                 continue
             key, value = line.split(":", 1)
             if key == 'Packages':
-                value = [v.strip() for v in value.split(",")]
+                value = split_packages(value)
             elif key == 'Products':
-                value = value.replace("SLE-", "").strip()
+                value = split_products(value)
+            elif key == "SRCRPMs":
+                value = split_srcrpms(value)
             else:
                 value = value.strip()
             self.log_entries[key] = value

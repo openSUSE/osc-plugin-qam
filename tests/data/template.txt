@@ -1,0 +1,20 @@
+SUMMARY: PASSED
+
+comment: NONE
+
+$Author: oscqam $
+
+Products: SLE-SERVER 11-SP3 (i386, ia64, ppc64, s390x, x86_64), SLE-DESKTOP 11-SP3 (i386, x86_64)
+Category: security
+SAT Patch No: 10001
+MD5 sum: 10000000000000000000000000000001
+SUBSWAMPID: 10001
+Packager: oscqam@oscqam.test
+Bugs: 100001
+Repository: None
+Packages: glibc >= 2.11.3-17.74.13, glibc-32bit >= 2.11.3-17.74.13, glibc-devel >= 2.11.3-17.74.13, glibc-devel-32bit >= 2.11.3-17.74.13, glibc-html >= 2.11.3-17.74.13, glibc-i18ndata >= 2.11.3-17.74.13, glibc-info >= 2.11.3-17.74.13, glibc-locale >= 2.11.3-17.74.13, glibc-locale-32bit >= 2.11.3-17.74.13, glibc-locale-x86 >= 2.11.3-17.74.13, glibc-profile >= 2.11.3-17.74.13, glibc-profile-32bit >= 2.11.3-17.74.13, glibc-profile-x86 >= 2.11.3-17.74.13, glibc-x86 >= 2.11.3-17.74.13, nscd >= 2.11.3-17.74.13
+SRCRPMs: glibc, glibc-devel
+Test Plan Reviewers: oscqam
+Testplatform: base=sles(major=11,minor=sp3);arch=[i386,x86_64];addon=sdk(major=11,minor=sp3)
+Testplatform: base=sles(major=11,minor=sp3);arch=[i386,ia64,ppc64,s390x,x86_64]
+Testplatform: base=sled(major=11,minor=sp3);arch=[i386,x86_64]
