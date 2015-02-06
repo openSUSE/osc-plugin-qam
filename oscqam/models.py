@@ -28,6 +28,14 @@ def et_iter(elementtree, tag):
         return elementtree.getiterator(tag)
 
 
+class InvalidRequestError(RuntimeError):
+    """Raise when a request object is missing required information."""
+
+
+class TemplateNotFoundError(RuntimeError):
+    """Raise when a template could not be found."""
+
+
 class RemoteError(Exception):
     """Indicates an error while communicating with the remote service.
 
@@ -592,15 +600,44 @@ class Template(object):
     STATUS_UNKNOWN = 2
     base_url = "http://qam.suse.de/testreports/"
 
-    def __init__(self, project_name, request):
-        """Create a new template from the given directory.
+    def get_testreport_web(request):
+        """Load the template belonging to the request from
+        http://qam.suse.de/testreports/.
+
+        :param request: The request this template is associated with.
+        :return: Content of the log-file as string.
+
         """
-        self.project = project_name
+        request_project = request.src_project
+        if not request_project:
+            raise InvalidRequestError(
+                "Request {0} has no source project.".format(request)
+            )
+        log_path = (Template.base_url + request_project + ":" + request.reqid
+                    + "/" + "log")
+        try:
+            with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
+                return log_file.read()
+        except urllib2.URLError:
+            raise TemplateNotFoundError("URL not found: {0}".format(log_path))
+
+    def __init__(self, request, tr_getter=get_testreport_web):
+        """Create a template from the given request.
+
+        :param request: The request the template is associated with.
+        :type request: L{oscqam.models.Request}.
+
+        :param tr_getter: Function that can load the template's log file based
+                          on the request. Will default to loading testreports
+                          from http://qam.suse.de.
+
+        :type tr_getter: Function: L{oscqam.models.Request} -> L{str}
+
+        """
         self.request = request
-        self.web_path = (Template.base_url + self.project + ":" +
-                         self.request.reqid)
         self.log_entries = {}
-        self.parse_log()
+        log = tr_getter(self.request)
+        self.parse_log(log)
 
     @property
     def status(self):
@@ -611,32 +648,27 @@ class Template(object):
             return Template.STATUS_FAILURE
         return Template.STATUS_UNKNOWN
 
-    def parse_log(self):
+    def parse_log(self, log):
         """Parses the header of the log into the log_entries dictionary.
+
+        :type log: str
         """
-        log_path = self.web_path + "/" + "log"
-        try:
-            with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
-                lines = log_file.read()
-                for line in lines.splitlines():
-                    # We end parsing at the results block.
-                    # We only need the header information.
-                    if "Test results by" in line:
-                        break
-                    try:
-                        key, value = line.split(":", 1)
-                        if key == 'Packages':
-                            value = [v.strip() for v in value.split(",")]
-                        elif key == 'Products':
-                            value = value.replace("SLE-", "").strip()
-                        else:
-                            value = value.strip()
-                        self.log_entries[key] = value
-                    except ValueError:
-                        pass
-        except urllib2.URLError:
-            logger.error("URL not found: %s", log_path)
-            raise AttributeError("URL does not exist")
+        for line in log.splitlines():
+            # We end parsing at the results block.
+            # We only need the header information.
+            if "Test results by" in line:
+                break
+            line = line.strip()
+            if not line or ":" not in line:
+                continue
+            key, value = line.split(":", 1)
+            if key == 'Packages':
+                value = [v.strip() for v in value.split(",")]
+            elif key == 'Products':
+                value = value.replace("SLE-", "").strip()
+            else:
+                value = value.strip()
+            self.log_entries[key] = value
 
     def values(self, keys):
         """Return the values for keys.
@@ -668,19 +700,6 @@ class Template(object):
             except KeyError:
                 logger.debug("Missing key: %s", key)
         return data
-
-    @classmethod
-    def for_request(cls, request):
-        """Load the template for the given request.
-        """
-        request_project = request.src_project
-        if not request_project:
-            logger.info("No source project found.")
-            return None
-        try:
-            return Template(request_project, request)
-        except AttributeError:
-            return None
 
 
 def monkeypatch():

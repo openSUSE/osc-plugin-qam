@@ -1,4 +1,3 @@
-import mock
 import os
 import unittest
 from xml.etree import ElementTree
@@ -19,18 +18,17 @@ class MockRemote(object):
 class ModelTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.req_1_xml = open(os.path.join(path, 'request_1.xml')).read()
-        cls.req_2_xml = open(os.path.join(path, 'request_2.xml')).read()
-        cls.req_search = open(os.path.join(path, 'request_search.xml')).read()
-        cls.req_search_none = open(os.path.join(
-            path,
-            'request_search_none_proj.xml'
-        )).read()
-        cls.req_no_src = open(os.path.join(path, 'request_no_src.xml')).read()
-        cls.req_assign = open(os.path.join(path, 'request_assign.xml')).read()
-        cls.req_unassign = open(os.path.join(
-            path, 'request_unassign.xml'
-        )).read()
+        cls.req_1_xml = open('%s/%s' % (path, 'request_1.xml')).read()
+        cls.req_2_xml = open('%s/%s' % (path, 'request_2.xml')).read()
+        cls.req_search = open('%s/%s' % (path, 'request_search.xml')).read()
+        cls.req_search_none = open(
+            '%s/%s' % (path, 'request_search_none_proj.xml')
+        ).read()
+        cls.req_no_src = open('%s/%s' % (path, 'request_no_src.xml')).read()
+        cls.req_assign = open('%s/%s' % (path, 'request_assign.xml')).read()
+        cls.req_unassign = open('%s/%s' % (path, 'request_unassign.xml')).read()
+        cls.req_invalid = open('%s/%s' % (path, 'request_no_src.xml')).read()
+        cls.template = open('%s/%s' % (path, 'template.txt')).read()
 
     def setUp(self):
         self.remote = MockRemote()

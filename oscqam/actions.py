@@ -92,7 +92,7 @@ class ListAction(OscAction):
             group_requests = set(Request.open_for_groups(self.remote,
                                                          qam_groups))
             all_requests = self.merge_requests(user_requests, group_requests)
-        templates = [Template.for_request(req) for req in all_requests]
+        templates = [Template(req) for req in all_requests]
         templates = [template for template in templates
                      if templates is not None]
         return templates
@@ -275,7 +275,7 @@ class RejectAction(OscAction):
     @property
     def template(self):
         if not self._template:
-            self._template = Template.for_request(self.request)
+            self._template = Template(self.request)
         return self._template
 
     def action(self):

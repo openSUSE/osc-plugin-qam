@@ -1,10 +1,9 @@
 from __future__ import print_function
-import os
 import itertools
 import logging
-import sys
-import urllib2
+import os
 import prettytable
+import sys
 from osc import cmdln
 import osc.commandline
 import osc.conf
@@ -12,7 +11,8 @@ import osc.conf
 from oscqam.actions import (ApproveAction, AssignAction, ListAction,
                             UnassignAction, RejectAction, ActionError,
                             CommentAction)
-from oscqam.models import RemoteFacade
+from oscqam.models import (RemoteFacade, InvalidRequestError,
+                           TemplateNotFoundError)
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -105,11 +105,17 @@ class QamInterpreter(cmdln.Cmdln):
         """
         try:
             return func()
-        except ActionError, e:
+        except ActionError as e:
             print("Error occurred while performing an action.")
             print(e.msg)
+        except TemplateNotFoundError as e:
+            print("The Template to load report information was not found:")
+            print(e.msg)
+        except InvalidRequestError as e:
+            print("The build service request seems corrupt:")
+            print(e.msg)
         except urllib2.HTTPError:
-            print("Error occurred on the server.")
+            print("An error occurred while contacting an external service.")
             print(e.msg)
 
     @cmdln.option('-U',
