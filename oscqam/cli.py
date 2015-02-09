@@ -9,10 +9,8 @@ import osc.commandline
 import osc.conf
 
 from oscqam.actions import (ApproveAction, AssignAction, ListAction,
-                            UnassignAction, RejectAction, ActionError,
-                            CommentAction)
-from oscqam.models import (RemoteFacade, InvalidRequestError,
-                           TemplateNotFoundError)
+                            UnassignAction, RejectAction, CommentAction)
+from oscqam.models import (RemoteFacade, ReportedError)
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -121,18 +119,8 @@ class QamInterpreter(cmdln.Cmdln):
         """
         try:
             return func()
-        except ActionError as e:
-            print("Error occurred while performing an action.")
-            print(e.msg)
-        except TemplateNotFoundError as e:
-            print("The Template to load report information was not found:")
-            print(e.msg)
-        except InvalidRequestError as e:
-            print("The build service request seems corrupt:")
-            print(e.msg)
-        except urllib2.HTTPError:
-            print("An error occurred while contacting an external service.")
-            print(e.msg)
+        except ReportedError as e:
+            print(str(e))
 
     @cmdln.option('-U',
                   '--user',

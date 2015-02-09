@@ -28,12 +28,31 @@ def et_iter(elementtree, tag):
         return elementtree.getiterator(tag)
 
 
-class InvalidRequestError(RuntimeError):
+class ReportedError(RuntimeError):
+    """Raise on exceptions that can only be reported but not handled."""
+
+
+class InvalidRequestError(ReportedError):
     """Raise when a request object is missing required information."""
+    def __init__(self, request):
+        self.message = "Invalid build service request: {0}".format(
+            self.request
+        )
 
 
-class TemplateNotFoundError(RuntimeError):
+class MissingSourceProjectError(InvalidRequestError):
+    """Raise when a request is missing the source project property."""
+    def __init__(self, request):
+        self.message = ("Invalid build service request: "
+                        "{0} has no source project.".format(
+                            request
+                        ))
+
+
+class TemplateNotFoundError(ReportedError):
     """Raise when a template could not be found."""
+    def __init__(self, message):
+        self.message = "Report could not be loaded: {0}".format(message)
 
 
 class RemoteError(Exception):
@@ -605,21 +624,21 @@ class Template(object):
         http://qam.suse.de/testreports/.
 
         :param request: The request this template is associated with.
+        :type request: L{oscqam.models.Request}
+
         :return: Content of the log-file as string.
 
         """
         request_project = request.src_project
         if not request_project:
-            raise InvalidRequestError(
-                "Request {0} has no source project.".format(request)
-            )
+            raise MissingSourceProjectError(request)
         log_path = (Template.base_url + request_project + ":" + request.reqid
                     + "/" + "log")
         try:
             with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
                 return log_file.read()
         except urllib2.URLError:
-            raise TemplateNotFoundError("URL not found: {0}".format(log_path))
+            raise TemplateNotFoundError(log_path)
 
     def __init__(self, request, tr_getter=get_testreport_web):
         """Create a template from the given request.

@@ -1,6 +1,7 @@
 from __future__ import print_function
 import logging
-from .models import Group, User, Request, Template, RemoteError
+from .models import (Group, User, Request, Template, ReportedError,
+                     RemoteError, TemplateNotFoundError)
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -8,16 +9,14 @@ logger.setLevel(logging.INFO)
 PREFIX = "[oscqam]"
 
 
-class ActionError(Exception):
+class ActionError(ReportedError):
     """General error to raise when an error occurred while performing one of the
     actions.
 
     """
-    def __init__(self, msg):
-        self.msg = msg
 
 
-class UninferableError(ActionError):
+class UninferableError(ValueError):
     """Error to raise when the program should try to auto-infer some values, but
     can not do so due to ambiguity.
 
@@ -92,9 +91,28 @@ class ListAction(OscAction):
             group_requests = set(Request.open_for_groups(self.remote,
                                                          qam_groups))
             all_requests = self.merge_requests(user_requests, group_requests)
-        templates = [Template(req) for req in all_requests]
+        templates = self._load_templates(all_requests)
         templates = [template for template in templates
                      if templates is not None]
+        return templates
+
+    def _load_templates(self, requests):
+        """Load templates for the given requests.
+
+        Templates that could not be loaded will print a warning (this can
+        occur and not be a problem: e.g. the template creation script has not
+        yet run).
+
+        :param requests: [L{oscqam.models.Request}]
+
+        :returns: [L{oscqam.models.Template}]
+        """
+        templates = []
+        for request in requests:
+            try:
+                templates.append(Template(request))
+            except TemplateNotFoundError as e:
+                logger.warning(str(e))
         return templates
 
 

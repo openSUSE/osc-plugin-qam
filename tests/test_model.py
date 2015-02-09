@@ -1,6 +1,6 @@
 import os
 import unittest
-from oscqam.models import Request, Template
+from oscqam.models import Request, Template, MissingSourceProjectError
 
 
 path = os.path.join(os.path.dirname(__file__), 'data')
@@ -26,6 +26,7 @@ class ModelTests(unittest.TestCase):
         cls.req_no_src = open('%s/%s' % (path, 'request_no_src.xml')).read()
         cls.req_assign = open('%s/%s' % (path, 'request_assign.xml')).read()
         cls.req_unassign = open('%s/%s' % (path, 'request_unassign.xml')).read()
+        cls.req_invalid = open('%s/%s' % (path, 'request_no_src.xml')).read()
         cls.template = open('%s/%s' % (path, 'template.txt')).read()
         cls.template_rh = open('%s/%s' % (path, 'template_rh.txt')).read()
 
@@ -118,3 +119,7 @@ class ModelTests(unittest.TestCase):
             .log_entries['Products'],
             ['PSLE-SP3 (i386)']
         )
+
+    def test_template_for_invalid_request(self):
+        request = Request.parse(self.remote, self.req_invalid)[0]
+        self.assertRaises(MissingSourceProjectError, Template, request)
