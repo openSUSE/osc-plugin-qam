@@ -4,13 +4,6 @@ from oscqam import actions, models
 from .mockremote import MockRemote
 
 
-path = os.path.join(os.path.dirname(__file__), 'data')
-
-
-def read_path(path):
-    return open(path).read()
-
-
 class UndoAction(actions.OscAction):
     def __init__(self):
         # Don't call super to prevent query to model objects.

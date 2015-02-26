@@ -443,6 +443,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return [r for r in self.review_list() if r.state in
                 Request.OPEN_STATES]
 
+    def review_list_accepted(self):
+        return [r for r in self.review_list()
+                if r.state.lower() == 'accepted']
+
     def add_comment(self, comment):
         """Adds a comment to this request.
         """

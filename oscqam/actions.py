@@ -17,11 +17,47 @@ class ActionError(ReportedError):
     """
 
 
-class UninferableError(ValueError):
+class UninferableError(ReportedError, ValueError):
     """Error to raise when the program should try to auto-infer some values, but
     can not do so due to ambiguity.
 
     """
+
+
+class NoQamReviewsError(UninferableError):
+    """Error when no qam groups still need a review.
+
+    """
+    def __init__(self, accepted_reviews):
+        """Create new error for accepted reviews.
+        """
+        message = "No 'qam'-groups need review."
+        accept_reviews = [review for review
+                          in accepted_reviews
+                          if review.review_type == Request.REVIEW_GROUP]
+        message += (" The following groups were already accepted: "
+                    "{msg}".format(
+                        msg=", ".join(["{r.by_group} (by {r.who})".format(r=review)
+                          for review in accept_reviews])
+                    )) if accept_reviews else ""
+        super(NoQamReviewsError, self).__init__(message)
+
+
+class NonMatchingGroupsError(UninferableError):
+    """Error when the user is not a member of a group that still needs to review
+    the request.
+
+    """
+    _msg = ("User groups and required groups don't match: "
+            "User-groups: {ug}, required-groups: {og}.")
+
+    def __init__(self, user, user_groups, open_groups):
+        message = (self._msg.format(
+            user=user,
+            ug=[g.name for g in user_groups],
+            og=[r.name for r in open_groups],
+        ))
+        super(NonMatchingGroupsError, self).__init__(message)
 
 
 class NoReviewError(UninferableError):
@@ -170,31 +206,24 @@ class AssignAction(OscAction):
         """
         user_groups = set(self.user.qam_groups)
         reviews = [review for review in self.request.review_list() if
-                   review.review_type == Request.REVIEW_GROUP and
-                   review.state.lower() == 'new']
+                   (review.review_type == Request.REVIEW_GROUP and
+                    review.state.lower() == 'new')]
         review_groups = [Group.for_name(self.remote, review.name) for review
                          in reviews]
         open_groups = set(review_groups)
+        if not open_groups:
+            raise NoQamReviewsError(self.request.review_list_accepted())
         both = user_groups.intersection(open_groups)
         if not both:
-            ug = [g.name for g in user_groups]
-            rg = [g.name for g in open_groups]
-            err = "No matching qam-groups found for user: {u}. " + \
-                  "(User-groups: {ug}, review-groups: {rg})".format(
-                      u=self.user,
-                      ug=ug,
-                      rg=rg,
-                  )
-            raise UninferableError(err)
-        else:
-            if len(both) > 1:
-                error = AssignAction.MULTIPLE_GROUPS_MSG.format(group=both)
-                raise UninferableError(error)
-            else:
-                group = both.pop()
-                msg = AssignAction.AUTO_INFER_MSG.format(group=group)
-                print(msg)
-                return group
+            raise NonMatchingGroupsError(self.user, user_groups, open_groups)
+        if len(both) > 1:
+            raise UninferableError(
+                AssignAction.MULTIPLE_GROUPS_MSG.format(group=both)
+            )
+            
+        group = both.pop()
+        print(AssignAction.AUTO_INFER_MSG.format(group=group))
+        return group
 
     def assign(self, group):
         msg = AssignAction.ASSIGN_USER_MSG.format(

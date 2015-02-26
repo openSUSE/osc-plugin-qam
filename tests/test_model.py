@@ -2,30 +2,26 @@ import os
 import unittest
 from oscqam.models import (Request, Template, MissingSourceProjectError, User,
                            Group)
+from .utils import load_fixture
 from .mockremote import MockRemote
-
-
-path = os.path.join(os.path.dirname(__file__), 'data')
 
 
 class ModelTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.req_1_xml = open('%s/%s' % (path, 'request_12345.xml')).read()
-        cls.req_2_xml = open('%s/%s' % (path, 'request_23456.xml')).read()
-        cls.req_3_xml = open('%s/%s' % (path, 'request_52542.xml')).read()
-        cls.req_search = open('%s/%s' % (path, 'request_search.xml')).read()
-        cls.req_search_none = open(
-            '%s/%s' % (path, 'request_search_none_proj.xml')
-        ).read()
-        cls.req_no_src = open('%s/%s' % (path, 'request_no_src.xml')).read()
-        cls.req_assign = open('%s/%s' % (path, 'request_assign.xml')).read()
-        cls.req_unassign = open('%s/%s' % (path, 'request_unassign.xml')).read()
-        cls.req_invalid = open('%s/%s' % (path, 'request_no_src.xml')).read()
-        cls.template = open('%s/%s' % (path, 'template.txt')).read()
-        cls.template_rh = open('%s/%s' % (path, 'template_rh.txt')).read()
-        cls.user = open('%s/%s' % (path, 'person_anonymous.xml')).read()
-        cls.group = open('%s/%s' % (path, 'group_qam-sle.xml')).read()
+        cls.req_1_xml = load_fixture('request_12345.xml')
+        cls.req_2_xml = load_fixture('request_23456.xml')
+        cls.req_3_xml = load_fixture('request_52542.xml')
+        cls.req_search = load_fixture('request_search.xml')
+        cls.req_search_none = load_fixture('request_search_none_proj.xml')
+        cls.req_no_src = load_fixture('request_no_src.xml')
+        cls.req_assign = load_fixture('request_assign.xml')
+        cls.req_unassign = load_fixture('request_unassign.xml')
+        cls.req_invalid = load_fixture('request_no_src.xml')
+        cls.template = load_fixture('template.txt')
+        cls.template_rh = load_fixture('template_rh.txt')
+        cls.user = load_fixture('person_anonymous.xml')
+        cls.group = load_fixture('group_qam-sle.xml')
 
     def create_template(self, request_data=None, template_data=None):
         if not request_data:

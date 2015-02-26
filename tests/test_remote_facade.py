@@ -2,29 +2,22 @@
 import os
 import unittest
 from oscqam import models
-
-
-path = os.path.join(os.path.dirname(__file__), 'data')
+from .utils import load_fixture
 
 
 class XmlFactoryMixinTests(unittest.TestCase):
     """Test automatic parsing code for xml returned from the build service.
 
     """
-    def _load_xml(self, filename):
-        absolute_path = os.path.join(path, filename)
-        with open(absolute_path, 'r') as xml_file:
-            return xml_file.read()
-
     def test_parse_flat_xml(self):
-        xml = self._load_xml("flat.xml")
+        xml = load_fixture("flat.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
         john = persons[0]
         self.assertEqual(john.firstname, 'John')
         self.assertEqual(john.lastname, 'Smith')
 
     def test_parse_nested_xml(self):
-        xml = self._load_xml("nested.xml")
+        xml = load_fixture("nested.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
         john = persons[0]
         self.assertEqual(john.firstname, 'John')
@@ -33,7 +26,7 @@ class XmlFactoryMixinTests(unittest.TestCase):
         self.assertEqual(john.address.streetnumber, '1')
 
     def test_parse_nested_xml_multiple(self):
-        xml = self._load_xml("nested_multi.xml")
+        xml = load_fixture("nested_multi.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
         john = persons[0]
         self.assertEqual(john.firstname, 'John')
@@ -45,14 +38,14 @@ class XmlFactoryMixinTests(unittest.TestCase):
         self.assertEqual(john.address[1].streetnumber, '2')
 
     def test_parse_attributes(self):
-        xml = self._load_xml("attributes.xml")
+        xml = load_fixture("attributes.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
         john = persons[0]
         self.assertEqual(john.firstname, 'John')
         self.assertEqual(john.lastname, 'Smith')
 
     def test_parse_multi_attributes(self):
-        xml = self._load_xml("attributes_multi.xml")
+        xml = load_fixture("attributes_multi.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
         john = persons[0]
         self.assertEqual(john.firstname, 'John')
@@ -62,7 +55,7 @@ class XmlFactoryMixinTests(unittest.TestCase):
         self.assertEqual(clara.lastname, 'Oswald')
 
     def test_parse_nested_and_attributes(self):
-        xml = self._load_xml("nested_attributes.xml")
+        xml = load_fixture("nested_attributes.xml")
         persons = models.XmlFactoryMixin.parse(None, xml, 'person')
         john = persons[0]
         self.assertEqual(john.id, '1')

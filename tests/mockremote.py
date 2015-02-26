@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os
+from .utils import load_fixture
 
 
 class MockRemote(object):
@@ -14,13 +14,11 @@ class MockRemote(object):
 
     """
     def __init__(self):
-        self.basepath = os.path.join(os.path.dirname(__file__), 'data')
         self.post_calls = []
 
     def _load(self, prefix, id):
-        path = "%s/%s_%s.xml" % (self.basepath, prefix, id)
-        with open(path, 'r') as f:
-            return f.read()
+        name = "%s_%s.xml" % (prefix, id)
+        return load_fixture(name)
 
     def get(self, *args, **kwargs):
         """Replacement for HTTP-get requests.

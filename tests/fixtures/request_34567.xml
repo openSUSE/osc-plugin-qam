@@ -3,7 +3,7 @@
     <source project="SUSE:Maintenance:130" package="update-test-trival.SUSE_SLE-12_Update"/>
     <target project="SUSE:SLE-12:Update" package="update-test-trival.130"/>
   </action>
-  <review state="review" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-sle">
+  <review state="new" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-sle">
   </review>
   <state name="new"/>
 </request>
