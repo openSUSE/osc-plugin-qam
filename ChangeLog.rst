@@ -1,6 +1,14 @@
 ChangeLog 
 #########
 
+0.3.2
+=====
+
+- Errors occurring during 'assign' will no longer crash the program.
+- Fixed incorrect log_path in 'decline' action crashing the program.
+- Fixed unassign action when user passes a group to unassign.
+- Reworked tests.
+
 0.3.1
 =====
 
