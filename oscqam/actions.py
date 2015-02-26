@@ -88,6 +88,13 @@ class MultipleReviewsError(UninferableError):
         )
 
 
+class TestResultMismatchError(ReportedError):
+    _msg = "Request-Status not '{0}': please check report: {1}"
+
+    def __init__(self, expected, log_path):
+        self.message = self._msg.format(expected, log_path)
+
+
 class OscAction(object):
     """Base class for actions that need to interface with the open build service.
 
@@ -365,10 +372,10 @@ class RejectAction(OscAction):
         """
         status = self.template.status
         if status != Template.STATUS_FAILURE:
-            msg = "Request-Status not 'FAILED': please check report: {p}".format(
-                p=self.template.web_path
+            raise TestResultMismatchError(
+                'FAILED',
+                self.template.log_path
             )
-            raise ActionError(msg)
         return self.template.log_entries['comment']
 
 

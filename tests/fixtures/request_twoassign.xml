@@ -1,0 +1,31 @@
+<request id="twoassign">
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:130" package="update-test-trival.SUSE_SLE-12_Update"/>
+    <target project="SUSE:SLE-12:Update" package="update-test-trival.130"/>
+  </action>
+  <review state="review" when="2014-11-14T11:12:53" who="anonymous" by_user="anonymous">
+  </review>
+  <review state="accepted" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-sle">
+  </review>
+  <review state="new" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-cloud">
+  </review>
+  <state name="review" who="anonymous" when="2014-12-01T14:46:23">
+    <comment>In review</comment>
+  </state>
+  <history who="anonymous" when="2014-12-16T10:54:10">
+    <description>Review got accepted</description>
+    <comment>review assigend to user anonymous</comment>
+  </history>
+  <history who="anonymous" when="2014-12-16T10:54:10">
+    <description>Review got assigned</description>
+    <comment>review for group qam-sle</comment>
+  </history>
+  <history who="anonymous" when="2014-12-16T10:54:10">
+    <description>Review got accepted</description>
+    <comment>review assigend to user anonymous</comment>
+  </history>
+  <history who="anonymous" when="2014-12-16T10:54:10">
+    <description>Review got assigned</description>
+    <comment>review for group qam-cloud</comment>
+  </history>
+</request>

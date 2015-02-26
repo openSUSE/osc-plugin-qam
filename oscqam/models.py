@@ -453,6 +453,20 @@ class Request(osc.core.Request, XmlFactoryMixin):
         endpoint = '/comments/request/{id}'.format(id=self.reqid)
         self.remote.post(endpoint, comment)
 
+    def template_path(self, base_path):
+        """Create a path to the report-template associated with this request.
+
+        :param base_path: Base path the template can be found under.
+        :type base_path: str
+
+        :return: Path to the template-folder.
+        """
+        if not self.src_project:
+            raise MissingSourceProjectError(self)
+        return "{base}{prj}:{reqid}".format(base=base_path,
+                                            prj=self.src_project,
+                                            reqid=self.reqid)
+
     @classmethod
     def filter_by_project(cls, filter, requests):
         requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
@@ -643,11 +657,7 @@ class Template(object):
         :return: Content of the log-file as string.
 
         """
-        request_project = request.src_project
-        if not request_project:
-            raise MissingSourceProjectError(request)
-        log_path = (Template.base_url + request_project + ":" + request.reqid
-                    + "/" + "log")
+        log_path = "%s/%s" % (request.template_path(Template.base_url), 'log')
         try:
             with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
                 return log_file.read()
@@ -671,6 +681,10 @@ class Template(object):
         self.log_entries = {}
         log = tr_getter(self.request)
         self.parse_log(log)
+
+    @property
+    def log_path(self):
+        return "%s/%s" % (self.request.template_path(Template.base_url), 'log')
 
     @property
     def status(self):
