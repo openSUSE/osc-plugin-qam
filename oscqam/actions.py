@@ -1,3 +1,4 @@
+
 from __future__ import print_function
 import logging
 from .models import (Group, User, Request, Template, ReportedError,
@@ -21,6 +22,34 @@ class UninferableError(ValueError):
     can not do so due to ambiguity.
 
     """
+
+
+class NoReviewError(UninferableError):
+    """Error to raise when a user attempts an unassign action for a request he did
+    not start a review for.
+
+    """
+    def __init__(self, user):
+        super(NoReviewError, self).__init__(
+            "User {u} is not assigned for any groups.".format(
+                u=user
+            )
+        )
+
+
+class MultipleReviewsError(UninferableError):
+    """Error to raise when a user attempts an unassign action for a request he is
+    reviewing for multiple groups at once.
+
+    """
+    def __init__(self, user, groups):
+        super(MultipleReviewsError, self).__init__(
+            "User {u} is currently reviewing for mulitple groups: {g}."
+            "Please provide which group to unassign via -G parameter.".format(
+                u=user,
+                g=groups
+            )
+        )
 
 
 class OscAction(object):
@@ -186,28 +215,24 @@ class UnassignAction(OscAction):
     the group the user assign himself for.
     """
     UNASSIGN_COMMENT = "{prefix}::unassign::{user.login}::{group.name}"
-    GROUP_NOT_INFERRED_MSG = "Can not auto-detect which group is affected."
     UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
 
     def __init__(self, remote, user, request_id, group=None):
         super(UnassignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
-        self.group = group
+        self._group = group
+
+    def group(self):
+        if self._group:
+            return self._group
+        return self.infer_group()
 
     def action(self):
-        if self.group:
-            group_to_readd = self.group
-        else:
-            group_to_readd = self.infer_group()
-        if not group_to_readd or len(group_to_readd) > 1:
-            raise UninferableError(UnassignAction.GROUP_NOT_INFERRED_MSG)
-        group_to_readd = group_to_readd.pop()
-        group_to_readd = Group.for_name(self.remote, group_to_readd)
-        self.unassign(group_to_readd)
+        self.unassign(self.group())
 
-    def infer_group(self):
-        """Search for the group the given user started a review for.
-
+    def possible_groups(self):
+        """Will return all groups the user assigned himself for and is
+        currently in the state of doing a review.
         """
         def check_history(review):
             if not hasattr(review, 'statehistory'):
@@ -234,6 +259,23 @@ class UnassignAction(OscAction):
                     if hist_group:
                         reviews_for_user_group.add(hist_group)
         return reviews_for_user_group
+
+    def infer_group(self):
+        """Find the exact group the user is currently reviewing and return it.
+
+        :return: Group in review by the user.
+        :raise NoReviewError: If the user is not reviewing any group of the
+            request.
+        :raise MultipleReviewsError: If more than one group is assigned to
+            the user.
+
+        """
+        groups = self.possible_groups()
+        if not groups:
+            raise NoReviewError(self.user)
+        elif len(groups) > 1:
+            raise MultipleReviewsError(self.user, groups)
+        return Group.for_name(self.remote, groups.pop())
 
     def unassign(self, group):
         msg = UnassignAction.UNASSIGN_USER_MSG.format(
