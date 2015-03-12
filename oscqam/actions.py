@@ -58,7 +58,6 @@ class OscAction(object):
     """
     def __init__(self, remote, user):
         self.remote = remote
-        self.all_groups = Group.all(remote)
         self.user = User.by_name(self.remote, user)
         self.undo_stack = []
 
@@ -220,7 +219,7 @@ class UnassignAction(OscAction):
     def __init__(self, remote, user, request_id, group=None):
         super(UnassignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
-        self._group = group
+        self._group = Group.for_name(self.remote, group) if group else None
 
     def group(self):
         if self._group:
@@ -234,31 +233,11 @@ class UnassignAction(OscAction):
         """Will return all groups the user assigned himself for and is
         currently in the state of doing a review.
         """
-        def check_history(review):
-            if not hasattr(review, 'statehistory'):
-                logger.warn("Review object missing history node.")
-                return
-            for history in review.statehistory:
-                if PREFIX in history.comment:
-                    try:
-                        _, action, user, group = history.comment.split("::")
-                        if user == self.user.login and action == 'assign':
-                            return review.by_group
-                    except ValueError:
-                        logger.debug("Could not unpack comment: %s",
-                                     history.comment)
-        group_reviews = [r for r in self.request.reviews
-                         if r.by_group is not None]
-        reviews_for_user_group = set()
-        for group_review in group_reviews:
-            if group_review.state == 'accepted':
-                if group_review.who == self.user.login:
-                    reviews_for_user_group.add(group_review.by_group)
-                else:
-                    hist_group = check_history(group_review)
-                    if hist_group:
-                        reviews_for_user_group.add(hist_group)
-        return reviews_for_user_group
+        possible_groups = []
+        for role in self.request.assigned_roles:
+            if role.user == self.user:
+                possible_groups.append(role.group)
+        return possible_groups
 
     def infer_group(self):
         """Find the exact group the user is currently reviewing and return it.
@@ -275,7 +254,7 @@ class UnassignAction(OscAction):
             raise NoReviewError(self.user)
         elif len(groups) > 1:
             raise MultipleReviewsError(self.user, groups)
-        return Group.for_name(self.remote, groups.pop())
+        return groups.pop()
 
     def unassign(self, group):
         msg = UnassignAction.UNASSIGN_USER_MSG.format(
