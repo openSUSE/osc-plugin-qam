@@ -1,0 +1,9 @@
+<group>
+  <title>qam-cloud</title>
+  <email>testgroup@test.test</email>
+  <maintainer userid="maint"/>
+  <person>
+    <person userid="maint"/>
+    <person userid="anonymous"/>
+  </person>
+</group>

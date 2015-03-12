@@ -1,24 +1,18 @@
 import os
 import unittest
 from oscqam.models import Request, Template, MissingSourceProjectError
+from .mockremote import MockRemote
 
 
 path = os.path.join(os.path.dirname(__file__), 'data')
 
 
-class MockRemote(object):
-    def get(self, *args, **kwargs):
-        pass
-
-    def post(self, *args, **kwargs):
-        pass
-
-
 class ModelTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.req_1_xml = open('%s/%s' % (path, 'request_1.xml')).read()
-        cls.req_2_xml = open('%s/%s' % (path, 'request_2.xml')).read()
+        cls.req_1_xml = open('%s/%s' % (path, 'request_12345.xml')).read()
+        cls.req_2_xml = open('%s/%s' % (path, 'request_23456.xml')).read()
+        cls.req_3_xml = open('%s/%s' % (path, 'request_52542.xml')).read()
         cls.req_search = open('%s/%s' % (path, 'request_search.xml')).read()
         cls.req_search_none = open(
             '%s/%s' % (path, 'request_search_none_proj.xml')
@@ -44,7 +38,7 @@ class ModelTests(unittest.TestCase):
 
     def test_merge_requests(self):
         request_1 = Request.parse(self.remote, self.req_1_xml)[0]
-        request_2 = Request.parse(self.remote, self.req_2_xml)[0]
+        request_2 = Request.parse(self.remote, self.req_1_xml)[0]
         requests = set([request_1, request_2])
         self.assertEqual(len(requests), 1)
 
@@ -79,7 +73,12 @@ class ModelTests(unittest.TestCase):
         assigned = request.assigned_roles
         self.assertEqual(len(assigned), 1)
         self.assertEqual(assigned[0].user, 'anonymous')
-        self.assertEqual(assigned[0].group, 'qam-sle')
+        self.assertEqual(assigned[0].group.name, 'qam-sle')
+        request = Request.parse(self.remote, self.req_3_xml)[0]
+        assigned = request.assigned_roles
+        self.assertEqual(len(assigned), 1)
+        self.assertEqual(assigned[0].user, 'anonymous')
+        self.assertEqual(assigned[0].group.name, 'qam-sle')
 
     def test_unassigned_removes_roles(self):
         request = Request.parse(self.remote, self.req_unassign)[0]
