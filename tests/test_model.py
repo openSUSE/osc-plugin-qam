@@ -1,6 +1,7 @@
 import os
 import unittest
-from oscqam.models import Request, Template, MissingSourceProjectError
+from oscqam.models import (Request, Template, MissingSourceProjectError, User,
+                           Group)
 from .mockremote import MockRemote
 
 
@@ -23,6 +24,8 @@ class ModelTests(unittest.TestCase):
         cls.req_invalid = open('%s/%s' % (path, 'request_no_src.xml')).read()
         cls.template = open('%s/%s' % (path, 'template.txt')).read()
         cls.template_rh = open('%s/%s' % (path, 'template_rh.txt')).read()
+        cls.user = open('%s/%s' % (path, 'person_anonymous.xml')).read()
+        cls.group = open('%s/%s' % (path, 'group_qam-sle.xml')).read()
 
     def create_template(self, request_data=None, template_data=None):
         if not request_data:
@@ -72,12 +75,12 @@ class ModelTests(unittest.TestCase):
         request = Request.parse(self.remote, self.req_assign)[0]
         assigned = request.assigned_roles
         self.assertEqual(len(assigned), 1)
-        self.assertEqual(assigned[0].user, 'anonymous')
+        self.assertEqual(assigned[0].user.login, 'anonymous')
         self.assertEqual(assigned[0].group.name, 'qam-sle')
         request = Request.parse(self.remote, self.req_3_xml)[0]
         assigned = request.assigned_roles
         self.assertEqual(len(assigned), 1)
-        self.assertEqual(assigned[0].user, 'anonymous')
+        self.assertEqual(assigned[0].user.login, 'anonymous')
         self.assertEqual(assigned[0].group.name, 'qam-sle')
 
     def test_unassigned_removes_roles(self):
@@ -122,3 +125,10 @@ class ModelTests(unittest.TestCase):
     def test_template_for_invalid_request(self):
         request = Request.parse(self.remote, self.req_invalid)[0]
         self.assertRaises(MissingSourceProjectError, Template, request)
+
+    def test_assignment_equality(self):
+        user = User.parse(self.remote, self.user)[0]
+        group = Group.parse(self.remote, self.group)[0]
+        a1 = Request.Assignment(user, group)
+        a2 = Request.Assignment(user, group)
+        self.assertEqual(a1, a2)

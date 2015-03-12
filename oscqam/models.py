@@ -262,6 +262,12 @@ class User(XmlFactoryMixin):
         return [group for group in self.groups
                 if User.QAM_SRE.match(group.name)]
 
+    def __hash__(self):
+        return hash(self.login)
+
+    def __eq__(self, other):
+        return isinstance(other, User) and self.login == other.login
+
     def __str__(self):
         return unicode(self)
 
@@ -559,8 +565,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
                     logger.debug("Assign incorrect format: %s. %s",
                                  prev_event.comment, curr_event.comment)
                     continue
-                assignment = self.Assignment(user_match.group('user'),
-                                             group_match.group('group'))
+                assignment = self.Assignment(
+                    User.by_name(self.remote, user_match.group('user')),
+                    Group.for_name(self.remote, group_match.group('group'))
+                )
                 assignments.append(assignment)
             elif is_unassignment(curr_event):
                 # Kind of ugly and *should* use a state-machine here.
@@ -573,12 +581,14 @@ class Request(osc.core.Request, XmlFactoryMixin):
                                  prev_event.comment, curr_event.comment)
                     was_unassignment = False
                     continue
-                assignment = self.Assignment(user_match.group('user'),
-                                             group_match.group('group'))
+                assignment = self.Assignment(
+                    User.by_name(self.remote, user_match.group('user')),
+                    Group.for_name(self.remote, group_match.group('group'))
+                )
                 if assignment in assignments:
                     assignments.remove(assignment)
             elif is_accepted(curr_event):
-                user = curr_event.who
+                user = User.by_name(self.remote, curr_event.who)
                 possible = [a for a in assignments if a.user == user]
                 if possible:
                     group = possible[0].group
