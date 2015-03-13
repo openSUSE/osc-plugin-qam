@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.4.0
+=====
+
+- Incident priority added to requests and list-sorting.
+
 0.3.2
 =====
 
