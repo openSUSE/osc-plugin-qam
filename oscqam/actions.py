@@ -1,4 +1,3 @@
-
 from __future__ import print_function
 import logging
 from .models import (Group, User, Request, Template, ReportedError,
@@ -123,6 +122,45 @@ class OscAction(object):
 
 
 class ListAction(OscAction):
+    class ListData(object):
+        def __init__(self, request):
+            """Associate a request with the correct template."""
+            self.request = request
+            self.template = request.get_template(Template)
+
+        def values(self, keys):
+            """Return the values for keys.
+
+            :type keys: [str]
+            :param keys: Identifiers for the data to be returned from the template
+                        or associated request.
+
+            :returns: [str]
+            """
+            data = []
+            entries = self.template.log_entries
+            for key in keys:
+                try:
+                    if key == "Unassigned Roles":
+                        names = [r.name for r in self.request.review_list_open()]
+                        value = " ".join(names)
+                    elif key == "Package-Streams":
+                        packages = [p for p in self.request.packages]
+                        value = " ".join(packages)
+                    elif key == "Assigned Roles":
+                        roles = self.request.assigned_roles
+                        assigns = ["{r.user} ({r.group})".format(r = r)
+                                for r in roles]
+                        value = ", ".join(assigns)
+                    elif key == "Incident Priority":
+                        value = self.request.incident_priority
+                    else:
+                        value = entries[key]
+                    data.append(value)
+                except KeyError:
+                    logger.debug("Missing key: %s", key)
+            return data
+
     def __init__(self, remote, user, only_review=False):
         super(ListAction, self).__init__(remote, user)
         self.only_review = only_review
@@ -162,10 +200,7 @@ class ListAction(OscAction):
             group_requests = set(Request.open_for_groups(self.remote,
                                                          qam_groups))
             all_requests = self.merge_requests(user_requests, group_requests)
-        templates = self._load_templates(all_requests)
-        templates = [template for template in templates
-                     if templates is not None]
-        return templates
+        return map(self.ListData, all_requests)
 
     def _load_templates(self, requests):
         """Load templates for the given requests.

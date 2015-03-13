@@ -17,27 +17,37 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
+def multi_level_sort(xs, criteria):
+    """Sort the given collection based on multiple criteria.
+    The criteria will be sorted by in the given order, whereas each group
+    from the first criteria will be sorted by the second criteria and so forth.
+
+    :param xs: Iterable of objects.
+    :type xs: [a]
+
+    :param criteria: Iterable of extractor functions.
+    :type criteria: [a -> b]
+
+    """
+    if not criteria:
+        return xs
+    extractor = criteria[-1]
+    xss = sorted(xs, key = extractor)
+    grouped = itertools.groupby(xss, extractor)
+    subsorts = [multi_level_sort(list(value), criteria[:-1]) for _, value in
+                grouped]
+    return [s for sub in subsorts for s in sub]
+
+
 def group_sort_requests(requests):
     """Sort request according to rating and request id.
 
-    First sort by Rating and group, then sort each group by request id.
+    First sort by Priority, then rating and finally request id.
     """
-    def group_by_rating(request):
-        return request.log_entries["Rating"]
-
-    def sort_by_rating(request):
-        return mapping.get(request.log_entries["Rating"], 10)
-    mapping = {
-        'important': 0,
-        'moderate': 1,
-        'low': 2,
-        '': 3
-    }
     requests = filter(None, requests)
-    sort_by_rating = sorted(requests, key = sort_by_rating)
-    group_rating = itertools.groupby(sort_by_rating, group_by_rating)
-    return [(key, sorted(list(group), key = lambda t: int(t.request.reqid)))
-            for key, group in group_rating]
+    return multi_level_sort(requests, [lambda l: l.request.reqid,
+                                       lambda l: l.template.log_entries["Rating"],
+                                       lambda l: l.request.incident_priority])
 
 
 def output_list(sep, value):
@@ -100,7 +110,7 @@ class QamInterpreter(cmdln.Cmdln):
     name = 'osc qam'
     all_keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
                 "Category", "Rating", "Unassigned Roles",
-                "Assigned Roles", "Package-Streams"]
+                "Assigned Roles", "Package-Streams", "Incident Priority"]
     all_columns_string = ", ".join(all_keys)
 
     def _set_required_params(self, opts):
@@ -200,8 +210,9 @@ class QamInterpreter(cmdln.Cmdln):
         only_review = opts.review if opts.review else False
         formatter = tabular_output if opts.tabular else verbose_output
         action = ListAction(self.api, self.affected_user, only_review)
-        templates = self._run_action(action)
-        keys = ["ReviewRequestID", "SRCRPMs", "Rating", "Products"]
+        listdata = self._run_action(action)
+        keys = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
+                "Incident Priority"]
         if opts.verbose:
             keys = self.all_keys
         else:
@@ -212,12 +223,11 @@ class QamInterpreter(cmdln.Cmdln):
             elif opts.columns:
                 keys = opts.columns
 
-        if templates:
-            requests = group_sort_requests(templates)
-            requests = [request.values(keys)
-                        for group in requests
-                        for request in group[1]]
-            print(formatter(requests, keys))
+        if listdata:
+            listdata = group_sort_requests(listdata)
+            listdata = [datum.values(keys)
+                        for datum in listdata]
+            print(formatter(listdata, keys))
 
     @cmdln.option('-U',
                   '--user',

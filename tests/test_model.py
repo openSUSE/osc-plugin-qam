@@ -1,4 +1,5 @@
-import os
+from urllib2 import HTTPError
+from StringIO import StringIO
 import unittest
 from oscqam.models import (Request, Template, MissingSourceProjectError, User,
                            Group)
@@ -120,7 +121,8 @@ class ModelTests(unittest.TestCase):
 
     def test_template_for_invalid_request(self):
         request = Request.parse(self.remote, self.req_invalid)[0]
-        self.assertRaises(MissingSourceProjectError, Template, request)
+        self.assertRaises(MissingSourceProjectError, request.get_template,
+                          Template)
 
     def test_assignment_equality(self):
         user = User.parse(self.remote, self.user)[0]
@@ -128,3 +130,41 @@ class ModelTests(unittest.TestCase):
         a1 = Request.Assignment(user, group)
         a2 = Request.Assignment(user, group)
         self.assertEqual(a1, a2)
+
+    def test_incident_priority(self):
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        src_project = request.src_project
+        endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(
+            src_project
+        )
+        self.remote.register_url(endpoint, lambda: (
+            "<attributes>"
+            "<attribute name='IncidentPriority' namespace='OBS'>"
+            "<value>100</value>"
+            "</attribute>"
+            "</attributes>"
+        ))
+        incident_priority = request.incident_priority
+        self.assertEqual(incident_priority, Request.Priority(100))
+
+    def test_incident_priority_empty(self):
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        src_project = request.src_project
+        endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(
+            src_project
+        )
+        self.remote.register_url(endpoint, lambda: "<attributes/>")
+        incident_priority = request.incident_priority
+        self.assertEqual(incident_priority, Request.UnknownPriority())
+
+    def test_no_incident_priority(self):
+        def raise_http():
+            raise HTTPError('test', 500, 'test', '', StringIO(''))
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        src_project = request.src_project
+        endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(
+            src_project
+        )
+        self.remote.register_url(endpoint, raise_http)
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        self.assertEqual(request.incident_priority, Request.UnknownPriority())

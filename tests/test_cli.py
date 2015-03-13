@@ -26,3 +26,13 @@ class ListOutputTests(TestCase):
                                     "B: c",
                                     "-----------------------"])
         self.assertEqual(expected, output)
+
+    def test_multi_level_sort(self):
+        one = {'a': 0, 'b': 1}
+        two = {'a': 0, 'b': 0}
+        xs = [one, two]
+        criteria = [lambda x: x['b'],
+                    lambda x: x['a']]
+        sortedxs = cli.multi_level_sort(xs, criteria)
+        self.assertEqual(sortedxs[0], two)
+        self.assertEqual(sortedxs[1], one)

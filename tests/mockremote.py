@@ -15,6 +15,7 @@ class MockRemote(object):
     """
     def __init__(self):
         self.post_calls = []
+        self.overrides = {}
 
     def _load(self, prefix, id):
         name = "%s_%s.xml" % (prefix, id)
@@ -23,11 +24,15 @@ class MockRemote(object):
     def get(self, *args, **kwargs):
         """Replacement for HTTP-get requests.
 
-        Special handling for groups, as it does not use an identifier as part
-        of the URL.
+        Will first check if the requested URL is registered as an override.
+        If so the override-data will be returned, otherwise the URL will
+        be mapped to the filesystem storage for test-fixtures.
         """
+        url = args[0]
+        if url in self.overrides:
+            return self.overrides[url]()
         try:
-            cls, identifier = args[0].split("/")
+            cls, identifier = url.split("/", 1)
         except ValueError:
             if args[0] == 'group':
                 cls = 'group'
@@ -39,3 +44,15 @@ class MockRemote(object):
     def post(self, *args, **kwargs):
         called = "Call-Args: %s. Call-Kwargs: %s" % (args, kwargs)
         self.post_calls.append(called)
+
+    def register_url(self, url, callback):
+        """Allow specifying a override for a given relative url.
+
+        :param url: Url that should trigger a callback.
+        :type url: str
+
+        :param callback: Function to call when the url is hit.
+        :type callback: () -> Either(str | Exception)
+
+        """
+        self.overrides[url] = callback

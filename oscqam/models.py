@@ -3,6 +3,7 @@ everything in a consistent state.
 
 """
 import contextlib
+from functools import total_ordering
 import logging
 import re
 import urllib
@@ -291,6 +292,32 @@ class Request(osc.core.Request, XmlFactoryMixin):
     """Wrapper around osc request object to add logic required by the
     qam-plugin.
     """
+    @total_ordering
+    class Priority(object):
+        """Store the priority of this request's associated incident.
+        """
+        def __init__(self, prio):
+            self.priority = int(prio)
+
+        def __eq__(self, other):
+            return self.priority == other.priority
+
+        def __lt__(self, other):
+            return (self.priority > other.priority)
+
+        def __str__(self):
+            return "{0}".format(self.priority)
+
+    class UnknownPriority(Priority):
+        def __init__(self):
+            self.priority = None
+
+        def __eq__(self, other):
+            return isinstance(other, Request.UnknownPriority)
+
+        def __lt__(self, other):
+            return False
+
     class Assignment(object):
         """Minimal class to store an assignment of a user for a group.
         """
@@ -319,6 +346,26 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self._groups = None
         self._packages = None
         self._assigned_roles = None
+        self._priority = None
+
+    @property
+    def incident_priority(self):
+        if not self._priority:
+            endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(
+                self.src_project
+            )
+            try:
+                xml = ET.fromstring(self.remote.get(endpoint))
+            except urllib2.HTTPError:
+                logger.error("Priority not found: %s", endpoint)
+                self._priority = self.UnknownPriority()
+            else:
+                value = xml.find(".//value")
+                try:
+                    self._priority = self.Priority(value.text)
+                except AttributeError:
+                    self._priority = self.UnknownPriority()
+        return self._priority
 
     @property
     def assigned_roles(self):
@@ -453,19 +500,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
         endpoint = '/comments/request/{id}'.format(id=self.reqid)
         self.remote.post(endpoint, comment)
 
-    def template_path(self, base_path):
-        """Create a path to the report-template associated with this request.
-
-        :param base_path: Base path the template can be found under.
-        :type base_path: str
-
-        :return: Path to the template-folder.
+    def get_template(self, template_factory):
+        """Return the template associated with this request.
         """
         if not self.src_project:
             raise MissingSourceProjectError(self)
-        return "{base}{prj}:{reqid}".format(base=base_path,
-                                            prj=self.src_project,
-                                            reqid=self.reqid)
+        return template_factory(self)
 
     @classmethod
     def filter_by_project(cls, filter, requests):
@@ -647,7 +687,31 @@ class Template(object):
     STATUS_UNKNOWN = 2
     base_url = "http://qam.suse.de/testreports/"
 
-    def get_testreport_web(request):
+    @total_ordering
+    class Rating(object):
+        """Store the template's rating.
+        """
+        def __init__(self, rating):
+            self.rating = rating
+            self.mapping = {
+                'critical': 0,
+                'important': 1,
+                'moderate': 2,
+                'low': 3,
+                '': 4
+            }
+
+        def __lt__(self, other):
+            return (self.mapping.get(self.rating, 10) <
+                    self.mapping.get(other.rating, 10))
+
+        def __eq__(self, other):
+            return self.rating == other.rating
+
+        def __str__(self):
+            return self.rating
+
+    def get_testreport_web(log_path):
         """Load the template belonging to the request from
         http://qam.suse.de/testreports/.
 
@@ -657,7 +721,6 @@ class Template(object):
         :return: Content of the log-file as string.
 
         """
-        log_path = "%s/%s" % (request.template_path(Template.base_url), 'log')
         try:
             with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
                 return log_file.read()
@@ -677,14 +740,13 @@ class Template(object):
         :type tr_getter: Function: L{oscqam.models.Request} -> L{str}
 
         """
-        self.request = request
         self.log_entries = {}
-        log = tr_getter(self.request)
-        self.parse_log(log)
-
-    @property
-    def log_path(self):
-        return "%s/%s" % (self.request.template_path(Template.base_url), 'log')
+        self.log_path = tr_getter(
+            "{base}{prj}:{reqid}/log".format(base=self.base_url,
+                                             prj=request.src_project,
+                                             reqid=request.reqid)
+        )
+        self.parse_log(self.log_path)
 
     @property
     def status(self):
@@ -739,47 +801,18 @@ class Template(object):
             line = line.strip()
             if not line or ":" not in line:
                 continue
-            key, value = line.split(":", 1)
+            key, value = map(str.strip, line.split(":", 1))
             if key == 'Packages':
                 value = split_packages(value)
             elif key == 'Products':
                 value = split_products(value)
             elif key == "SRCRPMs":
                 value = split_srcrpms(value)
+            elif key == "Rating":
+                value = self.Rating(value)
             else:
                 value = value.strip()
             self.log_entries[key] = value
-
-    def values(self, keys):
-        """Return the values for keys.
-
-        :type keys: [str]
-        :param keys: Identifiers for the data to be returned from the template
-                     or associated request.
-
-        :returns: [str]
-        """
-        data = []
-        entries = self.log_entries
-        for key in keys:
-            try:
-                if key == "Unassigned Roles":
-                    names = [r.name for r in self.request.review_list_open()]
-                    value = " ".join(names)
-                elif key == "Package-Streams":
-                    packages = [p for p in self.request.packages]
-                    value = " ".join(packages)
-                elif key == "Assigned Roles":
-                    roles = self.request.assigned_roles
-                    assigns = ["{r.user} ({r.group})".format(r = r)
-                               for r in roles]
-                    value = ", ".join(assigns)
-                else:
-                    value = entries[key]
-                data.append(value)
-            except KeyError:
-                logger.debug("Missing key: %s", key)
-        return data
 
 
 def monkeypatch():
