@@ -36,24 +36,26 @@ class ReportedError(RuntimeError):
 class InvalidRequestError(ReportedError):
     """Raise when a request object is missing required information."""
     def __init__(self, request):
-        self.message = "Invalid build service request: {0}".format(
-            self.request
+        super(InvalidRequestError, self).__init__(
+            "Invalid build service request: {0}".format(request)
         )
 
 
 class MissingSourceProjectError(InvalidRequestError):
     """Raise when a request is missing the source project property."""
     def __init__(self, request):
-        self.message = ("Invalid build service request: "
-                        "{0} has no source project.".format(
-                            request
-                        ))
+        super(MissingSourceProjectError, self).__init__(
+            "Invalid build service request: "
+            "{0} has no source project.".format(request)
+        )
 
 
 class TemplateNotFoundError(ReportedError):
     """Raise when a template could not be found."""
     def __init__(self, message):
-        self.message = "Report could not be loaded: {0}".format(message)
+        super(TemplateNotFoundError, self).__init__(
+            "Report could not be loaded: {0}".format(message)
+        )
 
 
 class RemoteError(Exception):

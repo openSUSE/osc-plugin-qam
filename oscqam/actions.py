@@ -37,7 +37,7 @@ class NoQamReviewsError(UninferableError):
         message += (" The following groups were already accepted: "
                     "{msg}".format(
                         msg=", ".join(["{r.by_group} (by {r.who})".format(r=review)
-                          for review in accept_reviews])
+                                       for review in accept_reviews])
                     )) if accept_reviews else ""
         super(NoQamReviewsError, self).__init__(message)
 
@@ -91,7 +91,9 @@ class TestResultMismatchError(ReportedError):
     _msg = "Request-Status not '{0}': please check report: {1}"
 
     def __init__(self, expected, log_path):
-        self.message = self._msg.format(expected, log_path)
+        super(TestResultMismatchError, self).__init__(
+            self._msg.format(expected, log_path)
+        )
 
 
 class OscAction(object):
