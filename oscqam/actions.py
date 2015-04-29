@@ -202,9 +202,9 @@ class ListAction(OscAction):
             group_requests = set(Request.open_for_groups(self.remote,
                                                          qam_groups))
             all_requests = self.merge_requests(user_requests, group_requests)
-        return map(self.ListData, all_requests)
+        return self._load_listdata(all_requests)
 
-    def _load_templates(self, requests):
+    def _load_listdata(self, requests):
         """Load templates for the given requests.
 
         Templates that could not be loaded will print a warning (this can
@@ -213,15 +213,15 @@ class ListAction(OscAction):
 
         :param requests: [L{oscqam.models.Request}]
 
-        :returns: [L{oscqam.models.Template}]
+        :returns: [L{oscqam.actions.ListAction.ListData}]
         """
-        templates = []
+        listdata = []
         for request in requests:
             try:
-                templates.append(Template(request))
+                listdata.append(self.ListData(request))
             except TemplateNotFoundError as e:
                 logger.warning(str(e))
-        return templates
+        return listdata
 
 
 class AssignAction(OscAction):
@@ -264,7 +264,6 @@ class AssignAction(OscAction):
             raise UninferableError(
                 AssignAction.MULTIPLE_GROUPS_MSG.format(group=both)
             )
-            
         group = both.pop()
         print(AssignAction.AUTO_INFER_MSG.format(group=group))
         return group
