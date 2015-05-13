@@ -1,3 +1,5 @@
+.. _workarounds:
+
 Known bugs & workarounds
 ========================
 

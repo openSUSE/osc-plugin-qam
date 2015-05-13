@@ -102,6 +102,13 @@ specific command:
              -u USER, --user=USER
                                  User to assign for this request.
 
+
+.. note::
+
+   When you are running a older version of ``osc`` (e.g. 0.148) then the
+   readline-support is not working out-of-the-box. Please see
+   :ref:`workarounds` to see how to still get it working.
+
 Instead of running the commands in the interactive session it is also possible
 to just write out the complete command following the osc qam part:
 
