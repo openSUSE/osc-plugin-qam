@@ -200,7 +200,8 @@ class QamInterpreter(cmdln.Cmdln):
                   default=False,
                   help='Generate verbose output.')
     def do_list(self, subcmd, opts):
-        """${cmd_name}: Show a list of all open requests currently running.
+        """${cmd_name}: Show a list of all open qam-requests currently running.
+
         The list will only contain requests that are part of the qam-groups.
 
         ${cmd_usage}
@@ -258,7 +259,7 @@ class QamInterpreter(cmdln.Cmdln):
                   '--group',
                   help='Group to reassign to this request.')
     def do_unassign(self, subcmd, opts, request_id):
-        """${cmd_name}: Assign the request to the user.
+        """${cmd_name}: Unassign the request for the user.
 
         The command either uses the configured user or the user passed via
         the `-u` flag.
