@@ -69,13 +69,13 @@ class ActionTests(unittest.TestCase):
     def test_assign_non_matching_groups(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.single_assign_single_open,
-                                      template_factory=lambda r: True)
+                                      template_factory = lambda r: True)
         self.assertRaises(actions.NonMatchingGroupsError, assign)
 
     def test_assign_multiple_groups(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
-                                      template_factory=lambda r: True)
+                                      template_factory = lambda r: True)
         self.assertRaises(actions.UninferableError, assign)
 
     def test_assign_multiple_groups_explicit(self):
@@ -103,7 +103,7 @@ class ActionTests(unittest.TestCase):
     def test_reject_not_failed(self):
         request = models.Request.by_id(self.mock_remote, self.cloud_open)
         template = models.Template(request,
-                                   tr_getter=lambda x: self.template)
+                                   tr_getter = lambda x: self.template)
         action = actions.RejectAction(self.mock_remote, self.user_id,
                                       self.cloud_open)
         action._template = template
@@ -122,8 +122,8 @@ class ActionTests(unittest.TestCase):
 
     def test_assign_only_one_group(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
-                                      self.one_assigned, group='qam-test',
-                                      template_factory=lambda r: True)
+                                      self.one_assigned, group = 'qam-test',
+                                      template_factory = lambda r: True)
         self.assertRaises(actions.OneGroupAssignedError, assign)
 
     def test_list_assigned_user(self):
@@ -203,3 +203,14 @@ class ActionTests(unittest.TestCase):
                          str(fields.ReportField.assigned_roles))
         self.assertEqual(fields.ReportField.assigned_roles,
                          fields.ReportField.from_str("Assigned Roles"))
+
+    def test_load_requests_with_exception(self):
+        def raise_template_not_found(self):
+            raise models.TemplateNotFoundError("Test error")
+        request_1 = models.Request.by_id(self.mock_remote, self.cloud_open)
+        request_2 = models.Request.by_id(self.mock_remote, self.cloud_open)
+        request_2.get_template = raise_template_not_found
+        action = actions.ListOpenAction(self.mock_remote, 'anonymous',
+                                        template_factory = lambda r: r)
+        requests = list(action._load_listdata([request_1, request_2]))
+        self.assertEqual(1, len(requests))

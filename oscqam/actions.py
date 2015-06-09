@@ -3,9 +3,12 @@ import abc
 import os
 import itertools
 import logging
+import multiprocessing
 import re
 import sys
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import osc.conf
 
 from .models import (Group, GroupReview, User, Request, Template,
                      ReportedError, RemoteError, TemplateNotFoundError)
@@ -16,6 +19,18 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 PREFIX = "[oscqam]"
+
+
+def get_number_of_threads():
+    """Return the number of threads to use when retrieving templates in parallel.
+
+    Will either use a configured value in 'oscqam_max_threads' from ~/.oscrc
+    or default to the number of CPUs.
+
+    """
+    osc.conf.get_config()
+    return osc.conf.config.get('oscqam_max_threads',
+                               multiprocessing.cpu_count())
 
 
 class ActionError(ReportedError):
@@ -309,16 +324,16 @@ class ListAction(OscAction):
 
         :param requests: [L{oscqam.models.Request}]
 
-        :returns: [L{oscqam.actions.Report}]
+        :returns: L{oscqam.actions.Report}-generator
         """
-        listdata = []
-        for request in requests:
+        with ThreadPoolExecutor(max_workers = get_number_of_threads()) as executor:
+            results = [executor.submit(Report, r, self.template_factory)
+                       for r in requests]
+        for promise in as_completed(results):
             try:
-                listdata.append(Report(request,
-                                       self.template_factory))
+                yield promise.result()
             except TemplateNotFoundError as e:
                 logger.warning(str(e))
-        return listdata
 
 
 class ListOpenAction(ListAction):
