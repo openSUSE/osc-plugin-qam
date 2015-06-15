@@ -16,11 +16,11 @@ After checking out the source code it is required to setup the plugin, so
 By default ``osc`` will look in the following paths for plugins:
 
 - ``/usr/lib/osc-plugins``
-             
+
 - ``/usr/local/lib/osc-plugins``
-  
+
 - ``/var/lib/osc-plugins``
-  
+
 - ``~/.osc-plugins``
 
 To make ``oscqam`` available to ``osc`` the start-up point needs to be
@@ -30,8 +30,15 @@ importable.
 An easy way is to symlink the ``oscqam`` folder and ``cli.py`` file into
 e.g. ``~/.osc-plugins`` and set the ``PYTHONPATH`` to include this folder:
 
+.. note::
+
+   To make usage of the ``development`` version easier, while also having a
+   version from the repository installed, it makes sense to add the
+   ``PYTHONPATH`` change to your ``.{bash,zsh}rc``.  To return to the
+   installed version just remove the symbolic links.
+
 .. code-block:: bash
-                
+
                 git clone gitlab@gitlab.suse.de:qa-maintenance/qam-oscplugin.git
                 ln -s "$PWD/oscqam/cli.py" ~/.osc-plugins/oscqam/cli.py
                 ln -s "$PWD/oscqam/oscqam" ~/.osc-plugin/oscqam
