@@ -231,10 +231,10 @@ class Group(XmlFactoryMixin):
         return self.name == other.name
 
     def __str__(self):
-        return self.name
+        return unicode(self).encode('utf-8')
 
     def __unicode__(self):
-        return str(self).encode('utf-8')
+        return u"{0}".format(self.name)
 
 
 class User(XmlFactoryMixin):
@@ -272,7 +272,7 @@ class User(XmlFactoryMixin):
         return isinstance(other, User) and self.login == other.login
 
     def __str__(self):
-        return unicode(self)
+        return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{0} ({1})".format(self.realname, self.email)
@@ -333,6 +333,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
         def __eq__(self, other):
             return (self.user == other.user and
                     self.group == other.group)
+
+        def __str__(self):
+            return unicode(self).encode('utf-8')
+
+        def __unicode__(self):
+            return u"{1} -> {0}".format(self.user, self.group)
 
     endpoint = 'request'
 
@@ -510,8 +516,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return template_factory(self)
 
     @classmethod
-    def filter_by_project(cls, filter, requests):
-        requests = [r for r in requests if "SUSE:Maintenance" in r.src_project]
+    def filter_by_project(cls, request_substring, requests):
+        requests = [r for r in requests if request_substring in r.src_project]
         return requests
 
     @classmethod
