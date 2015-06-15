@@ -4,8 +4,8 @@ Development
 Hosting
 -------
 
-The plugin is hosted on the internal ``git``-repository:
-http://git.suse.de/?p=fbergmann/oscqam.git
+The plugin is hosted on our internal ``gitlab`` instance:
+https://gitlab.suse.de/qa-maintenance/qam-oscplugin
 
 Working from source
 -------------------
@@ -32,7 +32,7 @@ e.g. ``~/.osc-plugins`` and set the ``PYTHONPATH`` to include this folder:
 
 .. code-block:: bash
                 
-                git clone git@git.suse.de:fbergmann/oscqam.git oscqam
+                git clone gitlab@gitlab.suse.de:qa-maintenance/qam-oscplugin.git
                 ln -s "$PWD/oscqam/cli.py" ~/.osc-plugins/oscqam/cli.py
                 ln -s "$PWD/oscqam/oscqam" ~/.osc-plugin/oscqam
                 export PYTHONPATH="~/.osc-plugins:$PYTHONPATH"
