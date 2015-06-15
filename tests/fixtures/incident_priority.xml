@@ -1,0 +1,5 @@
+<attributes>
+  <attribute name='IncidentPriority' namespace='OBS'>
+    <value>100</value>
+  </attribute>
+</attributes>

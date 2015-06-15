@@ -125,10 +125,10 @@ class OscAction(object):
 
 class ListAction(OscAction):
     class ListData(object):
-        def __init__(self, request):
+        def __init__(self, request, template_factory):
             """Associate a request with the correct template."""
             self.request = request
-            self.template = request.get_template(Template)
+            self.template = request.get_template(template_factory)
 
         def values(self, keys):
             """Return the values for keys.
@@ -218,7 +218,8 @@ class ListAction(OscAction):
         listdata = []
         for request in requests:
             try:
-                listdata.append(self.ListData(request))
+                listdata.append(self.ListData(request,
+                                              self.template_factory))
             except TemplateNotFoundError as e:
                 logger.warning(str(e))
         return listdata
