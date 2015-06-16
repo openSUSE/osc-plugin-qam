@@ -151,8 +151,7 @@ class ListAction(OscAction):
                         value = " ".join(packages)
                     elif key == "Assigned Roles":
                         roles = self.request.assigned_roles
-                        assigns = ["{r.user} ({r.group})".format(r = r)
-                                for r in roles]
+                        assigns = [str(r) for r in roles]
                         value = ", ".join(assigns)
                     elif key == "Incident Priority":
                         value = self.request.incident_priority
