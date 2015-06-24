@@ -1,7 +1,7 @@
 from __future__ import print_function
 import logging
-from .models import (Group, User, Request, Template, ReportedError,
-                     RemoteError, TemplateNotFoundError)
+from .models import (Group, GroupReview, User, Request, Template,
+                     ReportedError, RemoteError, TemplateNotFoundError)
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -33,11 +33,12 @@ class NoQamReviewsError(UninferableError):
         message = "No 'qam'-groups need review."
         accept_reviews = [review for review
                           in accepted_reviews
-                          if review.review_type == Request.REVIEW_GROUP]
-        message += (" The following groups were already accepted: "
+                          if isinstance(review, GroupReview)]
+        message += (" The following groups were already assigned/finished: "
                     "{msg}".format(
-                        msg=", ".join(["{r.by_group} (by {r.who})".format(r=review)
-                                       for review in accept_reviews])
+                        msg=", ".join(["{r.reviewer}".format(
+                            r=review
+                        ) for review in accept_reviews])
                     )) if accept_reviews else ""
         super(NoQamReviewsError, self).__init__(message)
 
@@ -144,7 +145,10 @@ class ListAction(OscAction):
             for key in keys:
                 try:
                     if key == "Unassigned Roles":
-                        names = [r.name for r in self.request.review_list_open()]
+                        reviews = Filter(
+                            self.request.review_list_open()
+                        ).isa(GroupReview)
+                        names = sorted([str(r.reviewer) for r in reviews])
                         value = " ".join(names)
                     elif key == "Package-Streams":
                         packages = [p for p in self.request.packages]
@@ -251,10 +255,9 @@ class AssignAction(OscAction):
         """
         user_groups = set(self.user.qam_groups)
         reviews = [review for review in self.request.review_list() if
-                   (review.review_type == Request.REVIEW_GROUP and
-                    review.state.lower() == 'new')]
-        review_groups = [Group.for_name(self.remote, review.name) for review
-                         in reviews]
+                   (isinstance(review, GroupReview) and review.open
+                    and review.reviewer.name.startswith('qam'))]
+        review_groups = [review.reviewer for review in reviews]
         open_groups = set(review_groups)
         if not open_groups:
             raise NoQamReviewsError(self.request.review_list_accepted())

@@ -228,6 +228,8 @@ class Group(XmlFactoryMixin):
         return hash(self.name) + hash(type(self))
 
     def __eq__(self, other):
+        if not isinstance(other, Group):
+            return False
         return self.name == other.name
 
     def __str__(self):
@@ -269,6 +271,8 @@ class User(XmlFactoryMixin):
         return hash(self.login)
 
     def __eq__(self, other):
+        if not isinstance(other, User):
+            return False
         return isinstance(other, User) and self.login == other.login
 
     def __str__(self):
@@ -288,6 +292,40 @@ class User(XmlFactoryMixin):
     @classmethod
     def parse(cls, remote, xml):
         return super(User, cls).parse(remote, xml, cls.endpoint)
+
+
+class Review(object):
+    """Base class for buildservice-review objects.
+
+    """
+    OPEN_STATES = ('new', 'review')
+    CLOSED_STATES = ('accepted',)
+
+    def __init__(self, remote, review, reviewer):
+        self._review = review
+        self.remote = remote
+        self.reviewer = reviewer
+        self.state = review.state.lower()
+        self.open = self.state in self.OPEN_STATES
+        self.closed = self.state in self.CLOSED_STATES
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return u'Review: {0} ({1})'.format(self.reviewer, self.state)
+
+
+class GroupReview(Review):
+    def __init__(self, remote, review):
+        reviewer = Group.for_name(remote, review.by_group)
+        super(GroupReview, self).__init__(remote, review, reviewer)
+
+
+class UserReview(Review):
+    def __init__(self, remote, review):
+        reviewer = User.by_name(remote, review.by_user)
+        super(UserReview, self).__init__(remote, review, reviewer)
 
 
 class Assignment(object):
@@ -330,19 +368,20 @@ class Assignment(object):
 
         """
         accepted = [r for r in request.review_list_accepted()
-                    if r.by_group]
+                    if isinstance(r, GroupReview)]
         if not len(accepted) == 1:
             return set()
-        users = [r for r in request.review_list_open() if r.by_user]
+        users = [r for r in request.review_list_open()
+                 if isinstance(r, UserReview)]
         if not len(users) == 1:
             logger.debug(
                 "No user for an assigned group-review:"
-                "Group: {0}, Request {1}.".format(accepted[0].by_group,
+                "Group: {0}, Request {1}.".format(accepted[0].reviewer,
                                                   request)
             )
             return set()
-        group = Group.for_name(request.remote, accepted[0].name)
-        user = User.by_name(request.remote, users[0].name)
+        group = accepted[0].reviewer
+        user = users[0].reviewer
         return set([Assignment(user, group)])
 
     @staticmethod
@@ -508,6 +547,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self._packages = None
         self._assigned_roles = None
         self._priority = None
+        self._reviews = []
 
     @property
     def incident_priority(self):
@@ -538,7 +578,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def groups(self):
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
-        return [review.by_group for review in self.reviews if review.by_group]
+        return [review.reviewer for review in self.review_list()
+                if isinstance(review, GroupReview)]
 
     @property
     def packages(self):
@@ -621,29 +662,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def review_list(self):
         """Returns all reviews as a list.
         """
-        def set_name_review(r):
-            if r.by_group is not None:
-                r.name = r.by_group
-                r.review_type = Request.REVIEW_GROUP
-            elif r.by_user is not None:
-                r.name = r.by_user
-                r.review_type = Request.REVIEW_USER
-            elif r.who:
-                r.name = r.who
-                r.review_type = Request.REVIEW_OTHER
-            else:
-                r.name = ''
-                r.review_type = Request.REVIEW_OTHER
-        if not self.reviews:
-            return []
-        if isinstance(self.reviews, list):
-            for r in self.reviews:
-                set_name_review(r)
-            reviews = self.reviews
-        else:
-            set_name_review(self.review)
-            reviews = [self.review]
-        return reviews
+        if not self._reviews:
+            for review in self.reviews:
+                if review.by_group:
+                    self._reviews.append(GroupReview(self.remote, review))
+                elif review.by_user:
+                    self._reviews.append(UserReview(self.remote, review))
+        return self._reviews
 
     def review_list_open(self):
         """Return only open reviews.

@@ -186,5 +186,5 @@ class ModelTests(unittest.TestCase):
         request = Request.parse(self.remote, self.req_unassigned)[0]
         open_reviews = request.review_list_open()
         self.assertEqual(len(open_reviews), 2)
-        self.assertEqual(open_reviews[0].name, 'qam-cloud')
-        self.assertEqual(open_reviews[1].name, 'qam-sle')
+        self.assertEqual(open_reviews[0].reviewer.name, 'qam-cloud')
+        self.assertEqual(open_reviews[1].reviewer.name, 'qam-sle')
