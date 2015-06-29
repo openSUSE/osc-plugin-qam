@@ -144,7 +144,8 @@ class ListAction(OscAction):
             for key in keys:
                 try:
                     if key == "Unassigned Roles":
-                        names = [r.name for r in self.request.review_list_open()]
+                        names = sorted([r.name for r in
+                                        self.request.review_list_open()])
                         value = " ".join(names)
                     elif key == "Package-Streams":
                         packages = [p for p in self.request.packages]
