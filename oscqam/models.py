@@ -82,7 +82,7 @@ class RemoteFacade(object):
             raise urllib2.HTTPError(answer.url, ret_code, answer.msg,
                                     answer.headers, answer.fp)
 
-    def get(self, endpoint, params=None):
+    def get(self, endpoint, params = None):
         """Retrieve information at the given endpoint with the parameters.
 
         Call the callback function with the result.
@@ -97,9 +97,9 @@ class RemoteFacade(object):
         xml = remote.read()
         return xml
 
-    def post(self, endpoint, data=None):
+    def post(self, endpoint, data = None):
         url = '/'.join([self.remote, endpoint])
-        remote = osc.core.http_POST(url, data=data)
+        remote = osc.core.http_POST(url, data = data)
         self._check_for_error(remote)
         xml = remote.read()
         return xml
@@ -131,7 +131,7 @@ class XmlFactoryMixin(object):
             dictionary[key] = [value]
 
     @classmethod
-    def parse_et(cls, remote, et, tag, wrapper_cls=None):
+    def parse_et(cls, remote, et, tag, wrapper_cls = None):
         """Recursively parses an element-tree instance.
 
         Will iterate over the tag as root-level.
@@ -411,7 +411,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                     return ''
         return ''
 
-    def review_action(self, params, user=None, group=None, comment=None):
+    def review_action(self, params, user = None, group = None, comment = None):
         if not user and not group:
             raise AttributeError("group or user required for this action.")
         if user:
@@ -423,27 +423,27 @@ class Request(osc.core.Request, XmlFactoryMixin):
         url += "?" + url_params
         self.remote.post(url, comment)
 
-    def review_assign(self, group, reviewer, comment=None):
+    def review_assign(self, group, reviewer, comment = None):
         params = {'cmd': 'assignreview',
                   'reviewer': reviewer.login}
-        self.review_action(params, group=group, comment=comment)
+        self.review_action(params, group = group, comment = comment)
 
-    def review_accept(self, user=None, group=None, comment=None):
+    def review_accept(self, user = None, group = None, comment = None):
         comment = "[qamosc]::accept::{user}::{group}".format(
-            user=user, group=group
+            user = user, group = group
         )
         params = {'cmd': 'changereviewstate',
                   'newstate': 'accepted'}
         self.review_action(params, user, group, comment)
 
-    def review_add(self, user=None, group=None, comment=None):
+    def review_add(self, user = None, group = None, comment = None):
         """Will add a new reviewrequest for the given user or group.
 
         """
         params = {'cmd': 'addreview'}
         self.review_action(params, user, group, comment)
 
-    def review_decline(self, user=None, group=None, comment=None):
+    def review_decline(self, user = None, group = None, comment = None):
         """Will decline the reviewrequest for the given user or group.
 
         """
@@ -451,7 +451,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                   'newstate': 'declined'}
         self.review_action(params, user, group, comment)
 
-    def review_reopen(self, user=None, group=None, comment=None):
+    def review_reopen(self, user = None, group = None, comment = None):
         """Will reopen a reviewrequest for the given user or group.
 
         """
@@ -499,7 +499,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def add_comment(self, comment):
         """Adds a comment to this request.
         """
-        endpoint = '/comments/request/{id}'.format(id=self.reqid)
+        endpoint = '/comments/request/{id}'.format(id = self.reqid)
         self.remote.post(endpoint, comment)
 
     def get_template(self, template_factory):
@@ -543,11 +543,11 @@ class Request(osc.core.Request, XmlFactoryMixin):
             return group.name
         if not kwargs:
             kwargs = {'withfullhistory': '1'}
-        xpaths = ["(state/@name='{0}')".format('review')]
+        xpaths = ["(state/@name = '{0}')".format('review')]
         for group in groups:
             name = get_group_name(group)
             xpaths.append(
-                "(review[@by_group='{0}' and @state='new'])".format(name)
+                "(review[@by_group = '{0}' and @state = 'new'])".format(name)
             )
         xpath = " and ".join(xpaths)
         params = {'match': xpath,
@@ -729,7 +729,7 @@ class Template(object):
         except urllib2.URLError:
             raise TemplateNotFoundError(log_path)
 
-    def __init__(self, request, tr_getter=get_testreport_web):
+    def __init__(self, request, tr_getter = get_testreport_web):
         """Create a template from the given request.
 
         :param request: The request the template is associated with.
@@ -744,9 +744,9 @@ class Template(object):
         """
         self.log_entries = {}
         self.log_path = tr_getter(
-            "{base}{prj}:{reqid}/log".format(base=self.base_url,
-                                             prj=request.src_project,
-                                             reqid=request.reqid)
+            "{base}{prj}:{reqid}/log".format(base = self.base_url,
+                                             prj = request.src_project,
+                                             reqid = request.reqid)
         )
         self.parse_log(self.log_path)
 

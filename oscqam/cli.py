@@ -68,7 +68,7 @@ def verbose_output(data, keys):
     """Output the data in verbose format."""
     length = max([len(k) for k in keys])
     output = []
-    str_template = "{{0:{length}s}}: {{1}}".format(length=length)
+    str_template = "{{0:{length}s}}: {{1}}".format(length = length)
     for row in data:
         for i, datum in enumerate(row):
             key = keys[i]
@@ -134,7 +134,7 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-U',
                   '--user',
-                  help='User to assign for this request.')
+                  help = 'User to assign for this request.')
     def do_approve(self, subcmd, opts, request_id):
         """${cmd_name}: Approve the request for the user.
 
@@ -151,10 +151,10 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-U',
                   '--user',
-                  help='User to assign for this request.')
+                  help = 'User to assign for this request.')
     @cmdln.option('-G',
                   '--group',
-                  help='Group to assign the user for.')
+                  help = 'Group to assign the user for.')
     def do_assign(self, subcmd, opts, request_id):
         """${cmd_name}: Assign the request to the user.
 
@@ -184,21 +184,21 @@ class QamInterpreter(cmdln.Cmdln):
                          'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-U',
                   '--user',
-                  help='User to list requests for.')
+                  help = 'User to list requests for.')
     @cmdln.option('-R',
                   '--review',
-                  action='store_true',
-                  help='Show all requests that are in review by the user.')
+                  action = 'store_true',
+                  help = 'Show all requests that are in review by the user.')
     @cmdln.option('-T',
                   '--tabular',
-                  action='store_true',
-                  default=False,
-                  help='Output the list in a tabular format.')
+                  action = 'store_true',
+                  default = False,
+                  help = 'Output the list in a tabular format.')
     @cmdln.option('-v',
                   '--verbose',
-                  action='store_true',
-                  default=False,
-                  help='Generate verbose output.')
+                  action = 'store_true',
+                  default = False,
+                  help = 'Generate verbose output.')
     def do_list(self, subcmd, opts):
         """${cmd_name}: Show a list of all open qam-requests currently running.
 
@@ -232,10 +232,10 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-U',
                   '--user',
-                  help='User that rejects this request.')
+                  help = 'User that rejects this request.')
     @cmdln.option('-M',
                   '--message',
-                  help='Message to use for rejection-comment.')
+                  help = 'Message to use for rejection-comment.')
     def do_reject(self, subcmd, opts, request_id):
         """${cmd_name}: Reject the request for the user.
 
@@ -254,10 +254,10 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-U',
                   '--user',
-                  help='User to assign for this request.')
+                  help = 'User to assign for this request.')
     @cmdln.option('-G',
                   '--group',
-                  help='Group to reassign to this request.')
+                  help = 'Group to reassign to this request.')
     def do_unassign(self, subcmd, opts, request_id):
         """${cmd_name}: Unassign the request for the user.
 
@@ -306,25 +306,25 @@ class QamInterpreter(cmdln.Cmdln):
                    'cumulative fashion (pass flag multiple times).')
 @cmdln.option('-G',
               '--group',
-              help='Group to use for the command.')
+              help = 'Group to use for the command.')
 @cmdln.option('-M',
               '--message',
-              help='Message to use for the command.')
+              help = 'Message to use for the command.')
 @cmdln.option('-R',
               '--review',
-              action='store_true',
-              help='Parameter for list command.')
+              action = 'store_true',
+              help = 'Parameter for list command.')
 @cmdln.option('-T',
               '--tabular',
-              action='store_true',
-              help='Create tabular output for list command.')
+              action = 'store_true',
+              help = 'Create tabular output for list command.')
 @cmdln.option('-U',
               '--user',
-              help='User to use for the command.')
+              help = 'User to use for the command.')
 @cmdln.option('-v',
               '--verbose',
-              action='store_true',
-              help='Generate verbose output.')
+              action = 'store_true',
+              help = 'Generate verbose output.')
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
