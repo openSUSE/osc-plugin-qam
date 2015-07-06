@@ -175,13 +175,13 @@ class QamInterpreter(cmdln.Cmdln):
                               group)
         self._run_action(action)
 
-    @cmdln.option('-C',
-                  '--columns',
-                  action='append',
-                  default=[],
-                  help='Define the columns to output for the list command in '
-                       'cumulative fashion (pass flag multiple times).'
-                       '[Available columns: ' + all_columns_string + ']')
+    @cmdln.option('-F',
+                  '--fields',
+                  action = 'append',
+                  default = [],
+                  help = 'Define the values to output in a cumulative fashion '
+                         '(pass flag multiple times).  '
+                         'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-U',
                   '--user',
                   help='User to list requests for.')
@@ -217,12 +217,12 @@ class QamInterpreter(cmdln.Cmdln):
         if opts.verbose:
             keys = self.all_keys
         else:
-            badcols = set(opts.columns) - set(self.all_keys)
+            badcols = set(opts.fields) - set(self.all_keys)
             if len(badcols):
-                print("Unknown columns: %s" % (", ".join(map(repr, badcols))))
+                print("Unknown fields: %s" % (", ".join(map(repr, badcols))))
                 return
-            elif opts.columns:
-                keys = opts.columns
+            elif opts.fields:
+                keys = opts.fields
 
         if listdata:
             listdata = group_sort_requests(listdata)
@@ -299,10 +299,10 @@ class QamInterpreter(cmdln.Cmdln):
         self.stop = True
 
 
-@cmdln.option('-C',
-              '--columns',
-              action='append',
-              help='Define the columns to output for the list command in '
+@cmdln.option('-F',
+              '--fields',
+              action = 'append',
+              help = 'Define the fields to output for the list command in '
                    'cumulative fashion (pass flag multiple times).')
 @cmdln.option('-G',
               '--group',
