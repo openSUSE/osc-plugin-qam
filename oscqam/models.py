@@ -405,65 +405,36 @@ class Assignment(object):
                     (not event.comment or
                     "[qamosc]::accept" in event.comment))
         assignments = []
-        unassignment_user_regex = re.compile(
-            "\[oscqam\]::unassign::(?P<user>\w+)::.*"
-        )
-        unassignment_group_regex = re.compile(
-            "\[oscqam\]::unassign::.+::(?P<group>.*)"
-        )
+        closed_group_reviews = [review for review in request.review_list()
+                                if isinstance(review, GroupReview) and
+                                review.closed]
+        closed_groups = set([review.reviewer for review in
+                             closed_group_reviews])
+        open_user_reviews = [review for review in request.review_list()
+                             if isinstance(review, UserReview) and
+                             review.open]
+        open_users = set([review.reviewer for review in open_user_reviews])
         assignment_user_regex = re.compile(
-            "review assigend to user (?P<user>\w+)"
+            "review assigend to user (?P<user>.+)"
         )
         assignment_group_regex = re.compile("review for group (?P<group>.+)")
-        prev_event = None
-        was_unassignment = False
-        for curr_event in request.statehistory:
-            if is_assignment(curr_event):
-                user_match = assignment_user_regex.match(
-                    prev_event.comment
-                )
-                group_match = assignment_group_regex.match(
-                    curr_event.comment
-                )
-                if not user_match or not group_match:
-                    logger.debug("Assign incorrect format: %s. %s",
-                                    prev_event.comment, curr_event.comment)
-                    continue
-                assignment = Assignment(
-                    User.by_name(request.remote, user_match.group('user')),
-                    Group.for_name(request.remote, group_match.group('group'))
-                )
-                assignments.append(assignment)
-            elif is_unassignment(curr_event):
-                # Kind of ugly and *should* use a state-machine here.
-                was_unassignment = True
-            elif was_unassignment:
-                user_match = unassignment_user_regex.match(
-                    prev_event.comment
-                )
-                group_match = unassignment_group_regex.match(
-                    curr_event.comment
-                )
-                if not user_match or not group_match:
-                    logger.debug("Unassign incorrect format: %s. %s",
-                                 prev_event.comment, curr_event.comment)
-                    was_unassignment = False
-                    continue
-                assignment = Assignment(
-                    User.by_name(request.remote, user_match.group('user')),
-                    Group.for_name(request.remote, group_match.group('group'))
-                )
-                if assignment in assignments:
-                    assignments.remove(assignment)
-            elif is_accepted(curr_event):
-                user = User.by_name(request.remote, curr_event.who)
-                possible = [a for a in assignments if a.user == user]
-                if possible:
-                    group = possible[0].group
-                    assignment = Assignment(user, group)
-                    if assignment in assignments:
-                        assignments.remove(assignment)
-            prev_event = curr_event
+        previous_event = None
+        for event in request.statehistory:
+            logger.debug("Event: {event.comment}".format(event=event))
+            group_match = assignment_group_regex.match(event.comment)
+            if group_match:
+                group = Group.for_name(request.remote,
+                                       group_match.group('group'))
+                if group in closed_groups:
+                    user_match = assignment_user_regex.match(
+                        previous_event.comment
+                    )
+                    if user_match:
+                        user = User.by_name(request.remote,
+                                            user_match.group('user'))
+                        if user in open_users:
+                            assignments.append(Assignment(user, group))
+            previous_event = event
         return assignments
 
     @classmethod

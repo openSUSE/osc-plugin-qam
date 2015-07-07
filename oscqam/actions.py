@@ -145,9 +145,9 @@ class ListAction(OscAction):
             for key in keys:
                 try:
                     if key == "Unassigned Roles":
-                        reviews = Filter(
-                            self.request.review_list_open()
-                        ).isa(GroupReview)
+                        reviews = [review for review
+                                   in self.request.review_list_open()
+                                   if isinstance(review, GroupReview)]
                         names = sorted([str(r.reviewer) for r in reviews])
                         value = " ".join(names)
                     elif key == "Package-Streams":
@@ -156,7 +156,7 @@ class ListAction(OscAction):
                     elif key == "Assigned Roles":
                         roles = self.request.assigned_roles
                         assigns = ["{r.user} ({r.group})".format(r = r)
-                                for r in roles]
+                                   for r in roles]
                         value = ", ".join(assigns)
                     elif key == "Incident Priority":
                         value = self.request.incident_priority
@@ -167,9 +167,11 @@ class ListAction(OscAction):
                     logger.debug("Missing key: %s", key)
             return data
 
-    def __init__(self, remote, user, only_review=False):
+    def __init__(self, remote, user, only_review=False,
+                 template_factory=Template):
         super(ListAction, self).__init__(remote, user)
         self.only_review = only_review
+        self.template_factory = template_factory
 
     def merge_requests(self, user_requests, group_requests):
         """Merge the requests together and set a field 'origin' to determine
@@ -238,7 +240,7 @@ class AssignAction(OscAction):
     def __init__(self, remote, user, request_id, group=None):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
-        self.group = group
+        self.group = Group.for_name(remote, group) if group else None
 
     def action(self):
         if self.group:
@@ -266,7 +268,7 @@ class AssignAction(OscAction):
             raise NonMatchingGroupsError(self.user, user_groups, open_groups)
         if len(both) > 1:
             raise UninferableError(
-                AssignAction.MULTIPLE_GROUPS_MSG.format(group=both)
+                AssignAction.MULTIPLE_GROUPS_MSG.format(groups=both)
             )
         group = both.pop()
         print(AssignAction.AUTO_INFER_MSG.format(group=group))

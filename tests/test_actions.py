@@ -25,7 +25,9 @@ class ActionTests(unittest.TestCase):
         self.sle_open = '34567'
         self.non_qam = '45678'
         self.assigned = '52542'
-        self.multi_assign = 'twoassign'
+        self.single_assign_single_open = 'oneassignoneopen'
+        self.two_assigned = 'twoassigned'
+        self.multi_available_assign = 'twoqam'
         self.template = load_fixture('template.txt')
 
     def test_undo(self):
@@ -61,6 +63,22 @@ class ActionTests(unittest.TestCase):
         unassign()
         self.assertEqual(len(self.mock_remote.post_calls), 2)
 
+    def test_assign_non_matching_groups(self):
+        assign = actions.AssignAction(self.mock_remote, self.user_id,
+                                      self.single_assign_single_open)
+        self.assertRaises(actions.NonMatchingGroupsError, assign)
+
+    def test_assign_multiple_groups(self):
+        assign = actions.AssignAction(self.mock_remote, self.user_id,
+                                      self.multi_available_assign)
+        self.assertRaises(actions.UninferableError, assign)
+
+    def test_assign_multiple_groups_explicit(self):
+        assign = actions.AssignAction(self.mock_remote, self.user_id,
+                                      self.multi_available_assign,
+                                      group='qam-test')
+        assign()
+
     def test_unassign_no_group(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
                                           self.non_qam)
@@ -68,7 +86,7 @@ class ActionTests(unittest.TestCase):
 
     def test_unassign_multiple_groups(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
-                                          self.multi_assign)
+                                          self.two_assigned)
         self.assertRaises(actions.MultipleReviewsError, unassign)
 
     def test_reject_not_failed(self):
