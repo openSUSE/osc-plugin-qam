@@ -737,6 +737,18 @@ class Request(osc.core.Request, XmlFactoryMixin):
             except osc.oscerr.APIError, e:
                 logger.error(e.msg)
                 pass
+            except osc.oscerr.WrongArgs as e:
+                # Temporary workaround, as OBS >= 2.7 can return requests with
+                # acceptinfo-elements that old osc can not handle.
+                if not (osc.core.get_osc_version() < '0.152'):
+                    raise
+                if not 'acceptinfo' in str(e):
+                    raise
+                else:
+                    logger.error(
+                        "Server version too high for osc-client: %s" % str(e)
+                    )
+                    pass
         return requests
 
     @classmethod

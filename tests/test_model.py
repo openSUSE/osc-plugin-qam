@@ -1,6 +1,7 @@
 from urllib2 import HTTPError
 from StringIO import StringIO
 import unittest
+import osc
 from oscqam.models import (Request, Template, MissingSourceProjectError, User,
                            Group, Assignment)
 from .utils import load_fixture
@@ -196,3 +197,28 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(len(open_reviews), 2)
         self.assertEqual(open_reviews[0].reviewer.name, 'qam-cloud')
         self.assertEqual(open_reviews[1].reviewer.name, 'qam-sle')
+
+    def test_obs27_workaround_pre_152(self):
+        def raise_wrong_args(self, request):
+                raise osc.oscerr.WrongArgs("acceptinfo")
+        original_version = osc.core.get_osc_version
+        original_read = Request.read
+        osc.core.get_osc_version = lambda: '0.151'
+        Request.read = raise_wrong_args
+        try:
+            request = Request.parse(self.remote, self.req_unassigned)
+            self.assertEqual(request, [])
+        finally:
+            Request.read = original_read
+            osc.core.get_osc_version = original_version
+
+    def test_obs27_workaround_post_152(self):
+        def raise_wrong_args(self, request):
+                raise osc.oscerr.WrongArgs("acceptinfo")
+        original_read = Request.read
+        Request.read = raise_wrong_args
+        try:
+            self.assertRaises(osc.oscerr.WrongArgs, Request.parse,
+                              self.remote, self.req_unassigned)
+        finally:
+            Request.read = original_read
