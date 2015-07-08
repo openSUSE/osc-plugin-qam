@@ -36,7 +36,7 @@ class NoQamReviewsError(UninferableError):
                           if review.review_type == Request.REVIEW_GROUP]
         message += (" The following groups were already accepted: "
                     "{msg}".format(
-                        msg=", ".join(["{r.by_group} (by {r.who})".format(r=review)
+                        msg = ", ".join(["{r.by_group} (by {r.who})".format(r = review)
                                        for review in accept_reviews])
                     )) if accept_reviews else ""
         super(NoQamReviewsError, self).__init__(message)
@@ -52,9 +52,9 @@ class NonMatchingGroupsError(UninferableError):
 
     def __init__(self, user, user_groups, open_groups):
         message = (self._msg.format(
-            user=user,
-            ug=[g.name for g in user_groups],
-            og=[r.name for r in open_groups],
+            user = user,
+            ug = [g.name for g in user_groups],
+            og = [r.name for r in open_groups],
         ))
         super(NonMatchingGroupsError, self).__init__(message)
 
@@ -67,7 +67,7 @@ class NoReviewError(UninferableError):
     def __init__(self, user):
         super(NoReviewError, self).__init__(
             "User {u} is not assigned for any groups.".format(
-                u=user
+                u = user
             )
         )
 
@@ -81,8 +81,8 @@ class MultipleReviewsError(UninferableError):
         super(MultipleReviewsError, self).__init__(
             "User {u} is currently reviewing for mulitple groups: {g}."
             "Please provide which group to unassign via -G parameter.".format(
-                u=user,
-                g=groups
+                u = user,
+                g = groups
             )
         )
 
@@ -144,15 +144,15 @@ class ListAction(OscAction):
             for key in keys:
                 try:
                     if key == "Unassigned Roles":
-                        names = [r.name for r in self.request.review_list_open()]
+                        names = sorted([r.name for r in
+                                        self.request.review_list_open()])
                         value = " ".join(names)
                     elif key == "Package-Streams":
                         packages = [p for p in self.request.packages]
                         value = " ".join(packages)
                     elif key == "Assigned Roles":
                         roles = self.request.assigned_roles
-                        assigns = ["{r.user} ({r.group})".format(r = r)
-                                for r in roles]
+                        assigns = [str(r) for r in roles]
                         value = ", ".join(assigns)
                     elif key == "Incident Priority":
                         value = self.request.incident_priority
@@ -163,7 +163,7 @@ class ListAction(OscAction):
                     logger.debug("Missing key: %s", key)
             return data
 
-    def __init__(self, remote, user, only_review=False):
+    def __init__(self, remote, user, only_review = False):
         super(ListAction, self).__init__(remote, user)
         self.only_review = only_review
 
@@ -230,7 +230,7 @@ class AssignAction(OscAction):
     AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
-    def __init__(self, remote, user, request_id, group=None):
+    def __init__(self, remote, user, request_id, group = None):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
         self.group = group
@@ -262,23 +262,23 @@ class AssignAction(OscAction):
             raise NonMatchingGroupsError(self.user, user_groups, open_groups)
         if len(both) > 1:
             raise UninferableError(
-                AssignAction.MULTIPLE_GROUPS_MSG.format(group=both)
+                AssignAction.MULTIPLE_GROUPS_MSG.format(group = both)
             )
         group = both.pop()
-        print(AssignAction.AUTO_INFER_MSG.format(group=group))
+        print(AssignAction.AUTO_INFER_MSG.format(group = group))
         return group
 
     def assign(self, group):
         msg = AssignAction.ASSIGN_USER_MSG.format(
-            user=self.user, group=group, request=self.request
+            user = self.user, group = group, request = self.request
         )
         print(msg)
         comment = AssignAction.ASSIGN_COMMENT.format(
-            prefix=PREFIX, user=self.user, group=group
+            prefix = PREFIX, user = self.user, group = group
         )
-        self.request.review_assign(reviewer=self.user,
-                                   group=group,
-                                   comment=comment)
+        self.request.review_assign(reviewer = self.user,
+                                   group = group,
+                                   comment = comment)
 
 
 class UnassignAction(OscAction):
@@ -288,7 +288,7 @@ class UnassignAction(OscAction):
     UNASSIGN_COMMENT = "{prefix}::unassign::{user.login}::{group.name}"
     UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
 
-    def __init__(self, remote, user, request_id, group=None):
+    def __init__(self, remote, user, request_id, group = None):
         super(UnassignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
         self._group = Group.for_name(self.remote, group) if group else None
@@ -330,24 +330,24 @@ class UnassignAction(OscAction):
 
     def unassign(self, group):
         msg = UnassignAction.UNASSIGN_USER_MSG.format(
-            user=self.user, group=group, request=self.request
+            user = self.user, group = group, request = self.request
         )
         print(msg)
         comment = UnassignAction.UNASSIGN_COMMENT.format(
-            prefix=PREFIX, user=self.user, group=group
+            prefix = PREFIX, user = self.user, group = group
         )
         undo_comment = AssignAction.ASSIGN_COMMENT.format(
-            prefix=PREFIX, user=self.user, group=group
+            prefix = PREFIX, user = self.user, group = group
         )
-        self.request.review_reopen(group=group,
-                                   comment=comment)
+        self.request.review_reopen(group = group,
+                                   comment = comment)
         self.undo_stack.append(
-            lambda: self.request.review_accept(group=group,
-                                               comment=undo_comment)
+            lambda: self.request.review_accept(group = group,
+                                               comment = undo_comment)
         )
-        self.request.review_accept(user=self.user, comment=comment)
+        self.request.review_accept(user = self.user, comment = comment)
         self.undo_stack.append(
-            lambda: self.request.review_reopen(user=self.user)
+            lambda: self.request.review_reopen(user = self.user)
         )
 
 
@@ -362,10 +362,10 @@ class ApproveAction(OscAction):
         self.request = Request.by_id(self.remote, request_id)
 
     def action(self):
-        msg = ApproveAction.APPROVE_MSG.format(user=self.user,
-                                               request=self.request)
+        msg = ApproveAction.APPROVE_MSG.format(user = self.user,
+                                               request = self.request)
         print(msg)
-        self.request.review_accept(user=self.user)
+        self.request.review_accept(user = self.user)
 
 
 class RejectAction(OscAction):
@@ -377,7 +377,7 @@ class RejectAction(OscAction):
     """
     DECLINE_MSG = "Will decline {request} for {user}."
 
-    def __init__(self, remote, user, request_id, message=None):
+    def __init__(self, remote, user, request_id, message = None):
         super(RejectAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
         self._template = None
@@ -393,12 +393,12 @@ class RejectAction(OscAction):
         comment = self.get_failure()
         if self.message or not comment:
             comment = self.message
-        msg = RejectAction.DECLINE_MSG.format(user=self.user,
-                                              request=self.request)
+        msg = RejectAction.DECLINE_MSG.format(user = self.user,
+                                              request = self.request)
         print(msg)
         if not comment:
             raise ActionError("Must provide a message for reject.")
-        self.request.review_decline(user=self.user, comment=comment)
+        self.request.review_decline(user = self.user, comment = comment)
 
     def get_failure(self):
         """Get the failure message from the template.
