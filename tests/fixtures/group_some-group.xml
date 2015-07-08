@@ -1,0 +1,9 @@
+<group>
+  <title>some-group</title>
+  <email>some-group@test.test</email>
+  <maintainer userid="maint"/>
+  <person>
+    <person userid="maint"/>
+    <person userid="anonymous"/>
+  </person>
+</group>

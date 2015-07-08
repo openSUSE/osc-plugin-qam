@@ -1,0 +1,65 @@
+<request id="60836">
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="python-setuptools.SUSE_SLE-12_Update"/>
+    <target project="SUSE:SLE-12:Update" package="python-setuptools.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:SLE-12:Update" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:12-Cloud-Compute:5:x86_64" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:SLE-Module-Containers:12:x86_64" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:SLE-Module-Public-Cloud:12:ppc64le" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:SLE-Module-Public-Cloud:12:s390x" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:SLE-Module-Public-Cloud:12:x86_64" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:SLE-SDK:12:ppc64le" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:SLE-SDK:12:s390x" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:SLE-SDK:12:x86_64" package="patchinfo.666"/>
+  </action>
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:666" package="patchinfo"/>
+    <target project="SUSE:Updates:Storage:1.0:x86_64" package="patchinfo.666"/>
+  </action>
+  <state name="review" who="msmeissn" when="2015-06-22T15:48:44">
+    <comment/>
+  </state>
+  <review state="new" by_group="qam-cloud"/>
+  <review state="accepted" when="2015-06-22T15:48:49" who="anonymous" by_user="anonymous">
+    <comment>LGTM</comment>
+    <history who="anonymous" when="2015-06-22T16:09:26">
+      <description>Review got accepted</description>
+      <comment>LGTM</comment>
+    </history>
+  </review>
+  <review state="new" by_group="qam-sle"/>
+  <review state="accepted" when="2015-06-22T15:48:49" who="LarsMB" by_group="some-group">
+    <comment/>
+    <history who="LarsMB" when="2015-06-23T09:56:57">
+      <description>Review got accepted</description>
+    </history>
+  </review>
+  <description>requesting release</description>
+</request>

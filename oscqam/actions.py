@@ -1,7 +1,7 @@
 from __future__ import print_function
 import logging
-from .models import (Group, User, Request, Template, ReportedError,
-                     RemoteError, TemplateNotFoundError)
+from .models import (Group, GroupReview, User, Request, Template,
+                     ReportedError, RemoteError, TemplateNotFoundError)
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -33,11 +33,12 @@ class NoQamReviewsError(UninferableError):
         message = "No 'qam'-groups need review."
         accept_reviews = [review for review
                           in accepted_reviews
-                          if review.review_type == Request.REVIEW_GROUP]
-        message += (" The following groups were already accepted: "
+                          if isinstance(review, GroupReview)]
+        message += (" The following groups were already assigned/finished: "
                     "{msg}".format(
-                        msg = ", ".join(["{r.by_group} (by {r.who})".format(r = review)
-                                       for review in accept_reviews])
+                        msg=", ".join(["{r.reviewer}".format(
+                            r=review
+                        ) for review in accept_reviews])
                     )) if accept_reviews else ""
         super(NoQamReviewsError, self).__init__(message)
 
@@ -125,10 +126,10 @@ class OscAction(object):
 
 class ListAction(OscAction):
     class ListData(object):
-        def __init__(self, request):
+        def __init__(self, request, template_factory):
             """Associate a request with the correct template."""
             self.request = request
-            self.template = request.get_template(Template)
+            self.template = request.get_template(template_factory)
 
         def values(self, keys):
             """Return the values for keys.
@@ -144,8 +145,10 @@ class ListAction(OscAction):
             for key in keys:
                 try:
                     if key == "Unassigned Roles":
-                        names = sorted([r.name for r in
-                                        self.request.review_list_open()])
+                        reviews = [review for review
+                                   in self.request.review_list_open()
+                                   if isinstance(review, GroupReview)]
+                        names = sorted([str(r.reviewer) for r in reviews])
                         value = " ".join(names)
                     elif key == "Package-Streams":
                         packages = [p for p in self.request.packages]
@@ -163,9 +166,11 @@ class ListAction(OscAction):
                     logger.debug("Missing key: %s", key)
             return data
 
-    def __init__(self, remote, user, only_review = False):
+    def __init__(self, remote, user, only_review=False,
+                 template_factory=Template):
         super(ListAction, self).__init__(remote, user)
         self.only_review = only_review
+        self.template_factory = template_factory
 
     def merge_requests(self, user_requests, group_requests):
         """Merge the requests together and set a field 'origin' to determine
@@ -218,7 +223,8 @@ class ListAction(OscAction):
         listdata = []
         for request in requests:
             try:
-                listdata.append(self.ListData(request))
+                listdata.append(self.ListData(request,
+                                              self.template_factory))
             except TemplateNotFoundError as e:
                 logger.warning(str(e))
         return listdata
@@ -233,7 +239,7 @@ class AssignAction(OscAction):
     def __init__(self, remote, user, request_id, group = None):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
-        self.group = group
+        self.group = Group.for_name(remote, group) if group else None
 
     def action(self):
         if self.group:
@@ -250,10 +256,9 @@ class AssignAction(OscAction):
         """
         user_groups = set(self.user.qam_groups)
         reviews = [review for review in self.request.review_list() if
-                   (review.review_type == Request.REVIEW_GROUP and
-                    review.state.lower() == 'new')]
-        review_groups = [Group.for_name(self.remote, review.name) for review
-                         in reviews]
+                   (isinstance(review, GroupReview) and review.open
+                    and review.reviewer.name.startswith('qam'))]
+        review_groups = [review.reviewer for review in reviews]
         open_groups = set(review_groups)
         if not open_groups:
             raise NoQamReviewsError(self.request.review_list_accepted())
@@ -262,7 +267,9 @@ class AssignAction(OscAction):
             raise NonMatchingGroupsError(self.user, user_groups, open_groups)
         if len(both) > 1:
             raise UninferableError(
-                AssignAction.MULTIPLE_GROUPS_MSG.format(group = both)
+                AssignAction.MULTIPLE_GROUPS_MSG.format(
+                    groups = [str(g) for g in both]
+                )
             )
         group = both.pop()
         print(AssignAction.AUTO_INFER_MSG.format(group = group))

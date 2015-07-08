@@ -2,7 +2,7 @@ from urllib2 import HTTPError
 from StringIO import StringIO
 import unittest
 from oscqam.models import (Request, Template, MissingSourceProjectError, User,
-                           Group)
+                           Group, Assignment)
 from .utils import load_fixture
 from .mockremote import MockRemote
 
@@ -13,12 +13,15 @@ class ModelTests(unittest.TestCase):
         cls.req_1_xml = load_fixture('request_12345.xml')
         cls.req_2_xml = load_fixture('request_23456.xml')
         cls.req_3_xml = load_fixture('request_52542.xml')
+        cls.req_4_xml = load_fixture('request_56789.xml')
         cls.req_search = load_fixture('request_search.xml')
         cls.req_search_none = load_fixture('request_search_none_proj.xml')
         cls.req_no_src = load_fixture('request_no_src.xml')
         cls.req_assign = load_fixture('request_assign.xml')
         cls.req_unassign = load_fixture('request_unassign.xml')
+        cls.req_unassigned = load_fixture('request_unassigned.xml')
         cls.req_invalid = load_fixture('request_no_src.xml')
+        cls.req_sle11sp4 = load_fixture('request_sle11sp4.xml')
         cls.template = load_fixture('template.txt')
         cls.template_rh = load_fixture('template_rh.txt')
         cls.user = load_fixture('person_anonymous.xml')
@@ -80,6 +83,13 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(assigned[0].user.login, 'anonymous')
         self.assertEqual(assigned[0].group.name, 'qam-sle')
 
+    def test_assigned_roles_sle11_sp4(self):
+        request = Request.parse(self.remote, self.req_sle11sp4)[0]
+        assigned = request.assigned_roles
+        self.assertEqual(len(assigned), 1)
+        self.assertEqual(assigned[0].user.login, 'anonymous')
+        self.assertEqual(assigned[0].group.name, 'qam-sle')
+
     def test_unassigned_removes_roles(self):
         request = Request.parse(self.remote, self.req_unassign)[0]
         assigned = request.assigned_roles
@@ -127,9 +137,20 @@ class ModelTests(unittest.TestCase):
     def test_assignment_equality(self):
         user = User.parse(self.remote, self.user)[0]
         group = Group.parse(self.remote, self.group)[0]
-        a1 = Request.Assignment(user, group)
-        a2 = Request.Assignment(user, group)
+        a1 = Assignment(user, group)
+        a2 = Assignment(user, group)
         self.assertEqual(a1, a2)
+
+    def test_assignment_inference_single_group(self):
+        """Test that assignments can be inferred from a single group even
+        if the comments are not used.
+        """
+        request = Request.parse(self.remote, self.req_4_xml)[0]
+        assignments = Assignment.infer(request)
+        self.assertEqual(len(assignments), 1)
+        assignment = assignments[0]
+        self.assertEqual(assignment.user.login, 'anonymous')
+        self.assertEqual(assignment.group.name, 'qam-sle')
 
     def test_incident_priority(self):
         request = Request.parse(self.remote, self.req_1_xml)[0]
@@ -168,3 +189,10 @@ class ModelTests(unittest.TestCase):
         self.remote.register_url(endpoint, raise_http)
         request = Request.parse(self.remote, self.req_1_xml)[0]
         self.assertEqual(request.incident_priority, Request.UnknownPriority())
+
+    def test_unassigned_roles(self):
+        request = Request.parse(self.remote, self.req_unassigned)[0]
+        open_reviews = request.review_list_open()
+        self.assertEqual(len(open_reviews), 2)
+        self.assertEqual(open_reviews[0].reviewer.name, 'qam-cloud')
+        self.assertEqual(open_reviews[1].reviewer.name, 'qam-sle')

@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.4.1
+=====
+
+- Rewrote assignment inference logic to handle incorrect case.
+
 0.4.0
 =====
 

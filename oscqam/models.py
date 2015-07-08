@@ -228,6 +228,8 @@ class Group(XmlFactoryMixin):
         return hash(self.name) + hash(type(self))
 
     def __eq__(self, other):
+        if not isinstance(other, Group):
+            return False
         return self.name == other.name
 
     def __str__(self):
@@ -269,6 +271,8 @@ class User(XmlFactoryMixin):
         return hash(self.login)
 
     def __eq__(self, other):
+        if not isinstance(other, User):
+            return False
         return isinstance(other, User) and self.login == other.login
 
     def __str__(self):
@@ -288,6 +292,184 @@ class User(XmlFactoryMixin):
     @classmethod
     def parse(cls, remote, xml):
         return super(User, cls).parse(remote, xml, cls.endpoint)
+
+
+class Review(object):
+    """Base class for buildservice-review objects.
+
+    """
+    OPEN_STATES = ('new', 'review')
+    CLOSED_STATES = ('accepted',)
+
+    def __init__(self, remote, review, reviewer):
+        self._review = review
+        self.remote = remote
+        self.reviewer = reviewer
+        self.state = review.state.lower()
+        self.open = self.state in self.OPEN_STATES
+        self.closed = self.state in self.CLOSED_STATES
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return u'Review: {0} ({1})'.format(self.reviewer, self.state)
+
+
+class GroupReview(Review):
+    def __init__(self, remote, review):
+        reviewer = Group.for_name(remote, review.by_group)
+        super(GroupReview, self).__init__(remote, review, reviewer)
+
+
+class UserReview(Review):
+    def __init__(self, remote, review):
+        reviewer = User.by_name(remote, review.by_user)
+        super(UserReview, self).__init__(remote, review, reviewer)
+
+
+class Assignment(object):
+    """Associates a user with a group in the relation
+    '<user> performs review for <group>'.
+
+    This is solely a QAM construct as the buildservice has no concept of these
+    assignments.
+
+    """
+    def __init__(self, user, group):
+        self.user = user
+        self.group = group
+
+    def __hash__(self):
+        return hash(self.user) + hash(self.group)
+
+    def __eq__(self, other):
+        return (self.user == other.user and
+                self.group == other.group)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return u"{1} -> {0}".format(self.user, self.group)
+
+    @staticmethod
+    def infer_by_single_group(request):
+        """Return an L{oscqam.models.Assignment} for the request if
+        only one group is assigned for review.
+
+        This will be interpreted as the only possible group that can be
+        reviewed by an open user-review.
+
+        :param request: Request to check for a possible assigned role.
+        :type request: L{oscqam.models.Request}
+
+        :returns: set(L{oscqam.models.Request.Assignment})
+
+        """
+        accepted = [r for r in request.review_list_accepted()
+                    if isinstance(r, GroupReview)]
+        if not len(accepted) == 1:
+            return set()
+        users = [r for r in request.review_list_open()
+                 if isinstance(r, UserReview)]
+        if not len(users) == 1:
+            logger.debug(
+                "No user for an assigned group-review:"
+                "Group: {0}, Request {1}.".format(accepted[0].reviewer,
+                                                  request)
+            )
+            return set()
+        group = accepted[0].reviewer
+        user = users[0].reviewer
+        return set([Assignment(user, group)])
+
+    @staticmethod
+    def infer_by_comments(request):
+        """Return assignments for the request based on comments.
+
+        :param request: Request to check for a possible assigned roles.
+        :type request: L{oscqam.models.Request}
+
+        :returns: [L{oscqam.models.Request.Assignment}]
+        """
+        def is_assignment(event):
+            return "Review got assigned" in event.description
+
+        def is_unassignment(event):
+            return ("Review got reopened" in event.description and
+                    "unassign" in event.comment)
+
+        def is_accepted(event):
+            return ("Review got accepted in event.description" and
+                    (not event.comment or
+                    "[qamosc]::accept" in event.comment))
+        assignments = []
+        closed_group_reviews = [review for review in request.review_list()
+                                if isinstance(review, GroupReview) and
+                                review.closed]
+        closed_groups = set([review.reviewer for review in
+                             closed_group_reviews])
+        open_user_reviews = [review for review in request.review_list()
+                             if isinstance(review, UserReview) and
+                             review.open]
+        open_users = set([review.reviewer for review in open_user_reviews])
+        assignment_user_regex = re.compile(
+            "review assigend to user (?P<user>.+)"
+        )
+        assignment_group_regex = re.compile("review for group (?P<group>.+)")
+        previous_event = None
+        for event in request.statehistory:
+            logger.debug("Event: {event.comment}".format(event=event))
+            group_match = assignment_group_regex.match(event.comment)
+            if group_match:
+                group = Group.for_name(request.remote,
+                                       group_match.group('group'))
+                if group in closed_groups:
+                    user_match = assignment_user_regex.match(
+                        previous_event.comment
+                    )
+                    if user_match:
+                        user = User.by_name(request.remote,
+                                            user_match.group('user'))
+                        if user in open_users:
+                            assignments.append(Assignment(user, group))
+            previous_event = event
+        return assignments
+
+    @classmethod
+    def infer(cls, request):
+        """Create assignments for the given request.
+
+        This code uses heuristics to find assignments as the build service
+        does not have the concept of a review being done by a user:
+        a relation 'group review is performed by user' is inferred from
+        the request via the following two approaches:
+
+        1. If only one group-review and one user-review exist, it is
+        assumed that the user is performing the review for the group.
+
+        2. If multiple group-reviews exist the user-reviews must be inferred
+        via comments - this uses the fact that the new 'addreview' command
+        always adds a comment of the form 'review for group <group>'.
+        However if a user chooses to accept the review by hand and add a new
+        review for himself, this will not happen (e.g. by using
+        ``osc review command``).
+
+        :param request: Request to check for a possible assigned roles.
+        :type request: L{oscqam.models.Request}
+
+        :returns: [L{oscqam.models.Assignment}]
+
+        """
+        assignments = set()
+        assignments.update(cls.infer_by_single_group(request))
+        assignments.update(cls.infer_by_comments(request))
+        if not assignments:
+            logger.debug(
+                "No assignments could be found for {0}".format(request)
+            )
+        return list(assignments)
 
 
 class Request(osc.core.Request, XmlFactoryMixin):
@@ -320,19 +502,6 @@ class Request(osc.core.Request, XmlFactoryMixin):
         def __lt__(self, other):
             return False
 
-    class Assignment(object):
-        """Minimal class to store an assignment of a user for a group.
-        """
-        def __init__(self, user, group):
-            self.user = user
-            self.group = group
-
-        def __hash__(self):
-            return hash(self.user) + hash(self.group)
-
-        def __eq__(self, other):
-            return (self.user == other.user and
-                    self.group == other.group)
 
         def __str__(self):
             return unicode(self).encode('utf-8')
@@ -355,6 +524,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self._packages = None
         self._assigned_roles = None
         self._priority = None
+        self._reviews = []
 
     @property
     def incident_priority(self):
@@ -378,14 +548,15 @@ class Request(osc.core.Request, XmlFactoryMixin):
     @property
     def assigned_roles(self):
         if not self._assigned_roles:
-            self._assigned_roles = self._infer_assignment()
+            self._assigned_roles = Assignment.infer(self)
         return self._assigned_roles
 
     @property
     def groups(self):
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
-        return [review.by_group for review in self.reviews if review.by_group]
+        return [review.reviewer for review in self.review_list()
+                if isinstance(review, GroupReview)]
 
     @property
     def packages(self):
@@ -468,29 +639,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def review_list(self):
         """Returns all reviews as a list.
         """
-        def set_name_review(r):
-            if r.by_group is not None:
-                r.name = r.by_group
-                r.review_type = Request.REVIEW_GROUP
-            elif r.by_user is not None:
-                r.name = r.by_user
-                r.review_type = Request.REVIEW_USER
-            elif r.who:
-                r.name = r.who
-                r.review_type = Request.REVIEW_OTHER
-            else:
-                r.name = ''
-                r.review_type = Request.REVIEW_OTHER
-        if not self.reviews:
-            return []
-        if isinstance(self.reviews, list):
-            for r in self.reviews:
-                set_name_review(r)
-            reviews = self.reviews
-        else:
-            set_name_review(self.review)
-            reviews = [self.review]
-        return reviews
+        if not self._reviews:
+            for review in self.reviews:
+                if review.by_group:
+                    self._reviews.append(GroupReview(self.remote, review))
+                elif review.by_user:
+                    self._reviews.append(UserReview(self.remote, review))
+        return self._reviews
 
     def review_list_open(self):
         """Return only open reviews.
@@ -597,72 +752,6 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if reqid:
             return reqid.group('req')
         return request_id
-
-    def _infer_assignment(self):
-        def is_assignment(event):
-            return "Review got assigned" in event.description
-
-        def is_unassignment(event):
-            return ("Review got reopened" in event.description and
-                    "unassign" in event.comment)
-
-        def is_accepted(event):
-            return ("Review got accepted in event.description" and
-                    (not event.comment or
-                     "[qamosc]::accept" in event.comment))
-        assignments = []
-        unassignment_user_regex = re.compile(
-            "\[oscqam\]::unassign::(?P<user>\w+)::.*"
-        )
-        unassignment_group_regex = re.compile(
-            "\[oscqam\]::unassign::.+::(?P<group>.*)"
-        )
-        assignment_user_regex = re.compile(
-            "review assigend to user (?P<user>\w+)"
-        )
-        assignment_group_regex = re.compile("review for group (?P<group>.+)")
-        prev_event = None
-        was_unassignment = False
-        for curr_event in self.statehistory:
-            if is_assignment(curr_event):
-                user_match = assignment_user_regex.match(prev_event.comment)
-                group_match = assignment_group_regex.match(curr_event.comment)
-                if not user_match or not group_match:
-                    logger.debug("Assign incorrect format: %s. %s",
-                                 prev_event.comment, curr_event.comment)
-                    continue
-                assignment = self.Assignment(
-                    User.by_name(self.remote, user_match.group('user')),
-                    Group.for_name(self.remote, group_match.group('group'))
-                )
-                assignments.append(assignment)
-            elif is_unassignment(curr_event):
-                # Kind of ugly and *should* use a state-machine here.
-                was_unassignment = True
-            elif was_unassignment:
-                user_match = unassignment_user_regex.match(prev_event.comment)
-                group_match = unassignment_group_regex.match(curr_event.comment)
-                if not user_match or not group_match:
-                    logger.debug("Unassign incorrect format: %s. %s",
-                                 prev_event.comment, curr_event.comment)
-                    was_unassignment = False
-                    continue
-                assignment = self.Assignment(
-                    User.by_name(self.remote, user_match.group('user')),
-                    Group.for_name(self.remote, group_match.group('group'))
-                )
-                if assignment in assignments:
-                    assignments.remove(assignment)
-            elif is_accepted(curr_event):
-                user = User.by_name(self.remote, curr_event.who)
-                possible = [a for a in assignments if a.user == user]
-                if possible:
-                    group = possible[0].group
-                    assignment = self.Assignment(user, group)
-                    if assignment in assignments:
-                        assignments.remove(assignment)
-            prev_event = curr_event
-        return assignments
 
     def __eq__(self, other):
         project = self.actions[0].src_project
