@@ -189,7 +189,7 @@ class OscAction(object):
         self.out.flush()
 
 
-class ListData(object):
+class Report(object):
     """Composes request with the matching template.
 
     Provides a method to output a list of keys from requests/templates and
@@ -248,14 +248,14 @@ class ListAction(OscAction):
     default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
                       "Incident Priority"]
 
-    def group_sort_requests(self):
-        """Sort request according to rating and request id.
+    def group_sort_reports(self):
+        """Sort reports according to rating and request id.
 
         First sort by Priority, then rating and finally request id.
         """
-        requests = filter(None, self.requests)
-        self.requests = multi_level_sort(
-            requests,
+        reports = filter(None, self.reports)
+        self.reports = multi_level_sort(
+            reports,
             [lambda l: l.request.reqid,
              lambda l: l.template.log_entries["Rating"],
              lambda l: l.request.incident_priority]
@@ -269,9 +269,9 @@ class ListAction(OscAction):
         """Return all reviews that match the parameters of the RequestAction.
 
         """
-        self.requests = self._load_listdata(self.load_requests())
-        self.group_sort_requests()
-        return self.requests
+        self.reports = self._load_listdata(self.load_requests())
+        self.group_sort_reports()
+        return self.reports
 
     @abc.abstractmethod
     def load_requests(self):
@@ -304,13 +304,13 @@ class ListAction(OscAction):
 
         :param requests: [L{oscqam.models.Request}]
 
-        :returns: [L{oscqam.actions.ListData}]
+        :returns: [L{oscqam.actions.Report}]
         """
         listdata = []
         for request in requests:
             try:
-                listdata.append(ListData(request,
-                                         self.template_factory))
+                listdata.append(Report(request,
+                                       self.template_factory))
             except TemplateNotFoundError as e:
                 logger.warning(str(e))
         return listdata
