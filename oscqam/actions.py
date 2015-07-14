@@ -37,7 +37,7 @@ class NoQamReviewsError(UninferableError):
         message += (" The following groups were already assigned/finished: "
                     "{msg}".format(
                         msg=", ".join(["{r.reviewer}".format(
-                            r=review
+                            r = review
                         ) for review in accept_reviews])
                     )) if accept_reviews else ""
         super(NoQamReviewsError, self).__init__(message)
@@ -94,6 +94,17 @@ class TestResultMismatchError(ReportedError):
     def __init__(self, expected, log_path):
         super(TestResultMismatchError, self).__init__(
             self._msg.format(expected, log_path)
+        )
+
+
+class ReportNotYetGeneratedError(ReportedError):
+    _msg = ("The report for request '{0}' is not generated yet. "
+            "To prevent bugs in the template parser, assigning "
+            "is not yet possible.")
+
+    def __init__(self, request):
+        super(ReportNotYetGeneratedError, self).__init__(
+            self._msg.format(str(request))
         )
 
 
@@ -166,8 +177,8 @@ class ListAction(OscAction):
                     logger.debug("Missing key: %s", key)
             return data
 
-    def __init__(self, remote, user, only_review=False,
-                 template_factory=Template):
+    def __init__(self, remote, user, only_review = False,
+                 template_factory = Template):
         super(ListAction, self).__init__(remote, user)
         self.only_review = only_review
         self.template_factory = template_factory
@@ -236,10 +247,27 @@ class AssignAction(OscAction):
     AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
-    def __init__(self, remote, user, request_id, group = None):
+    def __init__(self, remote, user, request_id, group = None,
+                 template_factory = Template):
         super(AssignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
         self.group = Group.for_name(remote, group) if group else None
+        self.template_factory = template_factory
+
+    def template_exists(self):
+        """Check that the template associated with the request exists.
+
+        If the template is not yet generated, assigning a user can lead
+        to the template-generator no longer finding the request and
+        never generating the template.
+        """
+        try:
+            self.request.get_template(self.template_factory)
+        except TemplateNotFoundError:
+            raise ReportNotYetGeneratedError(self.request)
+
+    def validate(self):
+        self.template_exists()
 
     def action(self):
         if self.group:
@@ -276,6 +304,7 @@ class AssignAction(OscAction):
         return group
 
     def assign(self, group):
+        self.validate()
         msg = AssignAction.ASSIGN_USER_MSG.format(
             user = self.user, group = group, request = self.request
         )
@@ -284,8 +313,8 @@ class AssignAction(OscAction):
             prefix = PREFIX, user = self.user, group = group
         )
         self.request.review_assign(reviewer = self.user,
-                                   group = group,
-                                   comment = comment)
+                                    group = group,
+                                    comment = comment)
 
 
 class UnassignAction(OscAction):

@@ -42,7 +42,8 @@ class ActionTests(unittest.TestCase):
 
     def test_infer_groups_match(self):
         assign_action = actions.AssignAction(self.mock_remote, self.user_id,
-                                             self.sle_open)
+                                             self.sle_open,
+                                             template_factory = lambda r: True)
         assign_action()
         self.assertEqual(len(self.mock_remote.post_calls), 1)
 
@@ -65,18 +66,21 @@ class ActionTests(unittest.TestCase):
 
     def test_assign_non_matching_groups(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
-                                      self.single_assign_single_open)
+                                      self.single_assign_single_open,
+                                      template_factory=lambda r: True)
         self.assertRaises(actions.NonMatchingGroupsError, assign)
 
     def test_assign_multiple_groups(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
-                                      self.multi_available_assign)
+                                      self.multi_available_assign,
+                                      template_factory=lambda r: True)
         self.assertRaises(actions.UninferableError, assign)
 
     def test_assign_multiple_groups_explicit(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
-                                      group='qam-test')
+                                      group='qam-test',
+                                      template_factory=lambda r: True)
         assign()
 
     def test_unassign_no_group(self):
@@ -97,3 +101,12 @@ class ActionTests(unittest.TestCase):
                                       self.cloud_open)
         action._template = template
         self.assertRaises(actions.TestResultMismatchError, action)
+
+    def test_assign_no_report(self):
+        def raiser(request):
+            raise models.TemplateNotFoundError("")
+        assign = actions.AssignAction(self.mock_remote, self.user_id,
+                                      self.multi_available_assign,
+                                      group = 'qam-test',
+                                      template_factory = raiser)
+        self.assertRaises(actions.ReportNotYetGeneratedError, assign)
