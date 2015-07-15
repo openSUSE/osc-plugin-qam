@@ -24,6 +24,7 @@ class ActionTests(unittest.TestCase):
         self.non_open = '23456'
         self.sle_open = '34567'
         self.non_qam = '45678'
+        self.one_assigned = '56789'
         self.assigned = '52542'
         self.single_assign_single_open = 'oneassignoneopen'
         self.two_assigned = 'twoassigned'
@@ -110,3 +111,10 @@ class ActionTests(unittest.TestCase):
                                       group = 'qam-test',
                                       template_factory = raiser)
         self.assertRaises(actions.ReportNotYetGeneratedError, assign)
+
+    def test_assign_only_one_group(self):
+        assign = actions.AssignAction(self.mock_remote, self.user_id,
+                                      self.one_assigned, group='qam-test',
+                                      template_factory=lambda r: True)
+        self.assertRaises(actions.OneGroupAssignedError, assign)
+

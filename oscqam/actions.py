@@ -108,6 +108,18 @@ class ReportNotYetGeneratedError(ReportedError):
         )
 
 
+class OneGroupAssignedError(ReportedError):
+    _msg = ("User {user} is already assigned for group {group}. "
+            "Assigning for multiple groups at once is currently not allowed "
+            "to prevent inconsistent states in the build service.")
+
+    def __init__(self, assignment):
+        super(OneGroupAssignedError, self).__init__(
+            self._msg.format(user = str(assignment.user),
+                             group = str(assignment.group))
+        )
+
+
 class OscAction(object):
     """Base class for actions that need to interface with the open build service.
 
@@ -266,8 +278,24 @@ class AssignAction(OscAction):
         except TemplateNotFoundError:
             raise ReportNotYetGeneratedError(self.request)
 
+    def first_group_assigned(self):
+        """Prevent a user from assigned more than 1 group at a time.
+
+        The buildservice creates only one user review, even if the user
+        assigns to 2 groups.
+        This user-review will be closed as soon as the user accepts the
+        first review, leading to inconsistent state in the buildservice.
+
+        Not allowing a user to assign for > 1 group at a time at least
+        prevents this.
+        """
+        for assignment in self.request.assigned_roles:
+            if assignment.user == self.user:
+                raise OneGroupAssignedError(assignment)
+
     def validate(self):
         self.template_exists()
+        self.first_group_assigned()
 
     def action(self):
         if self.group:
