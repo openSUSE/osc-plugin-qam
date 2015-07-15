@@ -3,7 +3,6 @@ everything in a consistent state.
 
 """
 import contextlib
-from functools import total_ordering
 import logging
 import re
 import urllib
@@ -14,6 +13,9 @@ except ImportError:
     import cElementTree as ET
 import osc.core
 import osc.oscerr
+
+from oscqam.compat import total_ordering
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
