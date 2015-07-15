@@ -55,6 +55,53 @@ def group_sort_requests(requests):
                                        lambda l: l.request.incident_priority])
 
 
+class InvalidFieldsError(ReportedError):
+    """Raise when the user wants to output non-existent fields.
+    """
+    _msg = ("Unknown fields: {0}.  "
+            "Valid fields: {1}.")
+
+    def __init__(self, bad_fields):
+        super(InvalidFieldsError, self).__init__(
+            self._msg.format(", ".join(map(repr, bad_fields)),
+                             ", ".join(map(repr, ReviewFields.all_fields)))
+        )
+
+
+class ReviewFields(object):
+    all_fields = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
+                  "Category", "Rating", "Unassigned Roles", "Assigned Roles",
+                  "Package-Streams", "Incident Priority"]
+
+    def fields(self, _):
+        return self.all_fields
+
+    @staticmethod
+    def review_fields_by_opts(opts):
+        if opts.verbose:
+            return ReviewFields()
+        elif opts.fields:
+            return UserFields(opts.fields)
+        else:
+            return DefaultFields()
+
+
+class DefaultFields(ReviewFields):
+    def fields(self, action):
+        return action.default_fields
+
+
+class UserFields(ReviewFields):
+    def __init__(self, fields):
+        badcols = set(fields) - set(self.all_fields)
+        if len(badcols):
+            raise InvalidFieldsError(badcols)
+        self._fields = fields
+
+    def fields(self, _):
+        return self._fields
+
+
 def output_list(sep, value):
     """Join lists on the given separator and return strings unaltered.
 
@@ -115,10 +162,7 @@ class QamInterpreter(cmdln.Cmdln):
         self.parent_cmdln = parent_cmdln
 
     name = 'osc qam'
-    all_keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
-                "Category", "Rating", "Unassigned Roles",
-                "Assigned Roles", "Package-Streams", "Incident Priority"]
-    all_columns_string = ", ".join(all_keys)
+    all_columns_string = ", ".join(ReviewFields.all_fields)
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
@@ -191,28 +235,6 @@ class QamInterpreter(cmdln.Cmdln):
                         for datum in listdata]
             print(formatter(listdata, keys))
 
-    def _list_keys(self, fields, verbose):
-        """Return keys to output for the given configuration.
-
-        :param fields: Fields passed from the user.
-        :type fields: [str]
-
-        :param verbose: True if verbose output is desired.
-        :type verbose: bool
-
-        :returns: [str]
-        """
-        if verbose:
-            keys = self.all_keys
-        else:
-            badcols = set(fields) - set(self.all_keys)
-            if len(badcols):
-                unknown = (", ".join(map(repr, badcols)))
-                raise ReportedError("Unknown fields: %s" % unknown)
-            elif fields:
-                keys = fields
-        return keys
-
     @cmdln.option('-F',
                   '--fields',
                   action = 'append',
@@ -250,9 +272,9 @@ class QamInterpreter(cmdln.Cmdln):
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
-        action = ListAction(self.api, self.affected_user)
-        fields = opts.fields if opts.fields else action.default_fields
-        keys = self._list_keys(fields, opts.verbose)
+        fields = ReviewFields.review_fields_by_opts(opts)
+        action = ListOpenAction(self.api, self.affected_user)
+        keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
 
     @cmdln.option('-F',
@@ -289,12 +311,12 @@ class QamInterpreter(cmdln.Cmdln):
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
+        fields = ReviewFields.review_fields_by_opts(opts)
         if opts.user:
-            action = ListAssignedUserAction(self.api, opts.user)
+            action = ListAssignedUserAction(self.api, self.affected_user)
         else:
             action = ListAssignedAction(self.api, self.affected_user)
-        fields = opts.fields if opts.fields else action.default_fields
-        keys = self._list_keys(fields, opts.verbose)
+        keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
 
     @cmdln.option('-U',
