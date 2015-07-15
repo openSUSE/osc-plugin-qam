@@ -189,6 +189,55 @@ class OscAction(object):
         self.out.flush()
 
 
+class ListData(object):
+    """Composes request with the matching template.
+
+    Provides a method to output a list of keys from requests/templates and
+    will dispatch to the correct object.
+
+    """
+
+    def __init__(self, request, template_factory):
+        """Associate a request with the correct template."""
+        self.request = request
+        self.template = request.get_template(template_factory)
+
+    def values(self, keys):
+        """Return the values for keys.
+
+        :type keys: [str]
+        :param keys: Identifiers for the data to be returned from the template
+                    or associated request.
+
+        :returns: [str]
+        """
+        data = []
+        entries = self.template.log_entries
+        for key in keys:
+            try:
+                if key == "Unassigned Roles":
+                    reviews = [review for review
+                               in self.request.review_list_open()
+                               if isinstance(review, GroupReview)]
+                    names = sorted([str(r.reviewer) for r in reviews])
+                    value = " ".join(names)
+                elif key == "Package-Streams":
+                    packages = [p for p in self.request.packages]
+                    value = " ".join(packages)
+                elif key == "Assigned Roles":
+                    roles = self.request.assigned_roles
+                    assigns = [str(r) for r in roles]
+                    value = ", ".join(assigns)
+                elif key == "Incident Priority":
+                    value = self.request.incident_priority
+                else:
+                    value = entries[key]
+                data.append(value)
+            except KeyError:
+                logger.debug("Missing key: %s", key)
+        return data
+
+
 class ListAction(OscAction):
     """Base action for operation that work on a list of requests.
 
@@ -198,47 +247,6 @@ class ListAction(OscAction):
     __metaclass__ = abc.ABCMeta
     default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
                       "Incident Priority"]
-
-    class ListData(object):
-        def __init__(self, request, template_factory):
-            """Associate a request with the correct template."""
-            self.request = request
-            self.template = request.get_template(template_factory)
-
-        def values(self, keys):
-            """Return the values for keys.
-
-            :type keys: [str]
-            :param keys: Identifiers for the data to be returned from the template
-                        or associated request.
-
-            :returns: [str]
-            """
-            data = []
-            entries = self.template.log_entries
-            for key in keys:
-                try:
-                    if key == "Unassigned Roles":
-                        reviews = [review for review
-                                   in self.request.review_list_open()
-                                   if isinstance(review, GroupReview)]
-                        names = sorted([str(r.reviewer) for r in reviews])
-                        value = " ".join(names)
-                    elif key == "Package-Streams":
-                        packages = [p for p in self.request.packages]
-                        value = " ".join(packages)
-                    elif key == "Assigned Roles":
-                        roles = self.request.assigned_roles
-                        assigns = [str(r) for r in roles]
-                        value = ", ".join(assigns)
-                    elif key == "Incident Priority":
-                        value = self.request.incident_priority
-                    else:
-                        value = entries[key]
-                    data.append(value)
-                except KeyError:
-                    logger.debug("Missing key: %s", key)
-            return data
 
     def group_sort_requests(self):
         """Sort request according to rating and request id.
@@ -296,13 +304,13 @@ class ListAction(OscAction):
 
         :param requests: [L{oscqam.models.Request}]
 
-        :returns: [L{oscqam.actions.ListAction.ListData}]
+        :returns: [L{oscqam.actions.ListData}]
         """
         listdata = []
         for request in requests:
             try:
-                listdata.append(self.ListData(request,
-                                              self.template_factory))
+                listdata.append(ListData(request,
+                                         self.template_factory))
             except TemplateNotFoundError as e:
                 logger.warning(str(e))
         return listdata
