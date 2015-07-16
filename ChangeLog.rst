@@ -5,6 +5,8 @@ ChangeLog
 =====
 
 - Rewrote assignment inference logic to handle incorrect case.
+- Workaround for OBS2.7 and osc < 0.152 clients that can not handle
+  acceptinfo-tags.
 
 0.4.0
 =====
