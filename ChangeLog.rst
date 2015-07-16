@@ -1,9 +1,11 @@
 ChangeLog 
 #########
 
-0.4.2
+0.5.0
 =====
 
+- Assign-check: do not allow assign before the template is generated.
+- Assign-check: do not allow assign for more than one group.
 - Add Python 2.6 backport for total_ordering decorator.
 
 0.4.1
