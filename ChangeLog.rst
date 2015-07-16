@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.4.2
+=====
+
+- Add Python 2.6 backport for total_ordering decorator.
+
 0.4.1
 =====
 
