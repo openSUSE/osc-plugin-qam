@@ -1,6 +1,12 @@
 ChangeLog 
 #########
 
+0.5.0
+=====
+
+- Assign-check: do not allow assign before the template is generated.
+- Assign-check: do not allow assign for more than one group.
+
 0.4.1
 =====
 
