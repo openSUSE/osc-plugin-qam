@@ -191,6 +191,12 @@ class ModelTests(unittest.TestCase):
         request = Request.parse(self.remote, self.req_1_xml)[0]
         self.assertEqual(request.incident_priority, Request.UnknownPriority())
 
+    def test_priority_str(self):
+        priority = Request.UnknownPriority()
+        self.assertEqual("None", str(priority))
+        priority = Request.Priority(100)
+        self.assertEqual("100", str(priority))
+
     def test_unassigned_roles(self):
         request = Request.parse(self.remote, self.req_unassigned)[0]
         open_reviews = request.review_list_open()

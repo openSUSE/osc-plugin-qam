@@ -507,7 +507,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
             return unicode(self).encode('utf-8')
 
         def __unicode__(self):
-            return u"{1} -> {0}".format(self.user, self.group)
+            return u"{0}".format(self.priority)
 
     endpoint = 'request'
 
