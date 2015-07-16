@@ -228,3 +228,8 @@ class ModelTests(unittest.TestCase):
                               self.remote, self.req_unassigned)
         finally:
             Request.read = original_read
+
+    def test_request_str(self):
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        self.assertEqual(str(request), '12345')
+        self.assertEqual(unicode(request), u'12345')

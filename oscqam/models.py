@@ -781,10 +781,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return sum(hashes)
 
     def __str__(self):
-        return self.reqid
+        return unicode(self).encode('utf-8')
 
-    def unicode(self):
-        return str(self)
+    def __unicode__(self):
+        return u"{0}".format(self.reqid)
 
 
 class Template(object):
