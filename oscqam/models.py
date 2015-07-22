@@ -139,6 +139,8 @@ class XmlFactoryMixin(object):
                     kwargs[key].append(value)
                 else:
                     kwargs[key] = value
+            if request.text:
+                kwargs['text'] = request.text
             kwargs.update(attribs)
             objects.append(wrapper_cls(remote, attribs, kwargs))
         return objects
