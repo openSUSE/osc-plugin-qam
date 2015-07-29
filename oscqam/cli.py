@@ -108,6 +108,8 @@ class QamInterpreter(cmdln.Cmdln):
     ${command_list}
     ${help_list}
     """
+    INTERPRETER_QUIT = 3
+
     def __init__(self, parent_cmdln, *args, **kwargs):
         cmdln.Cmdln.__init__(self, *args, **kwargs)
         self.parent_cmdln = parent_cmdln
@@ -403,7 +405,7 @@ class QamInterpreter(cmdln.Cmdln):
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
-    osc_stdout = None
+    osc_stdout = [None]
     retval = None
 
     def restore_orig_stdout():
@@ -413,24 +415,32 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
         interactive commandline application.
 
         """
-        osc_stdout = sys.stdout
-        sys.stdout = osc_stdout.__dict__['writer']
+        osc_stdout[0] = sys.stdout
+        sys.stdout = osc_stdout[0].__dict__['writer']
 
     def restore_osc_stdout():
         """When the plugin has finished running restore the osc-state.
 
         """
-        sys.stdout = osc_stdout
+        sys.stdout = osc_stdout[0]
     osc.conf.get_config()
-    restore_orig_stdout()
-    try:
-        interp = QamInterpreter(self)
-        interp.optparser = cmdln.SubCmdOptionParser()
-        if args:
-            index = sys.argv.index('qam')
-            retval = interp.onecmd(sys.argv[index + 1:])
-        else:
-            retval = interp.cmdloop()
-    finally:
-        restore_osc_stdout()
-    return retval
+    running = True
+    ret = None
+    while running:
+        try:
+            restore_orig_stdout()
+            interp = QamInterpreter(self)
+            interp.optparser = cmdln.SubCmdOptionParser()
+            if args:
+                running = False
+                index = sys.argv.index('qam')
+                ret = interp.onecmd(sys.argv[index + 1:])
+            else:
+                ret = interp.cmdloop()
+                if ret == QamInterpreter.INTERPRETER_QUIT:
+                    running = False
+        except ReportedError as e:
+            print(str(e))
+        finally:
+            restore_osc_stdout()
+    return ret
