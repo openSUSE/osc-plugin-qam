@@ -1,5 +1,7 @@
 from __future__ import print_function
+import abc
 import os
+import itertools
 import logging
 import re
 import sys
@@ -116,6 +118,28 @@ class OneGroupAssignedError(ReportedError):
         )
 
 
+def multi_level_sort(xs, criteria):
+    """Sort the given collection based on multiple criteria.
+    The criteria will be sorted by in the given order, whereas each group
+    from the first criteria will be sorted by the second criteria and so forth.
+
+    :param xs: Iterable of objects.
+    :type xs: [a]
+
+    :param criteria: Iterable of extractor functions.
+    :type criteria: [a -> b]
+
+    """
+    if not criteria:
+        return xs
+    extractor = criteria[-1]
+    xss = sorted(xs, key = extractor)
+    grouped = itertools.groupby(xss, extractor)
+    subsorts = [multi_level_sort(list(value), criteria[:-1]) for _, value in
+                grouped]
+    return [s for sub in subsorts for s in sub]
+
+
 class OscAction(object):
     """Base class for actions that need to interface with the open build service.
 
@@ -166,6 +190,12 @@ class OscAction(object):
 
 
 class ListAction(OscAction):
+    """Base action for operation that work on a list of requests.
+
+    Subclasses must overwrite the 'load_requests' method that return the list
+    of requests that should be output according to the formatter and fields.
+    """
+    __metaclass__ = abc.ABCMeta
     default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
                       "Incident Priority"]
 
@@ -210,9 +240,38 @@ class ListAction(OscAction):
                     logger.debug("Missing key: %s", key)
             return data
 
+    def group_sort_requests(self):
+        """Sort request according to rating and request id.
+
+        First sort by Priority, then rating and finally request id.
+        """
+        requests = filter(None, self.requests)
+        self.requests = multi_level_sort(
+            requests,
+            [lambda l: l.request.reqid,
+             lambda l: l.template.log_entries["Rating"],
+             lambda l: l.request.incident_priority]
+        )
+
     def __init__(self, remote, user, template_factory=Template):
         super(ListAction, self).__init__(remote, user)
         self.template_factory = template_factory
+
+    def action(self):
+        """Return all reviews that match the parameters of the RequestAction.
+
+        """
+        self.requests = self._load_listdata(self.load_requests())
+        self.group_sort_requests()
+        return self.requests
+
+    @abc.abstractmethod
+    def load_requests(self):
+        """Load requests this class should operate on.
+
+        :returns: [L{oscqam.models.Request}]
+        """
+        pass
 
     def merge_requests(self, user_requests, group_requests):
         """Merge the requests together and set a field 'origin' to determine
@@ -227,16 +286,6 @@ class ListAction(OscAction):
             if request in group_requests:
                 request.origin.extend(request.groups)
         return all_requests
-
-    def action(self):
-        """Return all reviews that match the parameters of the RequestAction.
-
-        """
-        user_requests = set(Request.for_user(self.remote, self.user))
-        qam_groups = self.user.qam_groups
-        group_requests = set(self.remote.requests.open_for_groups(qam_groups))
-        all_requests = self.merge_requests(user_requests, group_requests)
-        return self._load_listdata(all_requests)
 
     def _load_listdata(self, requests):
         """Load templates for the given requests.
@@ -259,8 +308,16 @@ class ListAction(OscAction):
         return listdata
 
 
+class ListOpenAction(ListAction):
+    def load_requests(self):
+        user_requests = set(Request.for_user(self.remote, self.user))
+        qam_groups = self.user.qam_groups
+        group_requests = set(self.remote.requests.open_for_groups(qam_groups))
+        return self.merge_requests(user_requests, group_requests)
+
+
 class ListAssignedAction(ListAction):
-    """Action to list all assigned requests.
+    """Action to list assigned requests.
     """
     default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
                       "Incident Priority", "Assigned Roles"]
@@ -271,35 +328,19 @@ class ListAssignedAction(ListAction):
                 return True
         return False
 
-    def action(self):
+    def load_requests(self):
         qam_groups = Group.for_pattern(self.remote, re.compile(".*qam.*"))
-        return self._load_listdata(
-            set([request for request in
-                 self.remote.requests.review_for_groups(qam_groups)])
-        )
+        return set([request for request in
+                    self.remote.requests.review_for_groups(qam_groups)])
 
 
 class ListAssignedUserAction(ListAssignedAction):
-    """Action to list only requests assigned to the given user.
+    """Action to list requests that are assigned to the user.
     """
-    def __init__(self, remote, user, template_factory=Template):
-        """:param remote: The remote-object to use.
-        :type remote: L{oscqam.models.RemoteFacade}
-
-        :param user: The username for which to lists requests or None.
-            If None will list all assigned qam-requests.
-        :type user: (str | None)
-        """
-        self.remote = remote
-        self.user = User.by_name(self.remote, user) if user else None
-        self.template_factory = template_factory
-
-    def action(self):
+    def load_requests(self):
         user_requests = set(Request.for_user(self.remote, self.user))
-        return self._load_listdata(
-            set([request for request in user_requests
-                 if self.in_review_by_user(request.review_list())])
-        )
+        return set([request for request in user_requests
+                    if self.in_review_by_user(request.review_list())])
 
 
 class AssignAction(OscAction):

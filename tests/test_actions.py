@@ -1,7 +1,7 @@
 import os
 import StringIO
 import unittest
-from oscqam import actions, models
+from oscqam import actions, cli, models
 from .utils import load_fixture
 from .mockremote import MockRemote
 
@@ -133,12 +133,12 @@ class ActionTests(unittest.TestCase):
         action = actions.ListAssignedUserAction(
             self.mock_remote, self.user_id, template_factory = lambda r: True
         )
-        requests = action()
+        requests = action.load_requests()
         self.assertEqual(len(requests), 1)
 
     def test_list_assigned(self):
-        action = actions.ListAssignedAction(self.mock_remote, None,
-                                            lambda r: None)
+        action = actions.ListAssignedAction(self.mock_remote, 'anonymous',
+                                            cli.DefaultFields())
         self.mock_remote.register_url('group',
                                       lambda: load_fixture('group_all.xml'))
         endpoint = ("/source/SUSE:Maintenance:130/_attribute/"
@@ -147,7 +147,7 @@ class ActionTests(unittest.TestCase):
             endpoint,
             lambda: load_fixture("incident_priority.xml")
         )
-        requests = list(action())
+        requests = action.load_requests()
         self.assertEqual(len(requests), 1)
 
     def test_approval_requires_testplanreviewer(self):

@@ -1,6 +1,7 @@
 import os
 from unittest import TestCase
 from oscqam import cli
+from oscqam.actions import multi_level_sort
 
 
 class ListOutputTests(TestCase):
@@ -33,6 +34,6 @@ class ListOutputTests(TestCase):
         xs = [one, two]
         criteria = [lambda x: x['b'],
                     lambda x: x['a']]
-        sortedxs = cli.multi_level_sort(xs, criteria)
+        sortedxs = multi_level_sort(xs, criteria)
         self.assertEqual(sortedxs[0], two)
         self.assertEqual(sortedxs[1], one)

@@ -1,5 +1,4 @@
 from __future__ import print_function
-import itertools
 import logging
 import os
 import prettytable
@@ -8,7 +7,7 @@ from osc import cmdln
 import osc.commandline
 import osc.conf
 
-from oscqam.actions import (ApproveAction, AssignAction, ListAction,
+from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction)
 from oscqam.models import (RemoteFacade, ReportedError)
@@ -20,39 +19,6 @@ logger.setLevel(logging.INFO)
 
 class ConflictingOptions(ReportedError):
     pass
-
-
-def multi_level_sort(xs, criteria):
-    """Sort the given collection based on multiple criteria.
-    The criteria will be sorted by in the given order, whereas each group
-    from the first criteria will be sorted by the second criteria and so forth.
-
-    :param xs: Iterable of objects.
-    :type xs: [a]
-
-    :param criteria: Iterable of extractor functions.
-    :type criteria: [a -> b]
-
-    """
-    if not criteria:
-        return xs
-    extractor = criteria[-1]
-    xss = sorted(xs, key = extractor)
-    grouped = itertools.groupby(xss, extractor)
-    subsorts = [multi_level_sort(list(value), criteria[:-1]) for _, value in
-                grouped]
-    return [s for sub in subsorts for s in sub]
-
-
-def group_sort_requests(requests):
-    """Sort request according to rating and request id.
-
-    First sort by Priority, then rating and finally request id.
-    """
-    requests = filter(None, requests)
-    return multi_level_sort(requests, [lambda l: l.request.reqid,
-                                       lambda l: l.template.log_entries["Rating"],
-                                       lambda l: l.request.incident_priority])
 
 
 class InvalidFieldsError(ReportedError):
@@ -230,7 +196,6 @@ class QamInterpreter(cmdln.Cmdln):
         listdata = action()
         formatter = tabular_output if tabular else verbose_output
         if listdata:
-            listdata = group_sort_requests(listdata)
             listdata = [datum.values(keys)
                         for datum in listdata]
             print(formatter(listdata, keys))
@@ -246,8 +211,8 @@ class QamInterpreter(cmdln.Cmdln):
                   '--user',
                   default = None,
                   help = 'List requests assignable to the given USER '
-                  '(USER is a member of a qam-group that has an open review '
-                  'for the request).')
+                         '(USER is a member of a qam-group that has an open '
+                         'review for the request).')
     @cmdln.option('-T',
                   '--tabular',
                   action = 'store_true',
