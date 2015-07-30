@@ -211,7 +211,7 @@ class ListAction(OscAction):
 
     def in_review_by_user(self, reviews):
         for review in reviews:
-            if (review.by_user == self.user.login
+            if (review.reviewer == self.user
                     and review.state == 'new'):
                 return True
         return False

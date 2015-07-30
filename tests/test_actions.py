@@ -118,3 +118,12 @@ class ActionTests(unittest.TestCase):
                                       template_factory=lambda r: True)
         self.assertRaises(actions.OneGroupAssignedError, assign)
 
+    def test_list_assigned_user(self):
+        self.mock_remote.register_url(
+            'request', lambda: load_fixture('search_request.xml')
+        )
+        action = actions.ListAction(self.mock_remote, self.user_id,
+                                    only_review = True,
+                                    template_factory = lambda r: True)
+        requests = action()
+        self.assertEqual(len(requests), 1)
