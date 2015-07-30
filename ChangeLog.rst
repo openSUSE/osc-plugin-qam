@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.5.1
+=====
+
+- Fix bug in list user-assigned command.
+
 0.5.0
 =====
 
