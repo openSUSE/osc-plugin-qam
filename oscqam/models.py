@@ -69,6 +69,15 @@ class TestResultMismatchError(ReportedError):
         )
 
 
+class TestPlanReviewerNotSetError(ReportedError):
+    _msg = ("The testreport ({path}) is missing a test plan reviewer.")
+
+    def __init__(self, path):
+        super(TestPlanReviewerNotSetError, self).__init__(
+            self._msg.format(path = path)
+        )
+
+
 class RemoteError(Exception):
     """Indicates an error while communicating with the remote service.
 
@@ -879,6 +888,29 @@ class Template(object):
                 'FAILED',
                 self._log_path
             )
+
+    def passed(self):
+        """Assert that this template is from a successful test.
+
+        :raises: L{oscqam.models.TestResultMismatchError} if template is not
+            set to PASSED.
+        """
+        if self.status != Template.STATUS_SUCCESS:
+            raise TestResultMismatchError(
+                'PASSED',
+                self._log_path
+            )
+
+    def testplanreviewer(self):
+        """Assert that the Test Plan Reviewer for the template is set.
+
+        :raises: L{oscqam.models.TestPlanReviewerNotSetError} if reviewer
+            is not set or empty.
+        """
+        reviewer = self.log_entries.get('Test Plan Reviewer', '').strip()
+        if reviewer:
+            return reviewer
+        raise TestPlanReviewerNotSetError(self._log_path)
 
     @property
     def status(self):

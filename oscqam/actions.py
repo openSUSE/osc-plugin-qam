@@ -412,11 +412,23 @@ class ApproveAction(OscAction):
     """
     APPROVE_MSG = "Will approve {request} for {user}."
 
-    def __init__(self, remote, user, request_id):
+    def __init__(self, remote, user, request_id, template_factory = Template):
         super(ApproveAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
+        self.template = self.request.get_template(template_factory)
+
+    def validate(self):
+        """Check preconditions to be met before a request can be approved.
+
+        :raises: L{oscqam.models.TestResultMismatchError} or
+            L{oscqam.models.TestPlanReviewerNotSetError} if conditions are
+            not met.
+        """
+        self.template.testplanreviewer()
+        self.template.passed()
 
     def action(self):
+        self.validate()
         msg = ApproveAction.APPROVE_MSG.format(user = self.user,
                                                request = self.request)
         print(msg)
