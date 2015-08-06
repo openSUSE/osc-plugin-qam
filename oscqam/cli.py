@@ -130,15 +130,6 @@ class QamInterpreter(cmdln.Cmdln):
         else:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
 
-    def _run_action(self, func):
-        """Run the given action and catch (expected) errors that might occur.
-
-        """
-        try:
-            return func()
-        except ReportedError as e:
-            print(str(e))
-
     @cmdln.option('-U',
                   '--user',
                   help = 'User to assign for this request.')
@@ -154,7 +145,7 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = ApproveAction(self.api, self.affected_user, self.request_id)
-        self._run_action(action)
+        action()
 
     @cmdln.option('-U',
                   '--user',
@@ -180,7 +171,7 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = AssignAction(self.api, self.affected_user, self.request_id,
                               group)
-        self._run_action()
+        action()
 
     def _list_requests(self, action, tabular, keys):
         """Display the requests from the action.
@@ -326,7 +317,7 @@ class QamInterpreter(cmdln.Cmdln):
         message = opts.message if opts.message else None
         action = RejectAction(self.api, self.affected_user, self.request_id,
                               message)
-        self._run_action(action)
+        action()
 
     @cmdln.option('-U',
                   '--user',
@@ -352,7 +343,7 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = UnassignAction(self.api, self.affected_user, self.request_id,
                                 group)
-        self._run_action(action)
+        action()
 
     def do_comment(self, subcmd, opts, request_id, comment):
         """${cmd_name}: Add a comment to a request.
@@ -366,7 +357,7 @@ class QamInterpreter(cmdln.Cmdln):
         self.request_id = request_id
         action = CommentAction(self.api, self.affected_user, self.request_id,
                                comment)
-        self._run_action(action)
+        action()
 
     @cmdln.alias('q')
     @cmdln.alias('Q')
