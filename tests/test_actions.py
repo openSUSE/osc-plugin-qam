@@ -130,10 +130,24 @@ class ActionTests(unittest.TestCase):
         self.mock_remote.register_url(
             'request', lambda: load_fixture('search_request.xml')
         )
-        action = actions.ListAction(self.mock_remote, self.user_id,
-                                    only_review = True,
-                                    template_factory = lambda r: True)
+        action = actions.ListAssignedUserAction(
+            self.mock_remote, self.user_id, template_factory = lambda r: True
+        )
         requests = action()
+        self.assertEqual(len(requests), 1)
+
+    def test_list_assigned(self):
+        action = actions.ListAssignedAction(self.mock_remote, None,
+                                            lambda r: None)
+        self.mock_remote.register_url('group',
+                                      lambda: load_fixture('group_all.xml'))
+        endpoint = ("/source/SUSE:Maintenance:130/_attribute/"
+                    "OBS:IncidentPriority")
+        self.mock_remote.register_url(
+            endpoint,
+            lambda: load_fixture("incident_priority.xml")
+        )
+        requests = list(action())
         self.assertEqual(len(requests), 1)
 
     def test_approval_requires_testplanreviewer(self):

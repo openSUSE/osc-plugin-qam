@@ -9,12 +9,17 @@ import osc.commandline
 import osc.conf
 
 from oscqam.actions import (ApproveAction, AssignAction, ListAction,
+                            ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction)
 from oscqam.models import (RemoteFacade, ReportedError)
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+class ConflictingOptions(ReportedError):
+    pass
 
 
 def multi_level_sort(xs, criteria):
@@ -173,7 +178,47 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = AssignAction(self.api, self.affected_user, self.request_id,
                               group)
-        self._run_action(action)
+        self._run_action()
+
+    def _list_requests(self, action, tabular, keys):
+        """Display the requests from the action.
+
+        :param action: Action that obtains the requests.
+        :type action: L{oscqam.actions.ListAction}.
+        :param tabular: True if output should be formatted in a table.
+        :type tabular: bool
+        :param keys: The keys to output
+        :type keys: [str]
+        """
+        listdata = action()
+        formatter = tabular_output if tabular else verbose_output
+        if listdata:
+            listdata = group_sort_requests(listdata)
+            listdata = [datum.values(keys)
+                        for datum in listdata]
+            print(formatter(listdata, keys))
+
+    def _list_keys(self, fields, verbose):
+        """Return keys to output for the given configuration.
+
+        :param fields: Fields passed from the user.
+        :type fields: [str]
+
+        :param verbose: True if verbose output is desired.
+        :type verbose: bool
+
+        :returns: [str]
+        """
+        if verbose:
+            keys = self.all_keys
+        else:
+            badcols = set(fields) - set(self.all_keys)
+            if len(badcols):
+                unknown = (", ".join(map(repr, badcols)))
+                raise ReportedError("Unknown fields: %s" % unknown)
+            elif fields:
+                keys = fields
+        return keys
 
     @cmdln.option('-F',
                   '--fields',
@@ -184,51 +229,80 @@ class QamInterpreter(cmdln.Cmdln):
                          'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-U',
                   '--user',
-                  help = 'User to list requests for.')
-    @cmdln.option('-R',
-                  '--review',
-                  action = 'store_true',
-                  help = 'Show all requests that are in review by the user.')
+                  default = None,
+                  help = 'List requests assignable to the given USER '
+                  '(USER is a member of a qam-group that has an open review '
+                  'for the request).')
     @cmdln.option('-T',
                   '--tabular',
                   action = 'store_true',
                   default = False,
-                  help = 'Output the list in a tabular format.')
+                  help = 'Output the requests in an ASCII-table.')
     @cmdln.option('-v',
                   '--verbose',
                   action = 'store_true',
                   default = False,
-                  help = 'Generate verbose output.')
-    def do_list(self, subcmd, opts):
-        """${cmd_name}: Show a list of all open qam-requests currently running.
+                  help = 'Display all available fields for a request: '
+                         + all_columns_string + '.')
+    @cmdln.alias('list')
+    def do_open(self, subcmd, opts):
+        """${cmd_name}: Show a list of OBS qam-requests that are open.
 
-        The list will only contain requests that are part of the qam-groups.
+        By default, open requests assignable to yourself will be shown
+        (currently assigned to a qam-group you are a member of).
 
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if opts.verbose and opts.fields:
+            raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
-        only_review = opts.review if opts.review else False
-        formatter = tabular_output if opts.tabular else verbose_output
-        action = ListAction(self.api, self.affected_user, only_review)
-        listdata = self._run_action(action)
-        keys = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
-                "Incident Priority"]
-        if opts.verbose:
-            keys = self.all_keys
-        else:
-            badcols = set(opts.fields) - set(self.all_keys)
-            if len(badcols):
-                print("Unknown fields: %s" % (", ".join(map(repr, badcols))))
-                return
-            elif opts.fields:
-                keys = opts.fields
+        action = ListAction(self.api, self.affected_user)
+        fields = opts.fields if opts.fields else action.default_fields
+        keys = self._list_keys(fields, opts.verbose)
+        self._list_requests(action, opts.tabular, keys)
 
-        if listdata:
-            listdata = group_sort_requests(listdata)
-            listdata = [datum.values(keys)
-                        for datum in listdata]
-            print(formatter(listdata, keys))
+    @cmdln.option('-F',
+                  '--fields',
+                  action = 'append',
+                  default = [],
+                  help = 'Define the values to output in a cumulative fashion '
+                         '(pass flag multiple times).  '
+                         'Available fields: ' + all_columns_string + '.')
+    @cmdln.option('-U',
+                  '--user',
+                  default=None,
+                  help = 'List requests assigned to the given USER.')
+    @cmdln.option('-T',
+                  '--tabular',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Output the requests in an ASCII-table.')
+    @cmdln.option('-v',
+                  '--verbose',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Display all available fields for a request: '
+                         + all_columns_string + '.')
+    def do_assigned(self, subcmd, opts):
+        """${cmd_name}: Show a list of OBS qam-requests that are in review.
+
+        A request is in review, as soon as a user has been assigned for a
+        group that is required to review a request.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if opts.verbose and opts.fields:
+            raise ConflictingOptions("Only pass '-v' or '-F' not both")
+        self._set_required_params(opts)
+        if opts.user:
+            action = ListAssignedUserAction(self.api, opts.user)
+        else:
+            action = ListAssignedAction(self.api, self.affected_user)
+        fields = opts.fields if opts.fields else action.default_fields
+        keys = self._list_keys(fields, opts.verbose)
+        self._list_requests(action, opts.tabular, keys)
 
     @cmdln.option('-U',
                   '--user',
@@ -297,8 +371,13 @@ class QamInterpreter(cmdln.Cmdln):
     def do_quit(self, subcmd, opts):
         """${cmd_name}: Quit the qam-subinterpreter."""
         self.stop = True
+        return self.INTERPRETER_QUIT
 
 
+@cmdln.option('-A',
+              '--assigned',
+              action = 'store_true',
+              help = 'Parameter for list command.')
 @cmdln.option('-F',
               '--fields',
               action = 'append',
@@ -310,10 +389,6 @@ class QamInterpreter(cmdln.Cmdln):
 @cmdln.option('-M',
               '--message',
               help = 'Message to use for the command.')
-@cmdln.option('-R',
-              '--review',
-              action = 'store_true',
-              help = 'Parameter for list command.')
 @cmdln.option('-T',
               '--tabular',
               action = 'store_true',

@@ -1,9 +1,12 @@
 from __future__ import print_function
 import os
 import logging
+import re
 import sys
-from .models import (Group, GroupReview, User, Request, Template,
-                     ReportedError, RemoteError, TemplateNotFoundError)
+
+
+from .models import (Group, GroupReview, User, Request, Template, ReportedError,
+                     RemoteError, TemplateNotFoundError)
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -163,6 +166,9 @@ class OscAction(object):
 
 
 class ListAction(OscAction):
+    default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
+                      "Incident Priority"]
+
     class ListData(object):
         def __init__(self, request, template_factory):
             """Associate a request with the correct template."""
@@ -204,10 +210,8 @@ class ListAction(OscAction):
                     logger.debug("Missing key: %s", key)
             return data
 
-    def __init__(self, remote, user, only_review = False,
-                 template_factory = Template):
+    def __init__(self, remote, user, template_factory=Template):
         super(ListAction, self).__init__(remote, user)
-        self.only_review = only_review
         self.template_factory = template_factory
 
     def merge_requests(self, user_requests, group_requests):
@@ -224,27 +228,14 @@ class ListAction(OscAction):
                 request.origin.extend(request.groups)
         return all_requests
 
-    def in_review_by_user(self, reviews):
-        for review in reviews:
-            if (review.reviewer == self.user
-                    and review.state == 'new'):
-                return True
-        return False
-
     def action(self):
         """Return all reviews that match the parameters of the RequestAction.
 
         """
         user_requests = set(Request.for_user(self.remote, self.user))
-        if self.only_review:
-            all_requests = set([request for request in user_requests
-                                if self.in_review_by_user(request.review_list())])
-            all_requests = self.merge_requests(all_requests, [])
-        else:
-            qam_groups = self.user.qam_groups
-            group_requests = set(Request.open_for_groups(self.remote,
-                                                         qam_groups))
-            all_requests = self.merge_requests(user_requests, group_requests)
+        qam_groups = self.user.qam_groups
+        group_requests = set(self.remote.requests.open_for_groups(qam_groups))
+        all_requests = self.merge_requests(user_requests, group_requests)
         return self._load_listdata(all_requests)
 
     def _load_listdata(self, requests):
@@ -266,6 +257,49 @@ class ListAction(OscAction):
             except TemplateNotFoundError as e:
                 logger.warning(str(e))
         return listdata
+
+
+class ListAssignedAction(ListAction):
+    """Action to list all assigned requests.
+    """
+    default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
+                      "Incident Priority", "Assigned Roles"]
+
+    def in_review_by_user(self, reviews):
+        for review in reviews:
+            if (review.reviewer == self.user and review.open):
+                return True
+        return False
+
+    def action(self):
+        qam_groups = Group.for_pattern(self.remote, re.compile(".*qam.*"))
+        return self._load_listdata(
+            set([request for request in
+                 self.remote.requests.review_for_groups(qam_groups)])
+        )
+
+
+class ListAssignedUserAction(ListAssignedAction):
+    """Action to list only requests assigned to the given user.
+    """
+    def __init__(self, remote, user, template_factory=Template):
+        """:param remote: The remote-object to use.
+        :type remote: L{oscqam.models.RemoteFacade}
+
+        :param user: The username for which to lists requests or None.
+            If None will list all assigned qam-requests.
+        :type user: (str | None)
+        """
+        self.remote = remote
+        self.user = User.by_name(self.remote, user) if user else None
+        self.template_factory = template_factory
+
+    def action(self):
+        user_requests = set(Request.for_user(self.remote, self.user))
+        return self._load_listdata(
+            set([request for request in user_requests
+                 if self.in_review_by_user(request.review_list())])
+        )
 
 
 class AssignAction(OscAction):

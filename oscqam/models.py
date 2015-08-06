@@ -95,6 +95,7 @@ class RemoteFacade(object):
         """Initialize a new RemoteOscRemote that points to the given remote.
         """
         self.remote = remote
+        self.requests = RequestRemote(self)
 
     def _check_for_error(self, answer):
         ret_code = answer.getcode()
@@ -123,6 +124,69 @@ class RemoteFacade(object):
         self._check_for_error(remote)
         xml = remote.read()
         return xml
+
+
+class RequestRemote(object):
+    """Facade for retrieving Request objects from the buildservice API.
+    """
+    def __init__(self, remote):
+        "docstring"
+        self.remote = remote
+
+    def _group_xpath(self, groups, state):
+        """Search the given groups with the given state.
+        """
+        def get_group_name(group):
+            if isinstance(group, str):
+                return group
+            return group.name
+        xpaths = []
+        for group in groups:
+            name = get_group_name(group)
+            xpaths.append(
+                "(review[@by_group='{0}' and @state='{1}'])".format(name,
+                                                                    state)
+            )
+        xpath = " or ".join(xpaths)
+        return "( {0} )".format(xpath)
+
+    def _get_groups(self, groups, state, **kwargs):
+        if not kwargs:
+            kwargs = {'withfullhistory': '1'}
+        xpaths = ["(state/@name='{0}')".format('review')]
+        xpaths.append(self._group_xpath(groups, state))
+        xpath = " and ".join(xpaths)
+        params = {'match': xpath,
+                  'withfullhistory': '1'}
+        params.update(kwargs)
+        search = "/".join(["search", Request.endpoint])
+        requests = Request.parse(self.remote, self.remote.get(search, params))
+        return Request.filter_by_project("SUSE:Maintenance", requests)
+
+    def open_for_groups(self, groups, **kwargs):
+        """Will return all requests of the given type for the given groups
+        that are still open: the state of the review should be in state 'new'.
+
+        Args:
+            - remote: The remote facade to use.
+            - groups: The groups that should be used.
+            - **kwargs: additional parameters for the search.
+        """
+        return self._get_groups(groups, 'new', **kwargs)
+
+    def review_for_groups(self, groups, **kwargs):
+        """Will return all requests for the given groups that are in review.
+
+        As there is no 'review' state, the state is determined as a group being
+        'accepted', while a user is in state 'new' for that group.
+
+        Args:
+            - remote: The remote facade to use.
+            - groups: The groups that should be used.
+            - **kwargs: additional parameters for the search.
+        """
+        requests = self._get_groups(groups, 'accepted', **kwargs)
+        return [request for request in requests if request.assigned_roles]
 
 
 class XmlFactoryMixin(object):
@@ -210,9 +274,14 @@ class Group(XmlFactoryMixin):
 
     @classmethod
     def all(cls, remote):
-        group_entries = Group.parse(remote, remote.get(cls.endpoint))
+        group_entries = Group.parse_entry(remote, remote.get(cls.endpoint))
         groups = [Group.for_name(remote, g.name) for g in group_entries]
         return groups
+
+    @classmethod
+    def for_pattern(cls, remote, pattern):
+        return [group for group in cls.all(remote)
+                if pattern.match(group.name)]
 
     @classmethod
     def for_name(cls, remote, group_name):
@@ -522,7 +591,6 @@ class Request(osc.core.Request, XmlFactoryMixin):
         def __lt__(self, other):
             return False
 
-
         def __str__(self):
             return unicode(self).encode('utf-8')
 
@@ -706,36 +774,6 @@ class Request(osc.core.Request, XmlFactoryMixin):
                   'states': 'new,review',
                   'withfullhistory': '1'}
         requests = cls.parse(remote, remote.get(cls.endpoint, params))
-        return cls.filter_by_project("SUSE:Maintenance", requests)
-
-    @classmethod
-    def open_for_groups(cls, remote, groups, **kwargs):
-        """Will return all requests of the given type for the given groups
-        that are still open: the state of the review should be in state 'new'.
-
-        Args:
-            - remote: The remote facade to use.
-            - groups: The groups that should be used.
-            - **kwargs: additional parameters for the search.
-        """
-        def get_group_name(group):
-            if isinstance(group, str):
-                return group
-            return group.name
-        if not kwargs:
-            kwargs = {'withfullhistory': '1'}
-        xpaths = ["(state/@name = '{0}')".format('review')]
-        for group in groups:
-            name = get_group_name(group)
-            xpaths.append(
-                "(review[@by_group = '{0}' and @state = 'new'])".format(name)
-            )
-        xpath = " and ".join(xpaths)
-        params = {'match': xpath,
-                  'withfullhistory': '1'}
-        params.update(kwargs)
-        search = "/".join(["search", cls.endpoint])
-        requests = cls.parse(remote, remote.get(search, params))
         return cls.filter_by_project("SUSE:Maintenance", requests)
 
     @classmethod
