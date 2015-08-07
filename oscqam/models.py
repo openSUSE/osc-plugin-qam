@@ -60,6 +60,15 @@ class TemplateNotFoundError(ReportedError):
         )
 
 
+class TestResultMismatchError(ReportedError):
+    _msg = "Request-Status not '{0}': please check report: {1}"
+
+    def __init__(self, expected, log_path):
+        super(TestResultMismatchError, self).__init__(
+            self._msg.format(expected, log_path)
+        )
+
+
 class RemoteError(Exception):
     """Indicates an error while communicating with the remote service.
 
@@ -852,12 +861,24 @@ class Template(object):
 
         """
         self.log_entries = {}
-        self.log_path = tr_getter(
-            "{base}{prj}:{reqid}/log".format(base = self.base_url,
-                                             prj = request.src_project,
-                                             reqid = request.reqid)
+        self._log_path = "{base}{prj}:{reqid}/log".format(
+            base = self.base_url,
+            prj = request.src_project,
+            reqid = request.reqid
         )
-        self.parse_log(self.log_path)
+        self.parse_log(tr_getter(self._log_path))
+
+    def failed(self):
+        """Assert that this template is from a failed test.
+
+        If the template says the test did not fail this will raise an error.
+
+        """
+        if self.status != Template.STATUS_FAILURE:
+            raise TestResultMismatchError(
+                'FAILED',
+                self._log_path
+            )
 
     @property
     def status(self):
