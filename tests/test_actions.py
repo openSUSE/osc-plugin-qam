@@ -101,7 +101,9 @@ class ActionTests(unittest.TestCase):
         action = actions.RejectAction(self.mock_remote, self.user_id,
                                       self.cloud_open)
         action._template = template
-        self.assertRaises(actions.TestResultMismatchError, action)
+        with self.assertRaises(models.TestResultMismatchError) as context:
+            action()
+        self.assertIn(models.Template.base_url, str(context.exception))
 
     def test_assign_no_report(self):
         def raiser(request):

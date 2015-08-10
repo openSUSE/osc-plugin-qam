@@ -88,15 +88,6 @@ class MultipleReviewsError(UninferableError):
         )
 
 
-class TestResultMismatchError(ReportedError):
-    _msg = "Request-Status not '{0}': please check report: {1}"
-
-    def __init__(self, expected, log_path):
-        super(TestResultMismatchError, self).__init__(
-            self._msg.format(expected, log_path)
-        )
-
-
 class ReportNotYetGeneratedError(ReportedError):
     _msg = ("The report for request '{0}' is not generated yet. "
             "To prevent bugs in the template parser, assigning "
@@ -454,7 +445,8 @@ class RejectAction(OscAction):
         return self._template
 
     def action(self):
-        comment = self.get_failure()
+        self.template.failed()
+        comment = self.template.log_entries['comment']
         if self.message or not comment:
             comment = self.message
         msg = RejectAction.DECLINE_MSG.format(user = self.user,
@@ -463,20 +455,6 @@ class RejectAction(OscAction):
         if not comment:
             raise ActionError("Must provide a message for reject.")
         self.request.review_decline(user = self.user, comment = comment)
-
-    def get_failure(self):
-        """Get the failure message from the template.
-
-        If the template says the test did not fail this will raise an error.
-
-        """
-        status = self.template.status
-        if status != Template.STATUS_FAILURE:
-            raise TestResultMismatchError(
-                'FAILED',
-                self.template.log_path
-            )
-        return self.template.log_entries['comment']
 
 
 class CommentAction(OscAction):
