@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.5.2
+=====
+
+- Fix reject outputting complete log.
+
 0.5.1
 =====
 
