@@ -129,3 +129,51 @@ class ActionTests(unittest.TestCase):
                                     template_factory = lambda r: True)
         requests = action()
         self.assertEqual(len(requests), 1)
+
+    def test_approval_requires_testplanreviewer(self):
+        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        report = os.linesep.join(["SUMMARY: PASSED",
+                                  "Test Plan Reviewer: "])
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveAction(
+            self.mock_remote, self.user_id, "12345",
+            template_factory = lambda _: template
+        )
+        self.assertRaises(models.TestPlanReviewerNotSetError, approval)
+
+    def test_approval_no_testplanreviewer_key(self):
+        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        report = "SUMMARY: PASSED"
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveAction(
+            self.mock_remote, self.user_id, "12345",
+            template_factory = lambda _: template
+        )
+        self.assertRaises(models.TestPlanReviewerNotSetError, approval)
+
+    def test_approval_requires_status_passed(self):
+        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        report = os.linesep.join(["SUMMARY: FAILED",
+                                  "Test Plan Reviewer: someone"])
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveAction(
+            self.mock_remote, self.user_id, "12345",
+            template_factory = lambda _: template
+        )
+        self.assertRaises(models.TestResultMismatchError, approval)
+
+    def test_approval(self):
+        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        report = os.linesep.join(["SUMMARY: PASSED",
+                                  "Test Plan Reviewer: someone"])
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveAction(
+            self.mock_remote, self.user_id, "12345",
+            template_factory = lambda _: template
+        )
+        approval()
+        self.assertEqual(len(self.mock_remote.post_calls), 1)
