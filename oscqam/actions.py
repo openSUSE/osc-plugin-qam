@@ -1,5 +1,7 @@
 from __future__ import print_function
+import os
 import logging
+import sys
 from .models import (Group, GroupReview, User, Request, Template,
                      ReportedError, RemoteError, TemplateNotFoundError)
 logging.basicConfig()
@@ -115,10 +117,21 @@ class OscAction(object):
     """Base class for actions that need to interface with the open build service.
 
     """
-    def __init__(self, remote, user):
+    def __init__(self, remote, user, out = sys.stdout):
+        """
+        :param remote: Remote endpoint to the buildservice.
+        :type remote: L{oscqam.models.RemoteFacade}
+
+        :param user: Username that performs the action.
+        :type user: str
+
+        :param out: Filelike to print enduser-messages to.
+        :type out: L{file}
+        """
         self.remote = remote
         self.user = User.by_name(self.remote, user)
         self.undo_stack = []
+        self.out = out
 
     def __call__(self, *args, **kwargs):
         """Will attempt the encapsulated action and call the rollback function if an
@@ -136,6 +149,17 @@ class OscAction(object):
     def rollback(self):
         for action in self.undo_stack:
             action()
+
+    def print(self, msg, end = os.linesep):
+        """Mimick the print-statements behaviour on the out-stream:
+
+        Print the given message and add a newline.
+
+        :type msg: str
+        """
+        self.out.write(msg)
+        self.out.write(end)
+        self.out.flush()
 
 
 class ListAction(OscAction):
