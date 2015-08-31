@@ -5,6 +5,9 @@ ChangeLog
 =====
 
 - Fix reject outputting complete log.
+- Fix bnc#943294: match 'Test Plan Reviewers' if 'Test Plan Reviewer' is not
+  found.
+- Fix bnc#942510: print message after assignment was successful.
 
 0.5.1
 =====
