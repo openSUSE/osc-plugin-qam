@@ -1,4 +1,5 @@
 import os
+import StringIO
 import unittest
 from oscqam import actions, models
 from .utils import load_fixture
@@ -78,11 +79,16 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(actions.UninferableError, assign)
 
     def test_assign_multiple_groups_explicit(self):
+        out = StringIO.StringIO()
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
-                                      group='qam-test',
-                                      template_factory=lambda r: True)
+                                      group = 'qam-test',
+                                      template_factory = lambda r: True,
+                                      out = out)
         assign()
+        self.assertEqual(assign.out.getvalue(),
+                         "Assigned Unknown User (anonymous@nowhere.none) "
+                         "to qam-test for 56789.\n")
 
     def test_unassign_no_group(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
