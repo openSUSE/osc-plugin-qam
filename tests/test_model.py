@@ -233,3 +233,13 @@ class ModelTests(unittest.TestCase):
         request = Request.parse(self.remote, self.req_1_xml)[0]
         self.assertEqual(str(request), '12345')
         self.assertEqual(unicode(request), u'12345')
+
+    def test_test_plan_reviewer(self):
+        reviewer_singular = self.create_template(
+            template_data = 'Test Plan Reviewer: a'
+        )
+        reviewer_plural = self.create_template(
+            template_data = 'Test Plan Reviewers: a'
+        )
+        self.assertEqual(reviewer_singular.testplanreviewer(), 'a')
+        self.assertEqual(reviewer_plural.testplanreviewer(), 'a')

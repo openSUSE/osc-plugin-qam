@@ -907,7 +907,9 @@ class Template(object):
         :raises: L{oscqam.models.TestPlanReviewerNotSetError} if reviewer
             is not set or empty.
         """
-        reviewer = self.log_entries.get('Test Plan Reviewer', '').strip()
+        reviewer = self.log_entries.get('Test Plan Reviewer', '')
+        reviewer = self.log_entries.get('Test Plan Reviewers', reviewer)
+        reviewer = reviewer.strip()
         if reviewer:
             return reviewer
         raise TestPlanReviewerNotSetError(self._log_path)
