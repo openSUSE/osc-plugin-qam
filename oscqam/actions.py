@@ -1,5 +1,7 @@
 from __future__ import print_function
+import os
 import logging
+import sys
 from .models import (Group, GroupReview, User, Request, Template,
                      ReportedError, RemoteError, TemplateNotFoundError)
 logging.basicConfig()
@@ -36,7 +38,7 @@ class NoQamReviewsError(UninferableError):
                           if isinstance(review, GroupReview)]
         message += (" The following groups were already assigned/finished: "
                     "{msg}".format(
-                        msg=", ".join(["{r.reviewer}".format(
+                        msg = ", ".join(["{r.reviewer}".format(
                             r = review
                         ) for review in accept_reviews])
                     )) if accept_reviews else ""
@@ -115,10 +117,21 @@ class OscAction(object):
     """Base class for actions that need to interface with the open build service.
 
     """
-    def __init__(self, remote, user):
+    def __init__(self, remote, user, out = sys.stdout):
+        """
+        :param remote: Remote endpoint to the buildservice.
+        :type remote: L{oscqam.models.RemoteFacade}
+
+        :param user: Username that performs the action.
+        :type user: str
+
+        :param out: Filelike to print enduser-messages to.
+        :type out: L{file}
+        """
         self.remote = remote
         self.user = User.by_name(self.remote, user)
         self.undo_stack = []
+        self.out = out
 
     def __call__(self, *args, **kwargs):
         """Will attempt the encapsulated action and call the rollback function if an
@@ -136,6 +149,17 @@ class OscAction(object):
     def rollback(self):
         for action in self.undo_stack:
             action()
+
+    def print(self, msg, end = os.linesep):
+        """Mimick the print-statements behaviour on the out-stream:
+
+        Print the given message and add a newline.
+
+        :type msg: str
+        """
+        self.out.write(msg)
+        self.out.write(end)
+        self.out.flush()
 
 
 class ListAction(OscAction):
@@ -246,13 +270,13 @@ class ListAction(OscAction):
 
 class AssignAction(OscAction):
     ASSIGN_COMMENT = "{prefix}::assign::{user.login}::{group.name}"
-    ASSIGN_USER_MSG = ("Will assign {user} to {group} for {request}.")
+    ASSIGN_USER_MSG = ("Assigned {user} to {group} for {request}.")
     AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
     def __init__(self, remote, user, request_id, group = None,
-                 template_factory = Template):
-        super(AssignAction, self).__init__(remote, user)
+                 template_factory = Template, **kwargs):
+        super(AssignAction, self).__init__(remote, user, **kwargs)
         self.request = Request.by_id(self.remote, request_id)
         self.group = Group.for_name(remote, group) if group else None
         self.template_factory = template_factory
@@ -327,13 +351,13 @@ class AssignAction(OscAction):
         msg = AssignAction.ASSIGN_USER_MSG.format(
             user = self.user, group = group, request = self.request
         )
-        print(msg)
         comment = AssignAction.ASSIGN_COMMENT.format(
             prefix = PREFIX, user = self.user, group = group
         )
         self.request.review_assign(reviewer = self.user,
-                                    group = group,
-                                    comment = comment)
+                                   group = group,
+                                   comment = comment)
+        self.print(msg)
 
 
 class UnassignAction(OscAction):
