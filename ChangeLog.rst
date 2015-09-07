@@ -1,6 +1,12 @@
 ChangeLog 
 #########
 
+0.6.0
+=====
+
+- Add 'assigned' command to possible commands: list all requests that are
+  assigned (as far as the plugin can infer them).
+
 0.5.2
 =====
 
