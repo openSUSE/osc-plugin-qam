@@ -351,6 +351,18 @@ class ListAssignedUserAction(ListAssignedAction):
                     if self.in_review_by_user(request.review_list())])
 
 
+class InfoAction(ListAction):
+    default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
+                      "Incident Priority", "Assigned Roles", "Unassigned Roles"]
+
+    def __init__(self, remote, user_id, request_id):
+        super(InfoAction, self).__init__(remote, user_id)
+        self.request = Request.by_id(self.remote, request_id)
+
+    def load_requests(self):
+        return [self.request]
+
+
 class AssignAction(OscAction):
     ASSIGN_COMMENT = "{prefix}::assign::{user.login}::{group.name}"
     ASSIGN_USER_MSG = ("Assigned {user} to {group} for {request}.")
