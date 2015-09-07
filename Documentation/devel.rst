@@ -75,3 +75,11 @@ https://build.suse.de/package/show/QA:Maintenance/python-oscqam
 The plugin should keep building for at least the supported versions.
 
 .. _QA-Maintenance project: https://build.suse.de/project/show/QA:Maintenance
+
+Bug reporting
+-------------
+
+Bugs can be reported using `bugzilla`_: set the product to ``SUSE Tools`` and
+choose the component ``oscqam``.
+
+.. _bugzilla: https://bugzilla.suse.com
