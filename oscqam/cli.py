@@ -1,5 +1,4 @@
 from __future__ import print_function
-import itertools
 import logging
 import os
 import prettytable
@@ -8,7 +7,8 @@ from osc import cmdln
 import osc.commandline
 import osc.conf
 
-from oscqam.actions import (ApproveAction, AssignAction, ListAction,
+from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
+                            ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction)
 from oscqam.models import (RemoteFacade, ReportedError)
 
@@ -17,37 +17,55 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def multi_level_sort(xs, criteria):
-    """Sort the given collection based on multiple criteria.
-    The criteria will be sorted by in the given order, whereas each group
-    from the first criteria will be sorted by the second criteria and so forth.
+class ConflictingOptions(ReportedError):
+    pass
 
-    :param xs: Iterable of objects.
-    :type xs: [a]
 
-    :param criteria: Iterable of extractor functions.
-    :type criteria: [a -> b]
-
+class InvalidFieldsError(ReportedError):
+    """Raise when the user wants to output non-existent fields.
     """
-    if not criteria:
-        return xs
-    extractor = criteria[-1]
-    xss = sorted(xs, key = extractor)
-    grouped = itertools.groupby(xss, extractor)
-    subsorts = [multi_level_sort(list(value), criteria[:-1]) for _, value in
-                grouped]
-    return [s for sub in subsorts for s in sub]
+    _msg = ("Unknown fields: {0}.  "
+            "Valid fields: {1}.")
+
+    def __init__(self, bad_fields):
+        super(InvalidFieldsError, self).__init__(
+            self._msg.format(", ".join(map(repr, bad_fields)),
+                             ", ".join(map(repr, ReviewFields.all_fields)))
+        )
 
 
-def group_sort_requests(requests):
-    """Sort request according to rating and request id.
+class ReviewFields(object):
+    all_fields = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
+                  "Category", "Rating", "Unassigned Roles", "Assigned Roles",
+                  "Package-Streams", "Incident Priority"]
 
-    First sort by Priority, then rating and finally request id.
-    """
-    requests = filter(None, requests)
-    return multi_level_sort(requests, [lambda l: l.request.reqid,
-                                       lambda l: l.template.log_entries["Rating"],
-                                       lambda l: l.request.incident_priority])
+    def fields(self, _):
+        return self.all_fields
+
+    @staticmethod
+    def review_fields_by_opts(opts):
+        if opts.verbose:
+            return ReviewFields()
+        elif opts.fields:
+            return UserFields(opts.fields)
+        else:
+            return DefaultFields()
+
+
+class DefaultFields(ReviewFields):
+    def fields(self, action):
+        return action.default_fields
+
+
+class UserFields(ReviewFields):
+    def __init__(self, fields):
+        badcols = set(fields) - set(self.all_fields)
+        if len(badcols):
+            raise InvalidFieldsError(badcols)
+        self._fields = fields
+
+    def fields(self, _):
+        return self._fields
 
 
 def output_list(sep, value):
@@ -103,15 +121,14 @@ class QamInterpreter(cmdln.Cmdln):
     ${command_list}
     ${help_list}
     """
+    INTERPRETER_QUIT = 3
+
     def __init__(self, parent_cmdln, *args, **kwargs):
         cmdln.Cmdln.__init__(self, *args, **kwargs)
         self.parent_cmdln = parent_cmdln
 
     name = 'osc qam'
-    all_keys = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
-                "Category", "Rating", "Unassigned Roles",
-                "Assigned Roles", "Package-Streams", "Incident Priority"]
-    all_columns_string = ", ".join(all_keys)
+    all_columns_string = ", ".join(ReviewFields.all_fields)
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
@@ -122,15 +139,6 @@ class QamInterpreter(cmdln.Cmdln):
             self.affected_user = opts.user
         else:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
-
-    def _run_action(self, func):
-        """Run the given action and catch (expected) errors that might occur.
-
-        """
-        try:
-            return func()
-        except ReportedError as e:
-            print(str(e))
 
     @cmdln.option('-U',
                   '--user',
@@ -147,7 +155,7 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         action = ApproveAction(self.api, self.affected_user, self.request_id)
-        self._run_action(action)
+        action()
 
     @cmdln.option('-U',
                   '--user',
@@ -173,7 +181,24 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = AssignAction(self.api, self.affected_user, self.request_id,
                               group)
-        self._run_action(action)
+        action()
+
+    def _list_requests(self, action, tabular, keys):
+        """Display the requests from the action.
+
+        :param action: Action that obtains the requests.
+        :type action: L{oscqam.actions.ListAction}.
+        :param tabular: True if output should be formatted in a table.
+        :type tabular: bool
+        :param keys: The keys to output
+        :type keys: [str]
+        """
+        listdata = action()
+        formatter = tabular_output if tabular else verbose_output
+        if listdata:
+            listdata = [datum.values(keys)
+                        for datum in listdata]
+            print(formatter(listdata, keys))
 
     @cmdln.option('-F',
                   '--fields',
@@ -184,51 +209,80 @@ class QamInterpreter(cmdln.Cmdln):
                          'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-U',
                   '--user',
-                  help = 'User to list requests for.')
-    @cmdln.option('-R',
-                  '--review',
-                  action = 'store_true',
-                  help = 'Show all requests that are in review by the user.')
+                  default = None,
+                  help = 'List requests assignable to the given USER '
+                         '(USER is a member of a qam-group that has an open '
+                         'review for the request).')
     @cmdln.option('-T',
                   '--tabular',
                   action = 'store_true',
                   default = False,
-                  help = 'Output the list in a tabular format.')
+                  help = 'Output the requests in an ASCII-table.')
     @cmdln.option('-v',
                   '--verbose',
                   action = 'store_true',
                   default = False,
-                  help = 'Generate verbose output.')
-    def do_list(self, subcmd, opts):
-        """${cmd_name}: Show a list of all open qam-requests currently running.
+                  help = 'Display all available fields for a request: '
+                         + all_columns_string + '.')
+    @cmdln.alias('list')
+    def do_open(self, subcmd, opts):
+        """${cmd_name}: Show a list of OBS qam-requests that are open.
 
-        The list will only contain requests that are part of the qam-groups.
+        By default, open requests assignable to yourself will be shown
+        (currently assigned to a qam-group you are a member of).
 
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if opts.verbose and opts.fields:
+            raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
-        only_review = opts.review if opts.review else False
-        formatter = tabular_output if opts.tabular else verbose_output
-        action = ListAction(self.api, self.affected_user, only_review)
-        listdata = self._run_action(action)
-        keys = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
-                "Incident Priority"]
-        if opts.verbose:
-            keys = self.all_keys
-        else:
-            badcols = set(opts.fields) - set(self.all_keys)
-            if len(badcols):
-                print("Unknown fields: %s" % (", ".join(map(repr, badcols))))
-                return
-            elif opts.fields:
-                keys = opts.fields
+        fields = ReviewFields.review_fields_by_opts(opts)
+        action = ListOpenAction(self.api, self.affected_user)
+        keys = fields.fields(action)
+        self._list_requests(action, opts.tabular, keys)
 
-        if listdata:
-            listdata = group_sort_requests(listdata)
-            listdata = [datum.values(keys)
-                        for datum in listdata]
-            print(formatter(listdata, keys))
+    @cmdln.option('-F',
+                  '--fields',
+                  action = 'append',
+                  default = [],
+                  help = 'Define the values to output in a cumulative fashion '
+                         '(pass flag multiple times).  '
+                         'Available fields: ' + all_columns_string + '.')
+    @cmdln.option('-U',
+                  '--user',
+                  default=None,
+                  help = 'List requests assigned to the given USER.')
+    @cmdln.option('-T',
+                  '--tabular',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Output the requests in an ASCII-table.')
+    @cmdln.option('-v',
+                  '--verbose',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Display all available fields for a request: '
+                         + all_columns_string + '.')
+    def do_assigned(self, subcmd, opts):
+        """${cmd_name}: Show a list of OBS qam-requests that are in review.
+
+        A request is in review, as soon as a user has been assigned for a
+        group that is required to review a request.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if opts.verbose and opts.fields:
+            raise ConflictingOptions("Only pass '-v' or '-F' not both")
+        self._set_required_params(opts)
+        fields = ReviewFields.review_fields_by_opts(opts)
+        if opts.user:
+            action = ListAssignedUserAction(self.api, self.affected_user)
+        else:
+            action = ListAssignedAction(self.api, self.affected_user)
+        keys = fields.fields(action)
+        self._list_requests(action, opts.tabular, keys)
 
     @cmdln.option('-U',
                   '--user',
@@ -250,7 +304,7 @@ class QamInterpreter(cmdln.Cmdln):
         message = opts.message if opts.message else None
         action = RejectAction(self.api, self.affected_user, self.request_id,
                               message)
-        self._run_action(action)
+        action()
 
     @cmdln.option('-U',
                   '--user',
@@ -276,7 +330,7 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = UnassignAction(self.api, self.affected_user, self.request_id,
                                 group)
-        self._run_action(action)
+        action()
 
     def do_comment(self, subcmd, opts, request_id, comment):
         """${cmd_name}: Add a comment to a request.
@@ -290,15 +344,20 @@ class QamInterpreter(cmdln.Cmdln):
         self.request_id = request_id
         action = CommentAction(self.api, self.affected_user, self.request_id,
                                comment)
-        self._run_action(action)
+        action()
 
     @cmdln.alias('q')
     @cmdln.alias('Q')
     def do_quit(self, subcmd, opts):
         """${cmd_name}: Quit the qam-subinterpreter."""
         self.stop = True
+        return self.INTERPRETER_QUIT
 
 
+@cmdln.option('-A',
+              '--assigned',
+              action = 'store_true',
+              help = 'Parameter for list command.')
 @cmdln.option('-F',
               '--fields',
               action = 'append',
@@ -310,10 +369,6 @@ class QamInterpreter(cmdln.Cmdln):
 @cmdln.option('-M',
               '--message',
               help = 'Message to use for the command.')
-@cmdln.option('-R',
-              '--review',
-              action = 'store_true',
-              help = 'Parameter for list command.')
 @cmdln.option('-T',
               '--tabular',
               action = 'store_true',
@@ -328,7 +383,7 @@ class QamInterpreter(cmdln.Cmdln):
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
-    osc_stdout = None
+    osc_stdout = [None]
     retval = None
 
     def restore_orig_stdout():
@@ -338,24 +393,32 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
         interactive commandline application.
 
         """
-        osc_stdout = sys.stdout
-        sys.stdout = osc_stdout.__dict__['writer']
+        osc_stdout[0] = sys.stdout
+        sys.stdout = osc_stdout[0].__dict__['writer']
 
     def restore_osc_stdout():
         """When the plugin has finished running restore the osc-state.
 
         """
-        sys.stdout = osc_stdout
+        sys.stdout = osc_stdout[0]
     osc.conf.get_config()
-    restore_orig_stdout()
-    try:
-        interp = QamInterpreter(self)
-        interp.optparser = cmdln.SubCmdOptionParser()
-        if args:
-            index = sys.argv.index('qam')
-            retval = interp.onecmd(sys.argv[index + 1:])
-        else:
-            retval = interp.cmdloop()
-    finally:
-        restore_osc_stdout()
-    return retval
+    running = True
+    ret = None
+    while running:
+        try:
+            restore_orig_stdout()
+            interp = QamInterpreter(self)
+            interp.optparser = cmdln.SubCmdOptionParser()
+            if args:
+                running = False
+                index = sys.argv.index('qam')
+                ret = interp.onecmd(sys.argv[index + 1:])
+            else:
+                ret = interp.cmdloop()
+                if ret == QamInterpreter.INTERPRETER_QUIT:
+                    running = False
+        except ReportedError as e:
+            print(str(e))
+        finally:
+            restore_osc_stdout()
+    return ret

@@ -1,9 +1,14 @@
 from __future__ import print_function
+import abc
 import os
+import itertools
 import logging
+import re
 import sys
-from .models import (Group, GroupReview, User, Request, Template,
-                     ReportedError, RemoteError, TemplateNotFoundError)
+
+
+from .models import (Group, GroupReview, User, Request, Template, ReportedError,
+                     RemoteError, TemplateNotFoundError)
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -113,6 +118,28 @@ class OneGroupAssignedError(ReportedError):
         )
 
 
+def multi_level_sort(xs, criteria):
+    """Sort the given collection based on multiple criteria.
+    The criteria will be sorted by in the given order, whereas each group
+    from the first criteria will be sorted by the second criteria and so forth.
+
+    :param xs: Iterable of objects.
+    :type xs: [a]
+
+    :param criteria: Iterable of extractor functions.
+    :type criteria: [a -> b]
+
+    """
+    if not criteria:
+        return xs
+    extractor = criteria[-1]
+    xss = sorted(xs, key = extractor)
+    grouped = itertools.groupby(xss, extractor)
+    subsorts = [multi_level_sort(list(value), criteria[:-1]) for _, value in
+                grouped]
+    return [s for sub in subsorts for s in sub]
+
+
 class OscAction(object):
     """Base class for actions that need to interface with the open build service.
 
@@ -162,53 +189,97 @@ class OscAction(object):
         self.out.flush()
 
 
+class Report(object):
+    """Composes request with the matching template.
+
+    Provides a method to output a list of keys from requests/templates and
+    will dispatch to the correct object.
+
+    """
+
+    def __init__(self, request, template_factory):
+        """Associate a request with the correct template."""
+        self.request = request
+        self.template = request.get_template(template_factory)
+
+    def values(self, keys):
+        """Return the values for keys.
+
+        :type keys: [str]
+        :param keys: Identifiers for the data to be returned from the template
+                    or associated request.
+
+        :returns: [str]
+        """
+        data = []
+        entries = self.template.log_entries
+        for key in keys:
+            try:
+                if key == "Unassigned Roles":
+                    reviews = [review for review
+                               in self.request.review_list_open()
+                               if isinstance(review, GroupReview)]
+                    names = sorted([str(r.reviewer) for r in reviews])
+                    value = " ".join(names)
+                elif key == "Package-Streams":
+                    packages = [p for p in self.request.packages]
+                    value = " ".join(packages)
+                elif key == "Assigned Roles":
+                    roles = self.request.assigned_roles
+                    assigns = [str(r) for r in roles]
+                    value = ", ".join(assigns)
+                elif key == "Incident Priority":
+                    value = self.request.incident_priority
+                else:
+                    value = entries[key]
+                data.append(value)
+            except KeyError:
+                logger.debug("Missing key: %s", key)
+        return data
+
+
 class ListAction(OscAction):
-    class ListData(object):
-        def __init__(self, request, template_factory):
-            """Associate a request with the correct template."""
-            self.request = request
-            self.template = request.get_template(template_factory)
+    """Base action for operation that work on a list of requests.
 
-        def values(self, keys):
-            """Return the values for keys.
+    Subclasses must overwrite the 'load_requests' method that return the list
+    of requests that should be output according to the formatter and fields.
+    """
+    __metaclass__ = abc.ABCMeta
+    default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
+                      "Incident Priority"]
 
-            :type keys: [str]
-            :param keys: Identifiers for the data to be returned from the template
-                        or associated request.
+    def group_sort_reports(self):
+        """Sort reports according to rating and request id.
 
-            :returns: [str]
-            """
-            data = []
-            entries = self.template.log_entries
-            for key in keys:
-                try:
-                    if key == "Unassigned Roles":
-                        reviews = [review for review
-                                   in self.request.review_list_open()
-                                   if isinstance(review, GroupReview)]
-                        names = sorted([str(r.reviewer) for r in reviews])
-                        value = " ".join(names)
-                    elif key == "Package-Streams":
-                        packages = [p for p in self.request.packages]
-                        value = " ".join(packages)
-                    elif key == "Assigned Roles":
-                        roles = self.request.assigned_roles
-                        assigns = [str(r) for r in roles]
-                        value = ", ".join(assigns)
-                    elif key == "Incident Priority":
-                        value = self.request.incident_priority
-                    else:
-                        value = entries[key]
-                    data.append(value)
-                except KeyError:
-                    logger.debug("Missing key: %s", key)
-            return data
+        First sort by Priority, then rating and finally request id.
+        """
+        reports = filter(None, self.reports)
+        self.reports = multi_level_sort(
+            reports,
+            [lambda l: l.request.reqid,
+             lambda l: l.template.log_entries["Rating"],
+             lambda l: l.request.incident_priority]
+        )
 
-    def __init__(self, remote, user, only_review = False,
-                 template_factory = Template):
+    def __init__(self, remote, user, template_factory=Template):
         super(ListAction, self).__init__(remote, user)
-        self.only_review = only_review
         self.template_factory = template_factory
+
+    def action(self):
+        """Return all reviews that match the parameters of the RequestAction.
+
+        """
+        self.reports = self._load_listdata(self.load_requests())
+        self.group_sort_reports()
+        return self.reports
+
+    @abc.abstractmethod
+    def load_requests(self):
+        """Load requests this class should operate on.
+
+        :returns: [L{oscqam.models.Request}]
+        """
+        pass
 
     def merge_requests(self, user_requests, group_requests):
         """Merge the requests together and set a field 'origin' to determine
@@ -224,29 +295,6 @@ class ListAction(OscAction):
                 request.origin.extend(request.groups)
         return all_requests
 
-    def in_review_by_user(self, reviews):
-        for review in reviews:
-            if (review.reviewer == self.user
-                    and review.state == 'new'):
-                return True
-        return False
-
-    def action(self):
-        """Return all reviews that match the parameters of the RequestAction.
-
-        """
-        user_requests = set(Request.for_user(self.remote, self.user))
-        if self.only_review:
-            all_requests = set([request for request in user_requests
-                                if self.in_review_by_user(request.review_list())])
-            all_requests = self.merge_requests(all_requests, [])
-        else:
-            qam_groups = self.user.qam_groups
-            group_requests = set(Request.open_for_groups(self.remote,
-                                                         qam_groups))
-            all_requests = self.merge_requests(user_requests, group_requests)
-        return self._load_listdata(all_requests)
-
     def _load_listdata(self, requests):
         """Load templates for the given requests.
 
@@ -256,16 +304,51 @@ class ListAction(OscAction):
 
         :param requests: [L{oscqam.models.Request}]
 
-        :returns: [L{oscqam.actions.ListAction.ListData}]
+        :returns: [L{oscqam.actions.Report}]
         """
         listdata = []
         for request in requests:
             try:
-                listdata.append(self.ListData(request,
-                                              self.template_factory))
+                listdata.append(Report(request,
+                                       self.template_factory))
             except TemplateNotFoundError as e:
                 logger.warning(str(e))
         return listdata
+
+
+class ListOpenAction(ListAction):
+    def load_requests(self):
+        user_requests = set(Request.for_user(self.remote, self.user))
+        qam_groups = self.user.qam_groups
+        group_requests = set(self.remote.requests.open_for_groups(qam_groups))
+        return self.merge_requests(user_requests, group_requests)
+
+
+class ListAssignedAction(ListAction):
+    """Action to list assigned requests.
+    """
+    default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
+                      "Incident Priority", "Assigned Roles"]
+
+    def in_review_by_user(self, reviews):
+        for review in reviews:
+            if (review.reviewer == self.user and review.open):
+                return True
+        return False
+
+    def load_requests(self):
+        qam_groups = Group.for_pattern(self.remote, re.compile(".*qam.*"))
+        return set([request for request in
+                    self.remote.requests.review_for_groups(qam_groups)])
+
+
+class ListAssignedUserAction(ListAssignedAction):
+    """Action to list requests that are assigned to the user.
+    """
+    def load_requests(self):
+        user_requests = set(Request.for_user(self.remote, self.user))
+        return set([request for request in user_requests
+                    if self.in_review_by_user(request.review_list())])
 
 
 class AssignAction(OscAction):

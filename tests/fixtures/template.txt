@@ -6,6 +6,7 @@ $Author: oscqam $
 
 Products: SLE-SERVER 11-SP3 (i386, ia64, ppc64, s390x, x86_64), SLE-DESKTOP 11-SP3 (i386, x86_64)
 Category: security
+Rating: Important
 SAT Patch No: 10001
 MD5 sum: 10000000000000000000000000000001
 SUBSWAMPID: 10001
