@@ -2,6 +2,7 @@
 everything in a consistent state.
 
 """
+import abc
 import contextlib
 import logging
 import re
@@ -258,7 +259,21 @@ class XmlFactoryMixin(object):
         return cls.parse_et(remote, root, tag, cls)
 
 
-class Group(XmlFactoryMixin):
+class Reviewer(object):
+    """Superclass for possible reviewer-classes.
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def is_qam_group(self):
+        """:returns: True if the group denotes reviews it's associated with to
+        be reviewed by a QAM member.
+
+        """
+        pass
+
+
+class Group(XmlFactoryMixin, Reviewer):
     """A group object from the build service.
     """
     endpoint = 'group'
@@ -312,6 +327,13 @@ class Group(XmlFactoryMixin):
     def parse_entry(cls, remote, xml):
         return super(Group, cls).parse(remote, xml, 'entry')
 
+    def is_qam_group(self):
+        # 'qam-auto' is already used to designate automated reviews:
+        # https://gitlab.suse.de/l3ms/osc-plugins (osc-checker-qa.py).
+        # It is excluded here, as it does not require manual review
+        # by a QAM member.
+        return self.name.startswith('qam') and self.name != 'qam-auto'
+
     def __hash__(self):
         # We don't want to hash to the same as only the string.
         return hash(self.name) + hash(type(self))
@@ -328,7 +350,7 @@ class Group(XmlFactoryMixin):
         return u"{0}".format(self.name)
 
 
-class User(XmlFactoryMixin):
+class User(XmlFactoryMixin, Reviewer):
     """Wraps a user of the obs in an object.
 
     """
@@ -355,6 +377,9 @@ class User(XmlFactoryMixin):
         """Return only the groups that are part of the qam-workflow."""
         return [group for group in self.groups
                 if User.QAM_SRE.match(group.name)]
+
+    def is_qam_group(self):
+        return False
 
     def __hash__(self):
         return hash(self.login)
@@ -457,7 +482,7 @@ class Assignment(object):
 
         """
         accepted = [r for r in request.review_list_accepted()
-                    if isinstance(r, GroupReview)]
+                    if r.reviewer.is_qam_group()]
         if not len(accepted) == 1:
             return set()
         users = [r for r in request.review_list_open()

@@ -23,6 +23,7 @@ class ModelTests(unittest.TestCase):
         cls.req_unassigned = load_fixture('request_unassigned.xml')
         cls.req_invalid = load_fixture('request_no_src.xml')
         cls.req_sle11sp4 = load_fixture('request_sle11sp4.xml')
+        cls.req_qam_auto = load_fixture('request_qam_auto.xml')
         cls.template = load_fixture('template.txt')
         cls.template_rh = load_fixture('template_rh.txt')
         cls.user = load_fixture('person_anonymous.xml')
@@ -146,6 +147,14 @@ class ModelTests(unittest.TestCase):
         """Test that assignments can be inferred from a single group even
         if the comments are not used.
         """
+        request = Request.parse(self.remote, self.req_4_xml)[0]
+        assignments = Assignment.infer(request)
+        self.assertEqual(len(assignments), 1)
+        assignment = assignments[0]
+        self.assertEqual(assignment.user.login, 'anonymous')
+        self.assertEqual(assignment.group.name, 'qam-sle')
+
+    def test_assignment_inference_ignores_qam_auto(self):
         request = Request.parse(self.remote, self.req_4_xml)[0]
         assignments = Assignment.infer(request)
         self.assertEqual(len(assignments), 1)
