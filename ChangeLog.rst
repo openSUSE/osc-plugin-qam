@@ -6,10 +6,12 @@ ChangeLog
 
 - Add 'assigned' command to possible commands: list all requests that are
   assigned (as far as the plugin can infer them).
+- Inference for assignments now only considers qam-groups and ignore qam-auto.
 
 0.5.2
 =====
 
+- Add 'status' and 'Test Plan Reviewer' checks to approve action.
 - Fix reject outputting complete log.
 - Fix bnc#943294: match 'Test Plan Reviewers' if 'Test Plan Reviewer' is not
   found.
