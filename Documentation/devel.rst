@@ -76,6 +76,14 @@ The plugin should keep building for at least the supported versions.
 
 .. _QA-Maintenance project: https://build.suse.de/project/show/QA:Maintenance
 
+Procedure
+#########
+
+1. Bump version and ChangeLog
+2. make release
+3. git tag v<version>
+4. git push && git push <remote> refs/tags/v<version>
+
 Bug reporting
 -------------
 

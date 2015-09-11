@@ -8,3 +8,7 @@ all:
 check:
 
 	$(PYTEST) tests
+
+release:
+
+	bs-update -P QA:Maintenance -d . HEAD
