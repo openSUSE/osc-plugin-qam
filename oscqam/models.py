@@ -817,7 +817,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 req = Request(remote)
                 req.read(request)
                 requests.append(req)
-            except osc.oscerr.APIError, e:
+            except osc.oscerr.APIError as e:
                 logger.error(e.msg)
                 pass
             except osc.oscerr.WrongArgs as e:
