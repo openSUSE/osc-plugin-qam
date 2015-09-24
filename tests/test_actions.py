@@ -1,7 +1,7 @@
 import os
 import StringIO
 import unittest
-from oscqam import actions, cli, models
+from oscqam import actions, cli, models, fields
 from .utils import load_fixture
 from .mockremote import MockRemote
 
@@ -138,7 +138,7 @@ class ActionTests(unittest.TestCase):
 
     def test_list_assigned(self):
         action = actions.ListAssignedAction(self.mock_remote, 'anonymous',
-                                            cli.DefaultFields())
+                                            fields.DefaultFields())
         self.mock_remote.register_url('group',
                                       lambda: load_fixture('group_all.xml'))
         endpoint = ("/source/SUSE:Maintenance:130/_attribute/"
