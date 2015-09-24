@@ -39,7 +39,7 @@ def output_list(sep, value):
 
 def verbose_output(data, keys):
     """Output the data in verbose format."""
-    length = max([len(k) for k in keys])
+    length = max([len(str(k)) for k in keys])
     output = []
     str_template = "{{0:{length}s}}: {{1}}".format(length = length)
     for row in data:
@@ -83,7 +83,7 @@ class QamInterpreter(cmdln.Cmdln):
         self.parent_cmdln = parent_cmdln
 
     name = 'osc qam'
-    all_columns_string = ", ".join(ReportFields.all_fields)
+    all_columns_string = ", ".join([str(f) for f in ReportFields.all_fields])
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()

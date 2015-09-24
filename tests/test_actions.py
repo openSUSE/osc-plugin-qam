@@ -197,3 +197,9 @@ class ActionTests(unittest.TestCase):
         )
         approval()
         self.assertEqual(len(self.mock_remote.post_calls), 1)
+
+    def test_report_field(self):
+        self.assertEqual("Assigned Roles",
+                         str(fields.ReportField.assigned_roles))
+        self.assertEqual(fields.ReportField.assigned_roles,
+                         fields.ReportField.from_str("Assigned Roles"))
