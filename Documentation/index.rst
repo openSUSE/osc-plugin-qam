@@ -15,6 +15,7 @@ Contents:
    :maxdepth: 2
 
    install
+   workflows/workflows
    devel
    todo
    bugs
