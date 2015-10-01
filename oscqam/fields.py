@@ -2,16 +2,59 @@ from enum import Enum
 from .models import ReportedError
 
 
+def levenshtein(first, second):
+    """Calculate levenshtein distance between two strings.
+
+    Deletion, insertion and substitution all have a cost of 1.
+
+    :type first: str
+    :type second: str
+
+    :returns: Distance between the strings.
+    """
+    first = " " + first
+    second = " " + second
+    rows, cols = (len(first), len(second))
+    matrix = [[0] * cols for i in range(rows)]
+    # Set the axis
+    for row in range(rows):
+        matrix[row][0] = row
+    for col in range(cols):
+        matrix[0][col] = col
+
+    for row in range(rows):
+        for col in range(cols):
+            if first[row] == second[col]:
+                matrix[row][col] = matrix[row-1][col-1]
+            else:
+                matrix[row][col] = min(matrix[row-1][col] + 1,
+                                       matrix[row][col-1] + 1,
+                                       matrix[row-1][col-1] + 1)
+    return matrix[rows - 1][cols - 1]
+
+
 class InvalidFieldsError(ReportedError):
     """Raise when the user wants to output non-existent fields.
     """
-    _msg = ("Unknown fields: {0}.  "
-            "Valid fields: {1}.")
+    _msg = ("Unknown fields: {0}. "
+            "Did you mean: {1}. "
+            "(Available fields: {2})")
+
+    def _get_suggestions(self, bad_fields):
+        suggestions = set()
+        for bad_field in bad_fields:
+            distances = [(str(field), levenshtein(str(field), bad_field))
+                         for field in ReportField]
+            nearest = min(distances, key = lambda d: d[1])
+            suggestions.add(nearest[0])
+        return suggestions
 
     def __init__(self, bad_fields):
+        suggestions = self._get_suggestions(bad_fields)
         super(InvalidFieldsError, self).__init__(
             self._msg.format(", ".join(map(repr, bad_fields)),
-                             ", ".join(map(str, ReportFields.all_fields)))
+                             ", ".join(suggestions),
+                             ", ".join(map(str, ReportField)))
         )
 
 
