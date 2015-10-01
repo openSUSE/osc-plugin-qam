@@ -31,11 +31,11 @@ class InvalidFieldsError(ReportedError):
     def __init__(self, bad_fields):
         super(InvalidFieldsError, self).__init__(
             self._msg.format(", ".join(map(repr, bad_fields)),
-                             ", ".join(map(repr, ReviewFields.all_fields)))
+                             ", ".join(map(repr, ReportFields.all_fields)))
         )
 
 
-class ReviewFields(object):
+class ReportFields(object):
     all_fields = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
                   "Category", "Rating", "Unassigned Roles", "Assigned Roles",
                   "Package-Streams", "Incident Priority"]
@@ -46,19 +46,19 @@ class ReviewFields(object):
     @staticmethod
     def review_fields_by_opts(opts):
         if opts.verbose:
-            return ReviewFields()
+            return ReportFields()
         elif opts.fields:
             return UserFields(opts.fields)
         else:
             return DefaultFields()
 
 
-class DefaultFields(ReviewFields):
+class DefaultFields(ReportFields):
     def fields(self, action):
         return action.default_fields
 
 
-class UserFields(ReviewFields):
+class UserFields(ReportFields):
     def __init__(self, fields):
         badcols = set(fields) - set(self.all_fields)
         if len(badcols):
@@ -129,7 +129,7 @@ class QamInterpreter(cmdln.Cmdln):
         self.parent_cmdln = parent_cmdln
 
     name = 'osc qam'
-    all_columns_string = ", ".join(ReviewFields.all_fields)
+    all_columns_string = ", ".join(ReportFields.all_fields)
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
@@ -238,7 +238,7 @@ class QamInterpreter(cmdln.Cmdln):
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
-        fields = ReviewFields.review_fields_by_opts(opts)
+        fields = ReportFields.review_fields_by_opts(opts)
         action = ListOpenAction(self.api, self.affected_user)
         keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
@@ -277,7 +277,7 @@ class QamInterpreter(cmdln.Cmdln):
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
-        fields = ReviewFields.review_fields_by_opts(opts)
+        fields = ReportFields.review_fields_by_opts(opts)
         if opts.user:
             action = ListAssignedUserAction(self.api, self.affected_user)
         else:
@@ -309,7 +309,7 @@ class QamInterpreter(cmdln.Cmdln):
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
-        fields = ReviewFields.review_fields_by_opts(opts)
+        fields = ReportFields.review_fields_by_opts(opts)
         action = InfoAction(self.api, self.affected_user, request_id)
         keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
