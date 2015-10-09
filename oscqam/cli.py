@@ -9,8 +9,10 @@ import osc.conf
 
 from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListAssignedAction, ListAssignedUserAction,
-                            UnassignAction, RejectAction, CommentAction)
+                            UnassignAction, RejectAction, CommentAction,
+                            InfoAction)
 from oscqam.models import (RemoteFacade, ReportedError)
+from oscqam.fields import ReportFields
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -19,53 +21,6 @@ logger.setLevel(logging.INFO)
 
 class ConflictingOptions(ReportedError):
     pass
-
-
-class InvalidFieldsError(ReportedError):
-    """Raise when the user wants to output non-existent fields.
-    """
-    _msg = ("Unknown fields: {0}.  "
-            "Valid fields: {1}.")
-
-    def __init__(self, bad_fields):
-        super(InvalidFieldsError, self).__init__(
-            self._msg.format(", ".join(map(repr, bad_fields)),
-                             ", ".join(map(repr, ReviewFields.all_fields)))
-        )
-
-
-class ReviewFields(object):
-    all_fields = ["ReviewRequestID", "Products", "SRCRPMs", "Bugs",
-                  "Category", "Rating", "Unassigned Roles", "Assigned Roles",
-                  "Package-Streams", "Incident Priority"]
-
-    def fields(self, _):
-        return self.all_fields
-
-    @staticmethod
-    def review_fields_by_opts(opts):
-        if opts.verbose:
-            return ReviewFields()
-        elif opts.fields:
-            return UserFields(opts.fields)
-        else:
-            return DefaultFields()
-
-
-class DefaultFields(ReviewFields):
-    def fields(self, action):
-        return action.default_fields
-
-
-class UserFields(ReviewFields):
-    def __init__(self, fields):
-        badcols = set(fields) - set(self.all_fields)
-        if len(badcols):
-            raise InvalidFieldsError(badcols)
-        self._fields = fields
-
-    def fields(self, _):
-        return self._fields
 
 
 def output_list(sep, value):
@@ -84,7 +39,7 @@ def output_list(sep, value):
 
 def verbose_output(data, keys):
     """Output the data in verbose format."""
-    length = max([len(k) for k in keys])
+    length = max([len(str(k)) for k in keys])
     output = []
     str_template = "{{0:{length}s}}: {{1}}".format(length = length)
     for row in data:
@@ -128,7 +83,7 @@ class QamInterpreter(cmdln.Cmdln):
         self.parent_cmdln = parent_cmdln
 
     name = 'osc qam'
-    all_columns_string = ", ".join(ReviewFields.all_fields)
+    all_columns_string = ", ".join([str(f) for f in ReportFields.all_fields])
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
@@ -237,7 +192,7 @@ class QamInterpreter(cmdln.Cmdln):
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
-        fields = ReviewFields.review_fields_by_opts(opts)
+        fields = ReportFields.review_fields_by_opts(opts)
         action = ListOpenAction(self.api, self.affected_user)
         keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
@@ -251,7 +206,7 @@ class QamInterpreter(cmdln.Cmdln):
                          'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-U',
                   '--user',
-                  default=None,
+                  default = None,
                   help = 'List requests assigned to the given USER.')
     @cmdln.option('-T',
                   '--tabular',
@@ -276,11 +231,40 @@ class QamInterpreter(cmdln.Cmdln):
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
-        fields = ReviewFields.review_fields_by_opts(opts)
+        fields = ReportFields.review_fields_by_opts(opts)
         if opts.user:
             action = ListAssignedUserAction(self.api, self.affected_user)
         else:
             action = ListAssignedAction(self.api, self.affected_user)
+        keys = fields.fields(action)
+        self._list_requests(action, opts.tabular, keys)
+
+    @cmdln.option('-F',
+                  '--fields',
+                  action = 'append',
+                  default = [],
+                  help = 'Define the values to output in a cumulative fashion '
+                         '(pass flag multiple times).  '
+                         'Available fields: ' + all_columns_string + '.')
+    @cmdln.option('-T',
+                  '--tabular',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Output the requests in an ASCII-table.')
+    @cmdln.option('-v',
+                  '--verbose',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Display all available fields for a request: '
+                         + all_columns_string + '.')
+    def do_info(self, subcmd, opts, request_id):
+        """${cmd_name}: Show information for the given request.
+        """
+        if opts.verbose and opts.fields:
+            raise ConflictingOptions("Only pass '-v' or '-F' not both")
+        self._set_required_params(opts)
+        fields = ReportFields.review_fields_by_opts(opts)
+        action = InfoAction(self.api, self.affected_user, request_id)
         keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
 

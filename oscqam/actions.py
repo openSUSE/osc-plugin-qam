@@ -7,8 +7,10 @@ import re
 import sys
 
 
-from .models import (Group, GroupReview, User, Request, Template, ReportedError,
-                     RemoteError, TemplateNotFoundError)
+from .models import (Group, GroupReview, User, Request, Template,
+                     ReportedError, RemoteError, TemplateNotFoundError)
+from .fields import ReportField
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -202,10 +204,10 @@ class Report(object):
         self.request = request
         self.template = request.get_template(template_factory)
 
-    def values(self, keys):
-        """Return the values for keys.
+    def values(self, fields):
+        """Return the values for fields.
 
-        :type keys: [str]
+        :type keys: [L{actions.ReportField}]
         :param keys: Identifiers for the data to be returned from the template
                     or associated request.
 
@@ -213,28 +215,28 @@ class Report(object):
         """
         data = []
         entries = self.template.log_entries
-        for key in keys:
+        for field in fields:
             try:
-                if key == "Unassigned Roles":
+                if field == ReportField.unassigned_roles:
                     reviews = [review for review
                                in self.request.review_list_open()
                                if isinstance(review, GroupReview)]
                     names = sorted([str(r.reviewer) for r in reviews])
                     value = " ".join(names)
-                elif key == "Package-Streams":
+                elif field == ReportField.package_streams:
                     packages = [p for p in self.request.packages]
                     value = " ".join(packages)
-                elif key == "Assigned Roles":
+                elif field == ReportField.assigned_roles:
                     roles = self.request.assigned_roles
                     assigns = [str(r) for r in roles]
                     value = ", ".join(assigns)
-                elif key == "Incident Priority":
+                elif field == ReportField.incident_priority:
                     value = self.request.incident_priority
                 else:
-                    value = entries[key]
+                    value = entries[str(field)]
                 data.append(value)
             except KeyError:
-                logger.debug("Missing key: %s", key)
+                logger.debug("Missing key: %s", str(field))
         return data
 
 
@@ -245,8 +247,11 @@ class ListAction(OscAction):
     of requests that should be output according to the formatter and fields.
     """
     __metaclass__ = abc.ABCMeta
-    default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
-                      "Incident Priority"]
+    default_fields = [ReportField.review_request_id,
+                      ReportField.srcrpms,
+                      ReportField.rating,
+                      ReportField.products,
+                      ReportField.incident_priority]
 
     def group_sort_reports(self):
         """Sort reports according to rating and request id.
@@ -327,8 +332,12 @@ class ListOpenAction(ListAction):
 class ListAssignedAction(ListAction):
     """Action to list assigned requests.
     """
-    default_fields = ["ReviewRequestID", "SRCRPMs", "Rating", "Products",
-                      "Incident Priority", "Assigned Roles"]
+    default_fields = [ReportField.review_request_id,
+                      ReportField.srcrpms,
+                      ReportField.rating,
+                      ReportField.products,
+                      ReportField.incident_priority,
+                      ReportField.assigned_roles]
 
     def in_review_by_user(self, reviews):
         for review in reviews:
@@ -349,6 +358,23 @@ class ListAssignedUserAction(ListAssignedAction):
         user_requests = set(Request.for_user(self.remote, self.user))
         return set([request for request in user_requests
                     if self.in_review_by_user(request.review_list())])
+
+
+class InfoAction(ListAction):
+    default_fields = [ReportField.review_request_id,
+                      ReportField.srcrpms,
+                      ReportField.rating,
+                      ReportField.products,
+                      ReportField.incident_priority,
+                      ReportField.assigned_roles,
+                      ReportField.unassigned_roles]
+
+    def __init__(self, remote, user_id, request_id):
+        super(InfoAction, self).__init__(remote, user_id)
+        self.request = Request.by_id(self.remote, request_id)
+
+    def load_requests(self):
+        return [self.request]
 
 
 class AssignAction(OscAction):
