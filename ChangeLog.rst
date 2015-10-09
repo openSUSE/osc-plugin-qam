@@ -6,6 +6,8 @@ ChangeLog
 
 - Add 'assigned' command to possible commands: list all requests that are
   assigned (as far as the plugin can infer them).
+- Add 'info' command to possible commands: list information for one request
+  only.
 - Inference for assignments now only considers qam-groups and ignore qam-auto.
 
 0.5.2
