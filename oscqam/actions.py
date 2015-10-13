@@ -174,7 +174,7 @@ class OscAction(object):
         :type out: L{file}
         """
         self.remote = remote
-        self.user = User.by_name(self.remote, user)
+        self.user = remote.users.by_name(user)
         self.undo_stack = []
         self.out = out
 

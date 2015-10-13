@@ -210,7 +210,6 @@ class User(XmlFactoryMixin, Reviewer):
     """Wraps a user of the obs in an object.
 
     """
-    endpoint = 'person'
     QAM_SRE = re.compile(".*qam.*")
 
     def __init__(self, remote, attributes, children):
@@ -252,16 +251,8 @@ class User(XmlFactoryMixin, Reviewer):
         return u"{0} ({1})".format(self.realname, self.email)
 
     @classmethod
-    def by_name(cls, remote, name):
-        url = '/'.join([User.endpoint, name])
-        users = User.parse(remote, remote.get(url))
-        if users:
-            return users[0]
-        raise AttributeError("User not found.")
-
-    @classmethod
     def parse(cls, remote, xml):
-        return super(User, cls).parse(remote, xml, cls.endpoint)
+        return super(User, cls).parse(remote, xml, remote.users.endpoint)
 
 
 class Review(object):
@@ -294,7 +285,7 @@ class GroupReview(Review):
 
 class UserReview(Review):
     def __init__(self, remote, review):
-        reviewer = User.by_name(remote, review.by_user)
+        reviewer = remote.users.by_name(review.by_user)
         super(UserReview, self).__init__(remote, review, reviewer)
 
 
@@ -401,8 +392,9 @@ class Assignment(object):
                         previous_event.comment
                     )
                     if user_match:
-                        user = User.by_name(request.remote,
-                                            user_match.group('user'))
+                        user = request.remote.users.by_name(
+                            user_match.group('user')
+                        )
                         if user in open_users:
                             assignments.append(Assignment(user, group))
             previous_event = event

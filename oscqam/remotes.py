@@ -3,7 +3,7 @@ import urllib2
 
 import osc
 
-from .models import Group, Request
+from .models import Group, Request, User
 
 
 class RemoteError(Exception):
@@ -152,3 +152,16 @@ class GroupRemote(object):
                                                           params))
         groups = [self.for_name(g.name) for g in group_entries]
         return groups
+
+
+class UserRemote(object):
+    def __init__(self, remote):
+        self.remote = remote
+        self.endpoint = 'person'
+
+    def by_name(self, name):
+        url = '/'.join([self.endpoint, name])
+        users = User.parse(self.remote, self.remote.get(url))
+        if users:
+            return users[0]
+        raise AttributeError("User not found.")
