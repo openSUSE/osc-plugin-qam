@@ -4,6 +4,7 @@ import urllib2
 import osc
 
 from .models import Group, Request, User
+from .utils import memoize
 
 
 class RemoteError(Exception):
@@ -146,6 +147,7 @@ class GroupRemote(object):
         self.remote = remote
         self.endpoint = 'group'
 
+    @memoize
     def all(self):
         group_entries = Group.parse_entry(self.remote,
                                           self.remote.get(self.endpoint))
@@ -155,6 +157,7 @@ class GroupRemote(object):
         return [group for group in self.all()
                 if pattern.match(group.name)]
 
+    @memoize
     def for_name(self, group_name):
         url = '/'.join([self.endpoint, group_name])
         group = Group.parse(self.remote, self.remote.get(url))
@@ -167,6 +170,7 @@ class GroupRemote(object):
                 )
             )
 
+    @memoize
     def for_user(self, user):
         params = {'login': user.login}
         group_entries = Group.parse_entry(self.remote,
@@ -181,6 +185,7 @@ class UserRemote(object):
         self.remote = remote
         self.endpoint = 'person'
 
+    @memoize
     def by_name(self, name):
         url = '/'.join([self.endpoint, name])
         users = User.parse(self.remote, self.remote.get(url))
