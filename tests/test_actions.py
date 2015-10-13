@@ -101,7 +101,7 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(actions.MultipleReviewsError, unassign)
 
     def test_reject_not_failed(self):
-        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        request = self.mock_remote.requests.by_id(self.cloud_open)
         template = models.Template(request,
                                    tr_getter = lambda x: self.template)
         action = actions.RejectAction(self.mock_remote, self.user_id,
@@ -151,7 +151,7 @@ class ActionTests(unittest.TestCase):
         self.assertEqual(len(requests), 1)
 
     def test_approval_requires_testplanreviewer(self):
-        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        request = self.mock_remote.requests.by_id(self.cloud_open)
         report = os.linesep.join(["SUMMARY: PASSED",
                                   "Test Plan Reviewer: "])
         template = models.Template(request,
@@ -163,7 +163,7 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(models.TestPlanReviewerNotSetError, approval)
 
     def test_approval_no_testplanreviewer_key(self):
-        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        request = self.mock_remote.requests.by_id(self.cloud_open)
         report = "SUMMARY: PASSED"
         template = models.Template(request,
                                    tr_getter = lambda x: report)
@@ -174,7 +174,7 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(models.TestPlanReviewerNotSetError, approval)
 
     def test_approval_requires_status_passed(self):
-        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        request = self.mock_remote.requests.by_id(self.cloud_open)
         report = os.linesep.join(["SUMMARY: FAILED",
                                   "Test Plan Reviewer: someone"])
         template = models.Template(request,
@@ -186,7 +186,7 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(models.TestResultMismatchError, approval)
 
     def test_approval(self):
-        request = models.Request.by_id(self.mock_remote, self.cloud_open)
+        request = self.mock_remote.requests.by_id(self.cloud_open)
         report = os.linesep.join(["SUMMARY: PASSED",
                                   "Test Plan Reviewer: someone"])
         template = models.Template(request,
@@ -207,8 +207,8 @@ class ActionTests(unittest.TestCase):
     def test_load_requests_with_exception(self):
         def raise_template_not_found(self):
             raise models.TemplateNotFoundError("Test error")
-        request_1 = models.Request.by_id(self.mock_remote, self.cloud_open)
-        request_2 = models.Request.by_id(self.mock_remote, self.cloud_open)
+        request_1 = self.mock_remote.requests.by_id(self.cloud_open)
+        request_2 = self.mock_remote.requests.by_id(self.non_open)
         request_2.get_template = raise_template_not_found
         action = actions.ListOpenAction(self.mock_remote, 'anonymous',
                                         template_factory = lambda r: r)

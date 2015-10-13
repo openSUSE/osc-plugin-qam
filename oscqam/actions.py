@@ -339,7 +339,7 @@ class ListAction(OscAction):
 
 class ListOpenAction(ListAction):
     def load_requests(self):
-        user_requests = set(Request.for_user(self.remote, self.user))
+        user_requests = set(self.remote.requests.for_user(self.user))
         qam_groups = self.user.qam_groups
         group_requests = set(self.remote.requests.open_for_groups(qam_groups))
         return self.merge_requests(user_requests, group_requests)
@@ -371,7 +371,7 @@ class ListAssignedUserAction(ListAssignedAction):
     """Action to list requests that are assigned to the user.
     """
     def load_requests(self):
-        user_requests = set(Request.for_user(self.remote, self.user))
+        user_requests = set(self.remote.requests.for_user(self.user))
         return set([request for request in user_requests
                     if self.in_review_by_user(request.review_list())])
 
@@ -387,7 +387,7 @@ class InfoAction(ListAction):
 
     def __init__(self, remote, user_id, request_id):
         super(InfoAction, self).__init__(remote, user_id)
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
 
     def load_requests(self):
         return [self.request]
@@ -402,7 +402,7 @@ class AssignAction(OscAction):
     def __init__(self, remote, user, request_id, group = None,
                  template_factory = Template, **kwargs):
         super(AssignAction, self).__init__(remote, user, **kwargs)
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
         self.group = remote.groups.for_name(group) if group else None
         self.template_factory = template_factory
 
@@ -494,7 +494,7 @@ class UnassignAction(OscAction):
 
     def __init__(self, remote, user, request_id, group = None):
         super(UnassignAction, self).__init__(remote, user)
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
         self._group = remote.groups.for_name(group) if group else None
 
     def group(self):
@@ -563,7 +563,7 @@ class ApproveAction(OscAction):
 
     def __init__(self, remote, user, request_id, template_factory = Template):
         super(ApproveAction, self).__init__(remote, user)
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
         self.template = self.request.get_template(template_factory)
 
     def validate(self):
@@ -595,7 +595,7 @@ class RejectAction(OscAction):
 
     def __init__(self, remote, user, request_id, message = None):
         super(RejectAction, self).__init__(remote, user)
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
         self._template = None
         self.message = message
 
@@ -625,7 +625,7 @@ class CommentAction(OscAction):
     def __init__(self, remote, user, request_id, comment):
         super(CommentAction, self).__init__(remote, user)
         self.comment = comment
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
 
     def action(self):
         self.request.add_comment(self.comment)

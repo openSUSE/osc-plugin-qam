@@ -118,6 +118,28 @@ class RequestRemote(object):
         requests = self._get_groups(groups, 'accepted', **kwargs)
         return [request for request in requests if request.assigned_roles]
 
+    def for_user(self, user):
+        """Will return all requests for the user if they are part of a
+        SUSE:Maintenance project.
+
+        """
+        params = {'user': user.login,
+                  'view': 'collection',
+                  'states': 'new,review',
+                  'withfullhistory': '1'}
+        requests = Request.parse(self.remote,
+                                 self.remote.get(self.endpoint, params))
+        return Request.filter_by_project("SUSE:Maintenance", requests)
+
+    def by_id(self, req_id):
+        req_id = Request.parse_request_id(req_id)
+        endpoint = "/".join([self.endpoint, req_id])
+        req = Request.parse(self.remote, self.remote.get(
+            endpoint,
+            {'withfullhistory': 1}
+        ))
+        return req[0]
+
 
 class GroupRemote(object):
     def __init__(self, remote):

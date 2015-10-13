@@ -471,8 +471,6 @@ class Request(osc.core.Request, XmlFactoryMixin):
         def __unicode__(self):
             return u"{0}".format(self.priority)
 
-    endpoint = 'request'
-
     OPEN_STATES = ['new', 'review']
     REVIEW_USER = 'BY_USER'
     REVIEW_GROUP = 'BY_GROUP'
@@ -558,7 +556,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if group:
             params['by_group'] = group.name
         url_params = urllib.urlencode(params)
-        url = "/".join([Request.endpoint, self.reqid])
+        url = "/".join([self.remote.requests.endpoint, self.reqid])
         url += "?" + url_params
         self.remote.post(url, comment)
 
@@ -638,30 +636,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return requests
 
     @classmethod
-    def for_user(cls, remote, user):
-        """Will return all requests for the user if they are part of a
-        SUSE:Maintenance project.
-
-        """
-        params = {'user': user.login,
-                  'view': 'collection',
-                  'states': 'new,review',
-                  'withfullhistory': '1'}
-        requests = cls.parse(remote, remote.get(cls.endpoint, params))
-        return cls.filter_by_project("SUSE:Maintenance", requests)
-
-    @classmethod
-    def by_id(cls, remote, req_id):
-        req_id = cls.parse_request_id(req_id)
-        endpoint = "/".join([cls.endpoint, req_id])
-        req = cls.parse(remote, remote.get(endpoint, {'withfullhistory': 1}))
-        return req[0]
-
-    @classmethod
     def parse(cls, remote, xml):
         et = ET.fromstring(xml)
         requests = []
-        for request in et_iter(et, cls.endpoint):
+        for request in et_iter(et, remote.requests.endpoint):
             try:
                 req = Request(remote)
                 req.read(request)
