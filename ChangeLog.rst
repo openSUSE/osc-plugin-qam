@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.7.0
+=====
+
+- Use threading to load requests.
+
 0.6.0
 =====
 
