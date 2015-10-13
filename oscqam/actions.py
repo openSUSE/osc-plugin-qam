@@ -362,7 +362,7 @@ class ListAssignedAction(ListAction):
         return False
 
     def load_requests(self):
-        qam_groups = Group.for_pattern(self.remote, re.compile(".*qam.*"))
+        qam_groups = self.remote.groups.for_pattern(re.compile(".*qam.*"))
         return set([request for request in
                     self.remote.requests.review_for_groups(qam_groups)])
 
@@ -403,7 +403,7 @@ class AssignAction(OscAction):
                  template_factory = Template, **kwargs):
         super(AssignAction, self).__init__(remote, user, **kwargs)
         self.request = Request.by_id(self.remote, request_id)
-        self.group = Group.for_name(remote, group) if group else None
+        self.group = remote.groups.for_name(group) if group else None
         self.template_factory = template_factory
 
     def template_exists(self):
@@ -495,7 +495,7 @@ class UnassignAction(OscAction):
     def __init__(self, remote, user, request_id, group = None):
         super(UnassignAction, self).__init__(remote, user)
         self.request = Request.by_id(self.remote, request_id)
-        self._group = Group.for_name(self.remote, group) if group else None
+        self._group = remote.groups.for_name(group) if group else None
 
     def group(self):
         if self._group:

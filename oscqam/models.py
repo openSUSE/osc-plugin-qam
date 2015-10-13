@@ -165,7 +165,6 @@ class Reviewer(object):
 class Group(XmlFactoryMixin, Reviewer):
     """A group object from the build service.
     """
-    endpoint = 'group'
 
     def __init__(self, remote, attributes, children):
         super(Group, self).__init__(remote, attributes, children)
@@ -175,38 +174,6 @@ class Group(XmlFactoryMixin, Reviewer):
             # prevent having to query *all* groups we need via this method,
             # which could use very many requests.
             self.name = children['title']
-
-    @classmethod
-    def all(cls, remote):
-        group_entries = Group.parse_entry(remote, remote.get(cls.endpoint))
-        groups = [Group.for_name(remote, g.name) for g in group_entries]
-        return groups
-
-    @classmethod
-    def for_pattern(cls, remote, pattern):
-        return [group for group in cls.all(remote)
-                if pattern.match(group.name)]
-
-    @classmethod
-    def for_name(cls, remote, group_name):
-        url = '/'.join([Group.endpoint, group_name])
-        group = Group.parse(remote, remote.get(url))
-        if group:
-            return group[0]
-        else:
-            raise AttributeError(
-                "No group found for name: {0}".format(
-                    group_name
-                )
-            )
-
-    @classmethod
-    def for_user(cls, remote, user):
-        params = {'login': user.login}
-        group_entries = Group.parse_entry(remote, remote.get(cls.endpoint,
-                                                             params))
-        groups = [Group.for_name(remote, g.name) for g in group_entries]
-        return groups
 
     @classmethod
     def parse(cls, remote, xml):
@@ -258,7 +225,7 @@ class User(XmlFactoryMixin, Reviewer):
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
         if not self._groups:
-            self._groups = Group.for_user(self.remote, self)
+            self._groups = self.remote.groups.for_user(self)
         return self._groups
 
     @property
@@ -321,7 +288,7 @@ class Review(object):
 
 class GroupReview(Review):
     def __init__(self, remote, review):
-        reviewer = Group.for_name(remote, review.by_group)
+        reviewer = remote.groups.for_name(review.by_group)
         super(GroupReview, self).__init__(remote, review, reviewer)
 
 
@@ -426,8 +393,9 @@ class Assignment(object):
             logger.debug("Event: {event.comment}".format(event=event))
             group_match = assignment_group_regex.match(event.comment)
             if group_match:
-                group = Group.for_name(request.remote,
-                                       group_match.group('group'))
+                group = request.remote.groups.for_name(
+                    group_match.group('group')
+                )
                 if group in closed_groups:
                     user_match = assignment_user_regex.match(
                         previous_event.comment

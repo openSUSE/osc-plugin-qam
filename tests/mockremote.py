@@ -18,6 +18,7 @@ class MockRemote(object):
         self.post_calls = []
         self.overrides = {}
         self.requests = RequestRemote(self)
+        self.groups = GroupRemote(self)
 
     def _load(self, prefix, id):
         name = "%s_%s.xml" % (prefix, id)

@@ -3,7 +3,7 @@ import urllib2
 
 import osc
 
-from .models import Request
+from .models import Group, Request
 
 
 class RemoteError(Exception):
@@ -118,3 +118,37 @@ class RequestRemote(object):
         requests = self._get_groups(groups, 'accepted', **kwargs)
         return [request for request in requests if request.assigned_roles]
 
+
+class GroupRemote(object):
+    def __init__(self, remote):
+        self.remote = remote
+        self.endpoint = 'group'
+
+    def all(self):
+        group_entries = Group.parse_entry(self.remote,
+                                          self.remote.get(self.endpoint))
+        return group_entries
+
+    def for_pattern(self, pattern):
+        return [group for group in self.all()
+                if pattern.match(group.name)]
+
+    def for_name(self, group_name):
+        url = '/'.join([self.endpoint, group_name])
+        group = Group.parse(self.remote, self.remote.get(url))
+        if group:
+            return group[0]
+        else:
+            raise AttributeError(
+                "No group found for name: {0}".format(
+                    group_name
+                )
+            )
+
+    def for_user(self, user):
+        params = {'login': user.login}
+        group_entries = Group.parse_entry(self.remote,
+                                          self.remote.get(self.endpoint,
+                                                          params))
+        groups = [self.for_name(g.name) for g in group_entries]
+        return groups
