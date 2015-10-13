@@ -1,6 +1,6 @@
 from __future__ import print_function
 from .utils import load_fixture
-from oscqam.models import RequestRemote
+from oscqam.remotes import RequestRemote
 
 
 class MockRemote(object):

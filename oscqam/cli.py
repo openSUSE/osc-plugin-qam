@@ -11,7 +11,8 @@ from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
                             InfoAction)
-from oscqam.models import (RemoteFacade, ReportedError)
+from oscqam.models import ReportedError
+from oscqam.remotes import RemoteFacade
 from oscqam.fields import ReportFields
 
 logging.basicConfig()

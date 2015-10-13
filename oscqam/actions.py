@@ -11,7 +11,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import osc.conf
 
 from .models import (Group, GroupReview, User, Request, Template,
-                     ReportedError, RemoteError, TemplateNotFoundError)
+                     ReportedError, TemplateNotFoundError)
+from .remotes import RemoteError
 from .fields import ReportField
 
 logging.basicConfig()

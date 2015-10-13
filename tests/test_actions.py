@@ -1,7 +1,7 @@
 import os
 import StringIO
 import unittest
-from oscqam import actions, cli, models, fields
+from oscqam import actions, cli, models, fields, remotes
 from .utils import load_fixture
 from .mockremote import MockRemote
 
@@ -14,7 +14,7 @@ class UndoAction(actions.OscAction):
 
     def action(self):
         self.undo_stack.append(lambda: self.undos.append(1))
-        raise models.RemoteError(None, None, None, None, None)
+        raise remotes.RemoteError(None, None, None, None, None)
 
 
 class ActionTests(unittest.TestCase):
