@@ -259,6 +259,34 @@ class QamInterpreter(cmdln.Cmdln):
                   default = False,
                   help = 'Display all available fields for a request: '
                          + all_columns_string + '.')
+    def do_my(self, subcmd, opts):
+        """${cmd_name}: Show a list of OBS qam-requests assigned to you.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        self._set_required_params(opts)
+        opts.user = self.affected_user
+        self.do_assigned(subcmd, opts)
+
+    @cmdln.option('-F',
+                  '--fields',
+                  action = 'append',
+                  default = [],
+                  help = 'Define the values to output in a cumulative fashion '
+                         '(pass flag multiple times).  '
+                         'Available fields: ' + all_columns_string + '.')
+    @cmdln.option('-T',
+                  '--tabular',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Output the requests in an ASCII-table.')
+    @cmdln.option('-v',
+                  '--verbose',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Display all available fields for a request: '
+                         + all_columns_string + '.')
     def do_info(self, subcmd, opts, request_id):
         """${cmd_name}: Show information for the given request.
         """
