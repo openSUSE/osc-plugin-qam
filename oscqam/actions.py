@@ -165,13 +165,13 @@ class OscAction(object):
     def __init__(self, remote, user, out = sys.stdout):
         """
         :param remote: Remote endpoint to the buildservice.
-        :type remote: L{oscqam.models.RemoteFacade}
+        :type remote: :class:`oscqam.models.RemoteFacade`
 
         :param user: Username that performs the action.
         :type user: str
 
         :param out: Filelike to print enduser-messages to.
-        :type out: L{file}
+        :type out: :class:`file`
         """
         self.remote = remote
         self.user = remote.users.by_name(user)
@@ -223,7 +223,7 @@ class Report(object):
     def values(self, fields):
         """Return the values for fields.
 
-        :type keys: [L{actions.ReportField}]
+        :type keys: [:class:`actions.ReportField`]
         :param keys: Identifiers for the data to be returned from the template
                     or associated request.
 
@@ -298,7 +298,7 @@ class ListAction(OscAction):
     def load_requests(self):
         """Load requests this class should operate on.
 
-        :returns: [L{oscqam.models.Request}]
+        :returns: [:class:`oscqam.models.Request`]
         """
         pass
 
@@ -323,9 +323,9 @@ class ListAction(OscAction):
         occur and not be a problem: e.g. the template creation script has not
         yet run).
 
-        :param requests: [L{oscqam.models.Request}]
+        :param requests: [:class:`oscqam.models.Request`]
 
-        :returns: L{oscqam.actions.Report}-generator
+        :returns: :class:`oscqam.actions.Report`-generator
         """
         with ThreadPoolExecutor(max_workers = get_number_of_threads()) as executor:
             results = [executor.submit(Report, r, self.template_factory)
@@ -569,9 +569,10 @@ class ApproveAction(OscAction):
     def validate(self):
         """Check preconditions to be met before a request can be approved.
 
-        :raises: L{oscqam.models.TestResultMismatchError} or
-            L{oscqam.models.TestPlanReviewerNotSetError} if conditions are
-            not met.
+        :raises: :class:`oscqam.models.TestResultMismatchError` or
+            :class:`oscqam.models.TestPlanReviewerNotSetError` if conditions
+            are not met.
+
         """
         self.template.testplanreviewer()
         self.template.passed()

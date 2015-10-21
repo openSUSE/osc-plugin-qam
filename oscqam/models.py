@@ -155,8 +155,9 @@ class Reviewer(object):
 
     @abc.abstractmethod
     def is_qam_group(self):
-        """:returns: True if the group denotes reviews it's associated with to
-        be reviewed by a QAM member.
+        """
+        :returns: True if the group denotes reviews it's associated with to
+            be reviewed by a QAM member.
 
         """
         pass
@@ -316,16 +317,16 @@ class Assignment(object):
 
     @staticmethod
     def infer_by_single_group(request):
-        """Return an L{oscqam.models.Assignment} for the request if
+        """Return an :class:`oscqam.models.Assignment` for the request if
         only one group is assigned for review.
 
         This will be interpreted as the only possible group that can be
         reviewed by an open user-review.
 
         :param request: Request to check for a possible assigned role.
-        :type request: L{oscqam.models.Request}
+        :type request: :class:`oscqam.models.Request`
 
-        :returns: set(L{oscqam.models.Request.Assignment})
+        :returns: set(:class:`oscqam.models.Assignment`)
 
         """
         accepted = [r for r in request.review_list_accepted()
@@ -350,9 +351,9 @@ class Assignment(object):
         """Return assignments for the request based on comments.
 
         :param request: Request to check for a possible assigned roles.
-        :type request: L{oscqam.models.Request}
+        :type request: :class:`oscqam.models.Request`
 
-        :returns: [L{oscqam.models.Request.Assignment}]
+        :returns: [:class:`oscqam.models.Assignment`]
         """
         def is_assignment(event):
             return "Review got assigned" in event.description
@@ -420,9 +421,9 @@ class Assignment(object):
         ``osc review command``).
 
         :param request: Request to check for a possible assigned roles.
-        :type request: L{oscqam.models.Request}
+        :type request: :class:`oscqam.models.Request`
 
-        :returns: [L{oscqam.models.Assignment}]
+        :returns: [:class:`oscqam.models.Assignment`]
 
         """
         assignments = set()
@@ -735,7 +736,7 @@ class Template(object):
         http://qam.suse.de/testreports/.
 
         :param request: The request this template is associated with.
-        :type request: L{oscqam.models.Request}
+        :type request: :class:`oscqam.models.Request`
 
         :return: Content of the log-file as string.
 
@@ -750,13 +751,13 @@ class Template(object):
         """Create a template from the given request.
 
         :param request: The request the template is associated with.
-        :type request: L{oscqam.models.Request}.
+        :type request: :class:`oscqam.models.Request`.
 
         :param tr_getter: Function that can load the template's log file based
                           on the request. Will default to loading testreports
                           from http://qam.suse.de.
 
-        :type tr_getter: Function: L{oscqam.models.Request} -> L{str}
+        :type tr_getter: Function: :class:`oscqam.models.Request} -> L{str`
 
         """
         self.log_entries = {}
@@ -782,7 +783,7 @@ class Template(object):
     def passed(self):
         """Assert that this template is from a successful test.
 
-        :raises: L{oscqam.models.TestResultMismatchError} if template is not
+        :raises: :class:`oscqam.models.TestResultMismatchError` if template is not
             set to PASSED.
         """
         if self.status != Template.STATUS_SUCCESS:
@@ -794,7 +795,7 @@ class Template(object):
     def testplanreviewer(self):
         """Assert that the Test Plan Reviewer for the template is set.
 
-        :raises: L{oscqam.models.TestPlanReviewerNotSetError} if reviewer
+        :raises: :class:`oscqam.models.TestPlanReviewerNotSetError` if reviewer
             is not set or empty.
         """
         reviewer = self.log_entries.get('Test Plan Reviewer', '')
