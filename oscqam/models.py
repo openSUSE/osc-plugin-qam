@@ -15,7 +15,8 @@ except ImportError:
 import osc.core
 import osc.oscerr
 
-from oscqam.compat import total_ordering
+from .compat import total_ordering
+from .parsers import TemplateParser
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -707,30 +708,6 @@ class Template(object):
     STATUS_UNKNOWN = 2
     base_url = "http://qam.suse.de/testreports/"
 
-    @total_ordering
-    class Rating(object):
-        """Store the template's rating.
-        """
-        def __init__(self, rating):
-            self.rating = rating
-            self.mapping = {
-                'critical': 0,
-                'important': 1,
-                'moderate': 2,
-                'low': 3,
-                '': 4
-            }
-
-        def __lt__(self, other):
-            return (self.mapping.get(self.rating, 10) <
-                    self.mapping.get(other.rating, 10))
-
-        def __eq__(self, other):
-            return self.rating == other.rating
-
-        def __str__(self):
-            return self.rating
-
     def get_testreport_web(log_path):
         """Load the template belonging to the request from
         http://qam.suse.de/testreports/.
@@ -747,7 +724,8 @@ class Template(object):
         except urllib2.URLError:
             raise TemplateNotFoundError(log_path)
 
-    def __init__(self, request, tr_getter = get_testreport_web):
+    def __init__(self, request, tr_getter = get_testreport_web,
+                 parser = TemplateParser):
         """Create a template from the given request.
 
         :param request: The request the template is associated with.
@@ -757,7 +735,11 @@ class Template(object):
                           on the request. Will default to loading testreports
                           from http://qam.suse.de.
 
-        :type tr_getter: Function: :class:`oscqam.models.Request} -> L{str`
+        :type tr_getter: Function: :class:`oscqam.models.Request` ->
+                         :class:`str`
+
+        :param parser: Class that can parse the data returned by tr_getter.
+        :type parser: :class:`oscqam.parsers.TemplateParser`
 
         """
         self.log_entries = {}
@@ -766,7 +748,7 @@ class Template(object):
             prj = request.src_project,
             reqid = request.reqid
         )
-        self.parse_log(tr_getter(self._log_path))
+        self.log_entries = parser(tr_getter(self._log_path))()
 
     def failed(self):
         """Assert that this template is from a failed test.
@@ -783,8 +765,8 @@ class Template(object):
     def passed(self):
         """Assert that this template is from a successful test.
 
-        :raises: :class:`oscqam.models.TestResultMismatchError` if template is not
-            set to PASSED.
+        :raises: :class:`oscqam.models.TestResultMismatchError` if template is
+            not set to PASSED.
         """
         if self.status != Template.STATUS_SUCCESS:
             raise TestResultMismatchError(
@@ -813,63 +795,6 @@ class Template(object):
         elif summary.upper() == "FAILED":
             return Template.STATUS_FAILURE
         return Template.STATUS_UNKNOWN
-
-    def parse_log(self, log):
-        """Parses the header of the log into the log_entries dictionary.
-
-        :type log: str
-        """
-        def split_packages(package_line):
-            """Parse a 'Packages' line from a template-log into a list of individual
-            packages.
-
-            :type package_line: str
-
-            :returns: [str]
-
-            """
-            return [v.strip() for v in package_line.split(",")]
-
-        def split_products(product_line):
-            """Split products into a list and strip SLE-prefix from each product.
-
-            :type product_line: str
-
-            :returns: [str]
-            """
-            products = map(str.strip, product_line.split("),"))
-            products = [p if p.endswith(")") else p + ")" for p in products]
-            return [re.sub("^SLE-", "", product, 1) for product in products]
-
-        def split_srcrpms(srcrpm_line):
-            """Parse 'SRCRPMs' from a template-log into a list.
-
-            :type srcrpm_line: str
-
-            :returns: [str]
-            """
-            return map(str.strip, srcrpm_line.split(","))
-
-        for line in log.splitlines():
-            # We end parsing at the results block.
-            # We only need the header information.
-            if "Test results by" in line:
-                break
-            line = line.strip()
-            if not line or ":" not in line:
-                continue
-            key, value = map(str.strip, line.split(":", 1))
-            if key == 'Packages':
-                value = split_packages(value)
-            elif key == 'Products':
-                value = split_products(value)
-            elif key == "SRCRPMs":
-                value = split_srcrpms(value)
-            elif key == "Rating":
-                value = self.Rating(value)
-            else:
-                value = value.strip()
-            self.log_entries[key] = value
 
 
 def monkeypatch():
