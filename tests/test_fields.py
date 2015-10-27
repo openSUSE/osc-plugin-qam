@@ -25,9 +25,11 @@ class AlgorithmTests(TestCase):
                                          "Assigned Roles"))
 
     def test_suggestions(self):
-        error = InvalidFieldsError(['ReviewRequest'])
-        suggestions = error._get_suggestions()
+        fields = ['ReviewRequest']
+        error = InvalidFieldsError(fields)
+        suggestions = error._get_suggestions(fields)
         self.assertEqual(suggestions, set(["ReviewRequestID"]))
-        error = InvalidFieldsError(['ReviewRequest', 'Bugz'])
-        suggestions = error._get_suggestions()
+        fields = ['ReviewRequest', 'Bugz']
+        error = InvalidFieldsError(fields)
+        suggestions = error._get_suggestions(fields)
         self.assertEqual(suggestions, set(["ReviewRequestID", "Bugs"]))
