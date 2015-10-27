@@ -5,6 +5,7 @@ ChangeLog
 =====
 
 - Use threading to load requests.
+- Fix bnc#949745: allow multiline comments.
 
 0.6.0
 =====
