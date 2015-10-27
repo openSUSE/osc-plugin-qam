@@ -11,7 +11,8 @@ from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
                             InfoAction)
-from oscqam.models import (RemoteFacade, ReportedError)
+from oscqam.models import ReportedError
+from oscqam.remotes import RemoteFacade
 from oscqam.fields import ReportFields
 
 logging.basicConfig()
@@ -30,7 +31,7 @@ def output_list(sep, value):
     :type list_transform: str
 
     :param value: Output value.
-    :type value: L{str} or list(L{str})
+    :type value: :class:`str} or list(L{str`)
 
     :return: str
     """
@@ -142,7 +143,7 @@ class QamInterpreter(cmdln.Cmdln):
         """Display the requests from the action.
 
         :param action: Action that obtains the requests.
-        :type action: L{oscqam.actions.ListAction}.
+        :type action: :class:`oscqam.actions.ListAction`.
         :param tabular: True if output should be formatted in a table.
         :type tabular: bool
         :param keys: The keys to output

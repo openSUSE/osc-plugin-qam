@@ -11,7 +11,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import osc.conf
 
 from .models import (Group, GroupReview, User, Request, Template,
-                     ReportedError, RemoteError, TemplateNotFoundError)
+                     ReportedError, TemplateNotFoundError)
+from .remotes import RemoteError
 from .fields import ReportField
 
 logging.basicConfig()
@@ -164,16 +165,16 @@ class OscAction(object):
     def __init__(self, remote, user, out = sys.stdout):
         """
         :param remote: Remote endpoint to the buildservice.
-        :type remote: L{oscqam.models.RemoteFacade}
+        :type remote: :class:`oscqam.models.RemoteFacade`
 
         :param user: Username that performs the action.
         :type user: str
 
         :param out: Filelike to print enduser-messages to.
-        :type out: L{file}
+        :type out: :class:`file`
         """
         self.remote = remote
-        self.user = User.by_name(self.remote, user)
+        self.user = remote.users.by_name(user)
         self.undo_stack = []
         self.out = out
 
@@ -222,7 +223,7 @@ class Report(object):
     def values(self, fields):
         """Return the values for fields.
 
-        :type keys: [L{actions.ReportField}]
+        :type keys: [:class:`actions.ReportField`]
         :param keys: Identifiers for the data to be returned from the template
                     or associated request.
 
@@ -297,7 +298,7 @@ class ListAction(OscAction):
     def load_requests(self):
         """Load requests this class should operate on.
 
-        :returns: [L{oscqam.models.Request}]
+        :returns: [:class:`oscqam.models.Request`]
         """
         pass
 
@@ -322,9 +323,9 @@ class ListAction(OscAction):
         occur and not be a problem: e.g. the template creation script has not
         yet run).
 
-        :param requests: [L{oscqam.models.Request}]
+        :param requests: [:class:`oscqam.models.Request`]
 
-        :returns: L{oscqam.actions.Report}-generator
+        :returns: :class:`oscqam.actions.Report`-generator
         """
         with ThreadPoolExecutor(max_workers = get_number_of_threads()) as executor:
             results = [executor.submit(Report, r, self.template_factory)
@@ -338,7 +339,7 @@ class ListAction(OscAction):
 
 class ListOpenAction(ListAction):
     def load_requests(self):
-        user_requests = set(Request.for_user(self.remote, self.user))
+        user_requests = set(self.remote.requests.for_user(self.user))
         qam_groups = self.user.qam_groups
         group_requests = set(self.remote.requests.open_for_groups(qam_groups))
         return self.merge_requests(user_requests, group_requests)
@@ -361,7 +362,7 @@ class ListAssignedAction(ListAction):
         return False
 
     def load_requests(self):
-        qam_groups = Group.for_pattern(self.remote, re.compile(".*qam.*"))
+        qam_groups = self.remote.groups.for_pattern(re.compile(".*qam.*"))
         return set([request for request in
                     self.remote.requests.review_for_groups(qam_groups)])
 
@@ -370,7 +371,7 @@ class ListAssignedUserAction(ListAssignedAction):
     """Action to list requests that are assigned to the user.
     """
     def load_requests(self):
-        user_requests = set(Request.for_user(self.remote, self.user))
+        user_requests = set(self.remote.requests.for_user(self.user))
         return set([request for request in user_requests
                     if self.in_review_by_user(request.review_list())])
 
@@ -386,7 +387,7 @@ class InfoAction(ListAction):
 
     def __init__(self, remote, user_id, request_id):
         super(InfoAction, self).__init__(remote, user_id)
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
 
     def load_requests(self):
         return [self.request]
@@ -401,8 +402,8 @@ class AssignAction(OscAction):
     def __init__(self, remote, user, request_id, group = None,
                  template_factory = Template, **kwargs):
         super(AssignAction, self).__init__(remote, user, **kwargs)
-        self.request = Request.by_id(self.remote, request_id)
-        self.group = Group.for_name(remote, group) if group else None
+        self.request = remote.requests.by_id(request_id)
+        self.group = remote.groups.for_name(group) if group else None
         self.template_factory = template_factory
 
     def template_exists(self):
@@ -493,8 +494,8 @@ class UnassignAction(OscAction):
 
     def __init__(self, remote, user, request_id, group = None):
         super(UnassignAction, self).__init__(remote, user)
-        self.request = Request.by_id(self.remote, request_id)
-        self._group = Group.for_name(self.remote, group) if group else None
+        self.request = remote.requests.by_id(request_id)
+        self._group = remote.groups.for_name(group) if group else None
 
     def group(self):
         if self._group:
@@ -562,15 +563,16 @@ class ApproveAction(OscAction):
 
     def __init__(self, remote, user, request_id, template_factory = Template):
         super(ApproveAction, self).__init__(remote, user)
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
         self.template = self.request.get_template(template_factory)
 
     def validate(self):
         """Check preconditions to be met before a request can be approved.
 
-        :raises: L{oscqam.models.TestResultMismatchError} or
-            L{oscqam.models.TestPlanReviewerNotSetError} if conditions are
-            not met.
+        :raises: :class:`oscqam.models.TestResultMismatchError` or
+            :class:`oscqam.models.TestPlanReviewerNotSetError` if conditions
+            are not met.
+
         """
         self.template.testplanreviewer()
         self.template.passed()
@@ -594,7 +596,7 @@ class RejectAction(OscAction):
 
     def __init__(self, remote, user, request_id, message = None):
         super(RejectAction, self).__init__(remote, user)
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
         self._template = None
         self.message = message
 
@@ -624,7 +626,7 @@ class CommentAction(OscAction):
     def __init__(self, remote, user, request_id, comment):
         super(CommentAction, self).__init__(remote, user)
         self.comment = comment
-        self.request = Request.by_id(self.remote, request_id)
+        self.request = remote.requests.by_id(request_id)
 
     def action(self):
         self.request.add_comment(self.comment)

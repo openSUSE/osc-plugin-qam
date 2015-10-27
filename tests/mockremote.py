@@ -1,6 +1,6 @@
 from __future__ import print_function
 from .utils import load_fixture
-from oscqam.models import RequestRemote
+from oscqam.remotes import RequestRemote, GroupRemote, UserRemote
 
 
 class MockRemote(object):
@@ -18,6 +18,8 @@ class MockRemote(object):
         self.post_calls = []
         self.overrides = {}
         self.requests = RequestRemote(self)
+        self.groups = GroupRemote(self)
+        self.users = UserRemote(self)
 
     def _load(self, prefix, id):
         name = "%s_%s.xml" % (prefix, id)
