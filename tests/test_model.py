@@ -1,10 +1,11 @@
+from collections import OrderedDict
 from urllib2 import HTTPError
 from StringIO import StringIO
 import unittest
 import osc
 from oscqam.models import (Request, Template, MissingSourceProjectError, User,
                            Group, Assignment)
-from .utils import load_fixture
+from .utils import load_fixture, create_template_data
 from .mockremote import MockRemote
 
 
@@ -29,13 +30,13 @@ class ModelTests(unittest.TestCase):
         cls.user = load_fixture('person_anonymous.xml')
         cls.group = load_fixture('group_qam-sle.xml')
 
-    def create_template(self, request_data=None, template_data=None):
+    def create_template(self, request_data = None, template_data = None):
         if not request_data:
             request_data = self.req_1_xml
         if not template_data:
             template_data = self.template
         request = Request.parse(self.remote, request_data)[0]
-        template = Template(request, tr_getter=lambda x: template_data)
+        template = Template(request, tr_getter = lambda x: template_data)
         return template
 
     def setUp(self):
@@ -117,18 +118,61 @@ class ModelTests(unittest.TestCase):
 
     def test_template_splits_non_sle_products(self):
         self.assertEqual(
-            self.create_template(template_data=self.template_rh)
+            self.create_template(template_data = self.template_rh)
             .log_entries['Products'],
             ["RHEL-TEST (i386)",
              "SERVER 11-SP3 (i386, ia64, ppc64, s390x, x86_64)"]
         )
 
     def test_replacing_sle_prefix(self):
-        template_data = "Products: SLE-PSLE-SP3 (i386)"
+        template_data = create_template_data(
+            Products = "SLE-PSLE-SP3 (i386)"
+        )
         self.assertEqual(
-            self.create_template(template_data=template_data)
+            self.create_template(template_data = template_data)
             .log_entries['Products'],
             ['PSLE-SP3 (i386)']
+        )
+
+    def test_multi_line_comment(self):
+        template_data = create_template_data(
+            comment = 'A comment\nwith multiple lines'
+        )
+        self.assertEqual(
+            self.create_template(template_data = template_data)
+            .log_entries['comment'],
+            "A comment\nwith multiple lines"
+        )
+
+    def test_template_key_repeats(self):
+        template_data = "\n".join(['comment: a',
+                                   '$Author: b',
+                                   'Testplatform: base=sles',
+                                   'Testplatform: base=studio'])
+        self.assertEqual(
+            self.create_template(template_data = template_data)
+            .log_entries['Testplatform'],
+            'base=sles\nbase=studio'
+        )
+
+    def test_multi_line_comment_first_line_empty(self):
+        template_data = create_template_data(
+            comment = "\nwith multiple lines"
+        )
+        self.assertEqual(
+            self.create_template(template_data = template_data)
+            .log_entries['comment'],
+            "with multiple lines"
+        )
+
+    def test_multi_line_comment_with_header_seperator(self):
+        template_data = create_template_data(
+            comment = "\nwith: multiple lines"
+        )
+        self.assertEqual(
+            self.create_template(template_data = template_data)
+            .log_entries['comment'],
+            "with: multiple lines"
         )
 
     def test_template_for_invalid_request(self):
@@ -245,10 +289,14 @@ class ModelTests(unittest.TestCase):
 
     def test_test_plan_reviewer(self):
         reviewer_singular = self.create_template(
-            template_data = 'Test Plan Reviewer: a'
+            template_data = create_template_data(
+                **{'Test Plan Reviewer': 'a'}
+            )
         )
         reviewer_plural = self.create_template(
-            template_data = 'Test Plan Reviewers: a'
+            template_data = create_template_data(
+                **{'Test Plan Reviewers': 'a'}
+            )
         )
         self.assertEqual(reviewer_singular.testplanreviewer(), 'a')
         self.assertEqual(reviewer_plural.testplanreviewer(), 'a')

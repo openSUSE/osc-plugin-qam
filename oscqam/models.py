@@ -383,7 +383,7 @@ class Assignment(object):
         assignment_group_regex = re.compile("review for group (?P<group>.+)")
         previous_event = None
         for event in request.statehistory:
-            logger.debug("Event: {event.comment}".format(event=event))
+            logger.debug("Event: {event.comment}".format(event = event))
             group_match = assignment_group_regex.match(event.comment)
             if group_match:
                 group = request.remote.groups.for_name(
@@ -725,7 +725,7 @@ class Template(object):
             raise TemplateNotFoundError(log_path)
 
     def __init__(self, request, tr_getter = get_testreport_web,
-                 parser = TemplateParser):
+                 parser = TemplateParser()):
         """Create a template from the given request.
 
         :param request: The request the template is associated with.
@@ -742,13 +742,12 @@ class Template(object):
         :type parser: :class:`oscqam.parsers.TemplateParser`
 
         """
-        self.log_entries = {}
         self._log_path = "{base}{prj}:{reqid}/log".format(
             base = self.base_url,
             prj = request.src_project,
             reqid = request.reqid
         )
-        self.log_entries = parser(tr_getter(self._log_path))()
+        self.log_entries = parser(tr_getter(self._log_path))
 
     def failed(self):
         """Assert that this template is from a failed test.
