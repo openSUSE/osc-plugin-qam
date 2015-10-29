@@ -2,7 +2,7 @@ import os
 import StringIO
 import unittest
 from oscqam import actions, cli, models, fields, remotes
-from .utils import load_fixture
+from .utils import load_fixture, create_template_data
 from .mockremote import MockRemote
 
 
@@ -152,8 +152,8 @@ class ActionTests(unittest.TestCase):
 
     def test_approval_requires_testplanreviewer(self):
         request = self.mock_remote.requests.by_id(self.cloud_open)
-        report = os.linesep.join(["SUMMARY: PASSED",
-                                  "Test Plan Reviewer: "])
+        report = create_template_data(**{'SUMMARY': "PASSED",
+                                         "Test Plan Reviewer": ""})
         template = models.Template(request,
                                    tr_getter = lambda x: report)
         approval = actions.ApproveAction(
@@ -164,7 +164,7 @@ class ActionTests(unittest.TestCase):
 
     def test_approval_no_testplanreviewer_key(self):
         request = self.mock_remote.requests.by_id(self.cloud_open)
-        report = "SUMMARY: PASSED"
+        report = create_template_data(SUMMARY = "PASSED")
         template = models.Template(request,
                                    tr_getter = lambda x: report)
         approval = actions.ApproveAction(
@@ -175,8 +175,8 @@ class ActionTests(unittest.TestCase):
 
     def test_approval_requires_status_passed(self):
         request = self.mock_remote.requests.by_id(self.cloud_open)
-        report = os.linesep.join(["SUMMARY: FAILED",
-                                  "Test Plan Reviewer: someone"])
+        report = create_template_data(**{"SUMMARY": "FAILED",
+                                         "Test Plan Reviewer": "someone"})
         template = models.Template(request,
                                    tr_getter = lambda x: report)
         approval = actions.ApproveAction(
@@ -187,8 +187,8 @@ class ActionTests(unittest.TestCase):
 
     def test_approval(self):
         request = self.mock_remote.requests.by_id(self.cloud_open)
-        report = os.linesep.join(["SUMMARY: PASSED",
-                                  "Test Plan Reviewer: someone"])
+        report = create_template_data(**{"SUMMARY": "PASSED",
+                                         "Test Plan Reviewer": "someone"})
         template = models.Template(request,
                                    tr_getter = lambda x: report)
         approval = actions.ApproveAction(
