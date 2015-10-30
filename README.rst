@@ -11,21 +11,24 @@ The plugin provides the following new features:
 
 - the following new commands:
 
-  - list [-u user]: list all open reviews for the given user that need review
+  - open [-U user]: list all open reviews for the given user that need review
     by one of the ``qam-*`` groups.
 
-  - assign [-u user] <request_id>: assign the user to do a review for the
+  - assigned [-U user]: list all reviews that are already assigned.
+    If -U is provided, will only list reviews assigned to the given user.
+
+  - assign [-U user] <request_id>: assign the user to do a review for the
     given request_id. This command will attempt to guess the group the user
     would probably like to a review for.
 
-  - unassign [-u user] <request_id>: unassign the user to do a review for the
+  - unassign [-U user] <request_id>: unassign the user to do a review for the
     given request_id. This command will attempt to guess the group the user
     wants to unassign himself for.
 
-  - approve [-u user] <request_id>: will approve a started review of the user
+  - approve [-U user] <request_id>: will approve a started review of the user
     for the given request_id.
 
-  - reject [-u user] <request_id>: will reject a started review of the user
+  - reject [-U user] <request_id>: will reject a started review of the user
     for the given request_id.
 
 Installation
@@ -73,21 +76,23 @@ specific command:
 .. code-block:: bash
 
           ibs qam
-          osc-qam> help
+          osc qam> help
           Usage: osc qam [command] [opts] [args]
 
           openSUSE build service command-line tool qam extensions.
 
           commands:
-             approve       Approve the request for the user.
-             assign        Assign the request to the user.
-             help (?, h)   give detailed help on a specific sub-command
-             list          Show a list of all open requests currently running. The l...
-             man           generates a man page
-             quit (q)      Quit the qam-subinterpreter.
-             reject        Reject the request for the user.
-             unassign      Assign the request to the user.
-
+              approve       Approve the request for the user.
+              assign        Assign the request to the user.
+              assigned      Show a list of OBS qam-requests that are in review.
+              comment       Add a comment to a request.
+              help (?, h)   give detailed help on a specific sub-command
+              info          Show information for the given request.
+              man           generates a man page
+              open (list)   Show a list of OBS qam-requests that are open.
+              quit (Q, q)   Quit the qam-subinterpreter.
+              reject        Reject the request for the user.
+              unassign      Unassign the request for the user.
           osc-qam> help approve
           approve: Approve the request for the user.
 
