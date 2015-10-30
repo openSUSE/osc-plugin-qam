@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.7.1
+=====
+
+- Add missing dependency to spec-file: python-futures
+
 0.7.0
 =====
 
