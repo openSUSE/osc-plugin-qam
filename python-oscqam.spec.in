@@ -23,6 +23,9 @@ Url:            http://qam.suse.de
 Source0:        %{name}-%{version}.tar.gz
 BuildRequires: python-devel
 BuildRequires: python-setuptools
+BuildRequires: python-enum34
+BuildRequires: python-PrettyTable
+BuildRequires: python-futures
 BuildRequires: osc
 Requires: osc >= 0.148.0
 Requires: python-futures
