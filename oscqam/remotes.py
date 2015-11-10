@@ -3,7 +3,7 @@ import urllib2
 
 import osc
 
-from .models import Group, Request, User
+from .models import Comment, Group, Request, User
 from .utils import memoize
 
 
@@ -24,6 +24,7 @@ class RemoteFacade(object):
         """Initialize a new RemoteOscRemote that points to the given remote.
         """
         self.remote = remote
+        self.comments = CommentRemote(self)
         self.groups = GroupRemote(self)
         self.requests = RequestRemote(self)
         self.users = UserRemote(self)
@@ -33,6 +34,16 @@ class RemoteFacade(object):
         if ret_code >= 400 and ret_code < 600:
             raise urllib2.HTTPError(answer.url, ret_code, answer.msg,
                                     answer.headers, answer.fp)
+
+    def delete(self, endpoint, params = None):
+        url = '/'.join([self.remote, endpoint])
+        if params:
+            params = urllib.urlencode(params)
+            url = url + "?" + params
+        remote = osc.core.http_DELETE(url)
+        self._check_for_error(remote)
+        xml = remote.read()
+        return xml
 
     def get(self, endpoint, params = None):
         """Retrieve information at the given endpoint with the parameters.
@@ -192,3 +203,20 @@ class UserRemote(object):
         if users:
             return users[0]
         raise AttributeError("User not found.")
+
+
+class CommentRemote(object):
+    endpoint = 'comments'
+    delete_endpoint = 'comment'
+
+    def __init__(self, remote):
+        self.remote = remote
+
+    def for_request(self, request):
+        endpoint = '{0}/request/{1}'.format(self.endpoint, request.reqid)
+        xml = self.remote.get(endpoint)
+        return Comment.parse(self.remote, xml)
+
+    def delete(self, comment_id):
+        endpoint = '{0}/{1}'.format(self.delete_endpoint, comment_id)
+        self.remote.delete(endpoint)

@@ -8,7 +8,7 @@ import osc.conf
 from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
-                            InfoAction)
+                            InfoAction, DeleteCommentAction)
 from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
 from oscqam.models import ReportedError
@@ -21,6 +21,19 @@ logger.setLevel(logging.INFO)
 
 class ConflictingOptions(ReportedError):
     pass
+
+
+class NoCommentsError(ReportedError):
+    def __init__(self):
+        super(ReportedError, self).__init__('No comments were found.')
+
+
+class InvalidCommentIdError(ReportedError):
+    def __init__(self, id, comments):
+        msg = 'Id {0} is not in valid ids: {1}'.format(
+            id, ', '.join([c.id for c in comments])
+        )
+        super(ReportedError, self).__init__(msg)
 
 
 class QamInterpreter(cmdln.Cmdln):
@@ -281,6 +294,30 @@ class QamInterpreter(cmdln.Cmdln):
         self.request_id = request_id
         action = CommentAction(self.api, self.affected_user, self.request_id,
                                comment)
+        action()
+
+    @cmdln.alias('rmcomment')
+    def do_deletecomment(self, subcmd, opts, request_id):
+        """${cmd_name}: Remove a comment for the given request.
+
+        The command will list all available comments of the request to allow
+        choosing the one to remove.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        self._set_required_params(opts)
+        request = self.api.requests.by_id(request_id)
+        if not request.comments:
+            raise NoCommentsError()
+        print("CommentID: Message")
+        print("------------------")
+        for comment in request.comments:
+            print("{0}: {1}".format(comment.id, comment.text))
+        comment_id = raw_input("Comment-Id to remove: ")
+        if comment_id not in [c.id for c in request.comments]:
+            raise InvalidCommentIdError(comment_id, request.comments)
+        action = DeleteCommentAction(self.api, self.affected_user, comment_id)
         action()
 
     @cmdln.alias('q')

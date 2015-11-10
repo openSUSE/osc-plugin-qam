@@ -724,6 +724,9 @@ class NullComment(object):
 class Comment(XmlFactoryMixin):
     none = NullComment()
 
+    def delete(self):
+        self.remote.comments.delete(self)
+
     @classmethod
     def parse(cls, remote, xml):
         return super(Comment, cls).parse(remote, xml, 'comment')

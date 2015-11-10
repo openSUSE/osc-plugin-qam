@@ -625,3 +625,14 @@ class CommentAction(OscAction):
 
     def action(self):
         self.request.add_comment(self.comment)
+
+
+class DeleteCommentAction(OscAction):
+    """Delete a comment.
+    """
+    def __init__(self, remote, user, comment_id):
+        super(DeleteCommentAction, self).__init__(remote, user)
+        self.comment_id = comment_id
+
+    def action(self):
+        self.remote.comments.delete(self.comment_id)
