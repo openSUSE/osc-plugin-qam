@@ -10,8 +10,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import osc.conf
 
-from .models import (Group, GroupReview, User, Request, Template,
-                     ReportedError, TemplateNotFoundError)
+from .models import (GroupReview, Request, Template, ReportedError,
+                     TemplateNotFoundError)
 from .remotes import RemoteError
 from .fields import ReportField
 
