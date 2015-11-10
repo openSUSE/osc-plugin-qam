@@ -241,10 +241,11 @@ class Report(object):
             value = " ".join(packages)
         elif field == ReportField.assigned_roles:
             roles = self.request.assigned_roles
-            assigns = [str(r) for r in roles]
-            value = ", ".join(assigns)
+            value = [str(r) for r in roles]
         elif field == ReportField.incident_priority:
             value = self.request.incident_priority
+        elif field == ReportField.comments:
+            value = self.request.comments
         else:
             value = entries[str(field)]
         return value
@@ -276,7 +277,7 @@ class ListAction(OscAction):
              lambda l: l.request.incident_priority]
         )
 
-    def __init__(self, remote, user, template_factory=Template):
+    def __init__(self, remote, user, template_factory = Template):
         super(ListAction, self).__init__(remote, user)
         self.template_factory = template_factory
 

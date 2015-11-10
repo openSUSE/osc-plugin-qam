@@ -1,10 +1,43 @@
 """Formatters used to generate nice looking output.
 """
 import os
+import platform
 
 import prettytable
 
 from .fields import ReportField
+
+
+def os_lineseps(value, target = None):
+    """Adjust the lineseperators in value to match the ones used by the current
+    system.
+
+    :param value: The text to modify
+    :type value: str
+
+    :param target: The system identifier whose line-endings should be
+    substituted.
+    :type target: str
+
+    """
+    def _windows_to_linux(value):
+        return value.replace('\r\n', '\n')
+
+    def _linux_to_windows(value):
+        if '\r\n' in value:
+            # Seems there are already the correct lines present
+            return value
+        return value.replace('\n', '\r\n')
+
+    target = target if target else platform.system()
+
+    if target == 'Linux':
+        value = _windows_to_linux(value)
+    elif target == 'Windows':
+        value = _linux_to_windows(value)
+    else:
+        return value
+    return value
 
 
 class Formatter(object):
@@ -21,9 +54,11 @@ class Formatter(object):
         self.listsep = listsep
         self._formatters = {
             ReportField.bugs: self.list_formatter,
+            ReportField.comments: self.comment_formatter,
             ReportField.package_streams: self.list_formatter,
             ReportField.products: self.list_formatter,
             ReportField.srcrpms: self.list_formatter,
+            ReportField.assigned_roles: self.list_formatter,
         }
         for formatter in formatters:
             self._formatters[formatter] = formatters[formatter]
@@ -45,6 +80,9 @@ class Formatter(object):
     def formatter(self, key):
         return self._formatters.get(key, self.default_format)
 
+    def comment_formatter(self, value):
+        return self.listsep.join([os_lineseps(str(v)) for v in value])
+
     def list_formatter(self, value):
         return self.listsep.join(value)
 
@@ -59,9 +97,10 @@ class VerboseOutput(Formatter):
         super(VerboseOutput, self).__init__(',')
 
     def output(self, keys, reports):
-        length = max([len(str(k)) for k in keys])
         output = []
-        str_template = "{{0:{length}s}}: {{1}}".format(length = length)
+        str_template = "{{0:{length}s}}: {{1}}".format(
+            length = max([len(str(k)) for k in keys])
+        )
         for report in reports:
             values = []
             for key in keys:
@@ -87,7 +126,6 @@ class TabularOutput(Formatter):
             os.linesep,
             {ReportField.comments:  self.comment_formatter}
         )
-        pass
 
     def output(self, keys, reports):
         table_formatter = prettytable.PrettyTable(keys)

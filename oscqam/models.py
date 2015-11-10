@@ -484,6 +484,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def __init__(self, remote):
         self.remote = remote
         super(Request, self).__init__()
+        self._comments = None
         self._groups = None
         self._packages = None
         self._assigned_roles = None
@@ -514,6 +515,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if not self._assigned_roles:
             self._assigned_roles = Assignment.infer(self)
         return self._assigned_roles
+
+    @property
+    def comments(self):
+        if not self._comments:
+            self._comments = (self.remote.comments.for_request(self) or
+                              [Comment.none])
+        return self._comments
 
     @property
     def groups(self):
@@ -697,6 +705,34 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     def __unicode__(self):
         return u"{0}".format(self.reqid)
+
+
+class NullComment(object):
+    """Null-Object for comments.
+    """
+    def __init__(self):
+        self.id = None
+        self.text = None
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return u""
+
+
+class Comment(XmlFactoryMixin):
+    none = NullComment()
+
+    @classmethod
+    def parse(cls, remote, xml):
+        return super(Comment, cls).parse(remote, xml, 'comment')
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return u"{0}: {1}".format(self.id, self.text)
 
 
 class Template(object):

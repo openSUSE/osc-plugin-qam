@@ -71,6 +71,7 @@ class ReportField(Enum):
     assigned_roles = (7, "Assigned Roles")
     package_streams = (8, "Package-Streams")
     incident_priority = (9, "Incident Priority")
+    comments = (10, "Comments")
 
     def __init__(self, enum_id, log_key):
         self.enum_id = enum_id

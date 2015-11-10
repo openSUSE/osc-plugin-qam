@@ -300,3 +300,14 @@ class ModelTests(unittest.TestCase):
         )
         self.assertEqual(reviewer_singular.testplanreviewer(), 'a')
         self.assertEqual(reviewer_plural.testplanreviewer(), 'a')
+
+    def test_parse_comment(self):
+        comment = Comment.parse(self.remote, self.comment_1_xml)[0]
+        self.assertEqual(comment.id, '1322')
+        self.assertEqual(comment.who, 'anonymous')
+        self.assertEqual(comment.text, 'test comment - please remove')
+
+    def test_parse_empty_comment(self):
+        comment_data = '<comments request="0"/>'
+        comments = Comment.parse(self.remote, comment_data)
+        self.assertEqual([], comments)
