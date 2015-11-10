@@ -358,17 +358,6 @@ class Assignment(object):
 
         :returns: [:class:`oscqam.models.Assignment`]
         """
-        def is_assignment(event):
-            return "Review got assigned" in event.description
-
-        def is_unassignment(event):
-            return ("Review got reopened" in event.description and
-                    "unassign" in event.comment)
-
-        def is_accepted(event):
-            return ("Review got accepted in event.description" and
-                    (not event.comment or
-                    "[qamosc]::accept" in event.comment))
         assignments = []
         closed_group_reviews = [review for review in request.review_list()
                                 if isinstance(review, GroupReview) and
