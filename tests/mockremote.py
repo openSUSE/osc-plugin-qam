@@ -1,4 +1,5 @@
 from __future__ import print_function
+from collections import defaultdict
 from .utils import load_fixture
 from oscqam.remotes import CommentRemote, RequestRemote, GroupRemote, UserRemote
 
@@ -17,7 +18,7 @@ class MockRemote(object):
     def __init__(self):
         self.delete_calls = []
         self.post_calls = []
-        self.overrides = {}
+        self.overrides = defaultdict(dict)
         self.requests = RequestRemote(self)
         self.groups = GroupRemote(self)
         self.users = UserRemote(self)
@@ -27,6 +28,11 @@ class MockRemote(object):
         name = "%s_%s.xml" % (prefix, id)
         return load_fixture(name)
 
+    def _encode_args(self, *args):
+        if args:
+            return repr(args)
+        return "None"
+
     def get(self, *args, **kwargs):
         """Replacement for HTTP-get requests.
 
@@ -35,14 +41,18 @@ class MockRemote(object):
         be mapped to the filesystem storage for test-fixtures.
         """
         url = args[0]
+        args = args[1:]
         if url in self.overrides:
-            return self.overrides[url]()
+            # The first arg is the endpoint.
+            enc = self._encode_args(*args)
+            if enc in self.overrides[url]:
+                return self.overrides[url][enc]()
         try:
             cls, identifier = url.split("/", 1)
         except ValueError:
-            if args[0] == 'group':
+            if url == 'group':
                 cls = 'group'
-                identifier = args[1]['login']
+                identifier = args[0]['login']
             else:
                 raise
         return self._load(cls, identifier)
@@ -55,7 +65,7 @@ class MockRemote(object):
         called = "Call-Args: %s. Call-Kwargs: %s" % (args, kwargs)
         self.post_calls.append(called)
 
-    def register_url(self, url, callback):
+    def register_url(self, url, callback, *args):
         """Allow specifying a override for a given relative url.
 
         :param url: Url that should trigger a callback.
@@ -65,4 +75,5 @@ class MockRemote(object):
         :type callback: () -> Either(str | Exception)
 
         """
-        self.overrides[url] = callback
+        enc = self._encode_args(*args)
+        self.overrides[url][enc] = callback

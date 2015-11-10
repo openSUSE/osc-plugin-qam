@@ -10,8 +10,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import osc.conf
 
-from .models import (GroupReview, Request, Template, ReportedError,
-                     TemplateNotFoundError)
+from .models import (Group, GroupReview, User, Request, Template,
+                     ReportedError, TemplateNotFoundError, UserReview)
 from .remotes import RemoteError
 from .fields import ReportField
 
@@ -133,6 +133,16 @@ class OneGroupAssignedError(ReportedError):
         super(OneGroupAssignedError, self).__init__(
             self._msg.format(user = str(assignment.user),
                              group = str(assignment.group))
+        )
+
+
+class NotPreviousReviewerError(ReportedError):
+    _msg = ("This request was previously rejected and you were not part "
+            "of the previous set of reviewers: {reviewers}.")
+
+    def __init__(self, reviewers):
+        super(NotPreviousReviewerError, self).__init__(
+            self._msg.format(reviewers = reviewers)
         )
 
 
@@ -395,11 +405,12 @@ class AssignAction(OscAction):
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
     def __init__(self, remote, user, request_id, group = None,
-                 template_factory = Template, **kwargs):
+                 template_factory = Template, force = False, **kwargs):
         super(AssignAction, self).__init__(remote, user, **kwargs)
         self.request = remote.requests.by_id(request_id)
         self.group = remote.groups.for_name(group) if group else None
         self.template_factory = template_factory
+        self.force = force
 
     def template_exists(self):
         """Check that the template associated with the request exists.
@@ -428,9 +439,32 @@ class AssignAction(OscAction):
             if assignment.user == self.user:
                 raise OneGroupAssignedError(assignment)
 
+    def check_previous_rejects(self):
+        """If there were previous rejects for an incident users that have
+        already reviewed this incident should (preferably) review it again.
+
+        If the user trying to assign himself is not one of the previous
+        reviewers a warning is issued.
+        """
+        related_requests = self.remote.requests.for_incident(
+            self.request.src_project
+        )
+        if not related_requests:
+            return
+        declined_requests = [request for request in related_requests
+                             if request.state.name == Request.STATE_DECLINED]
+        reviewers = [review.reviewer for review in request.review_list()
+                     for request in declined_requests
+                     if isinstance(review, UserReview)]
+        if self.user not in reviewers:
+            raise NotPreviousReviewerError(reviewers)
+
     def validate(self):
+        if self.force:
+            return
         self.template_exists()
         self.first_group_assigned()
+        self.check_previous_rejects()
 
     def action(self):
         if self.group:

@@ -464,7 +464,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
         def __unicode__(self):
             return u"{0}".format(self.priority)
 
-    OPEN_STATES = ['new', 'review']
+    STATE_NEW = 'new'
+    STATE_REVIEW = 'review'
+    STATE_DECLINED = 'declined'
+    OPEN_STATES = [STATE_NEW, STATE_REVIEW]
     REVIEW_USER = 'BY_USER'
     REVIEW_GROUP = 'BY_GROUP'
     REVIEW_OTHER = 'BY_OTHER'
