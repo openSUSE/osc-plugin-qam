@@ -9,7 +9,7 @@ from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
                             InfoAction)
-from oscqam.formatters import verbose_output, tabular_output
+from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
 from oscqam.models import ReportedError
 from oscqam.remotes import RemoteFacade
@@ -104,11 +104,9 @@ class QamInterpreter(cmdln.Cmdln):
         :type keys: [str]
         """
         listdata = action()
-        formatter = tabular_output if tabular else verbose_output
+        formatter = TabularOutput() if tabular else VerboseOutput()
         if listdata:
-            listdata = [datum.values(keys)
-                        for datum in listdata]
-            print(formatter(listdata, keys))
+            print(formatter.output(keys, listdata))
 
     @cmdln.option('-F',
                   '--fields',
