@@ -1,11 +1,35 @@
 """Formatters used to generate nice looking output.
 """
+import fcntl
 import os
 import platform
+import struct
+import sys
+import termios
 
 import prettytable
 
 from .fields import ReportField
+
+
+def terminal_dimensions(fd = None):
+    """Return dimensions of the terminal.
+
+    :param fd: filedescriptor of the terminal.
+    :type fd: int.
+
+    :returns: (int, int) tuple with rows and columns.
+    """
+    if not fd:
+        fd = sys.stdin.fileno()
+    dim = fcntl.ioctl(fd, termios.TIOCGWINSZ, '0000')
+    rows, columns = struct.unpack('hh', dim)
+    if rows == 0 and columns == 0:
+        try:
+            rows, columns = (int(os.getenv(v)) for v in ['LINES', 'COLUMNS'])
+        except:
+            pass
+    return rows, columns
 
 
 def os_lineseps(value, target = None):
@@ -95,6 +119,7 @@ class VerboseOutput(Formatter):
     """
     def __init__(self):
         super(VerboseOutput, self).__init__(',')
+        self.record_sep = '-' * terminal_dimensions()[1]
 
     def output(self, keys, reports):
         output = []
@@ -108,7 +133,7 @@ class VerboseOutput(Formatter):
                 value = formatter(report.value(key))
                 values.append(str_template.format(str(key), value))
             output.append(os.linesep.join(values))
-            output.append('----------------------------')
+            output.append(self.record_sep)
         return os.linesep.join(output)
 
 
