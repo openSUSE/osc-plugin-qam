@@ -10,8 +10,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import osc.conf
 
-from .models import (Group, GroupReview, User, Request, Template,
-                     ReportedError, TemplateNotFoundError)
+from .models import (GroupReview, Request, Template, ReportedError,
+                     TemplateNotFoundError)
 from .remotes import RemoteError
 from .fields import ReportField
 
@@ -220,7 +220,7 @@ class Report(object):
         self.request = request
         self.template = request.get_template(template_factory)
 
-    def values(self, fields):
+    def value(self, field):
         """Return the values for fields.
 
         :type keys: [:class:`actions.ReportField`]
@@ -229,31 +229,26 @@ class Report(object):
 
         :returns: [str]
         """
-        data = []
         entries = self.template.log_entries
-        for field in fields:
-            try:
-                if field == ReportField.unassigned_roles:
-                    reviews = [review for review
-                               in self.request.review_list_open()
-                               if isinstance(review, GroupReview)]
-                    names = sorted([str(r.reviewer) for r in reviews])
-                    value = " ".join(names)
-                elif field == ReportField.package_streams:
-                    packages = [p for p in self.request.packages]
-                    value = " ".join(packages)
-                elif field == ReportField.assigned_roles:
-                    roles = self.request.assigned_roles
-                    assigns = [str(r) for r in roles]
-                    value = ", ".join(assigns)
-                elif field == ReportField.incident_priority:
-                    value = self.request.incident_priority
-                else:
-                    value = entries[str(field)]
-                data.append(value)
-            except KeyError:
-                logger.debug("Missing key: %s", str(field))
-        return data
+        if field == ReportField.unassigned_roles:
+            reviews = [review for review
+                        in self.request.review_list_open()
+                        if isinstance(review, GroupReview)]
+            names = sorted([str(r.reviewer) for r in reviews])
+            value = " ".join(names)
+        elif field == ReportField.package_streams:
+            packages = [p for p in self.request.packages]
+            value = " ".join(packages)
+        elif field == ReportField.assigned_roles:
+            roles = self.request.assigned_roles
+            value = [str(r) for r in roles]
+        elif field == ReportField.incident_priority:
+            value = self.request.incident_priority
+        elif field == ReportField.comments:
+            value = self.request.comments
+        else:
+            value = entries[str(field)]
+        return value
 
 
 class ListAction(OscAction):
@@ -282,7 +277,7 @@ class ListAction(OscAction):
              lambda l: l.request.incident_priority]
         )
 
-    def __init__(self, remote, user, template_factory=Template):
+    def __init__(self, remote, user, template_factory = Template):
         super(ListAction, self).__init__(remote, user)
         self.template_factory = template_factory
 
@@ -630,3 +625,14 @@ class CommentAction(OscAction):
 
     def action(self):
         self.request.add_comment(self.comment)
+
+
+class DeleteCommentAction(OscAction):
+    """Delete a comment.
+    """
+    def __init__(self, remote, user, comment_id):
+        super(DeleteCommentAction, self).__init__(remote, user)
+        self.comment_id = comment_id
+
+    def action(self):
+        self.remote.comments.delete(self.comment_id)

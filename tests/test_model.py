@@ -4,7 +4,7 @@ from StringIO import StringIO
 import unittest
 import osc
 from oscqam.models import (Request, Template, MissingSourceProjectError, User,
-                           Group, Assignment)
+                           Group, Assignment, Comment)
 from .utils import load_fixture, create_template_data
 from .mockremote import MockRemote
 
@@ -12,6 +12,7 @@ from .mockremote import MockRemote
 class ModelTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.comment_1_xml = load_fixture('comments_1.xml')
         cls.req_1_xml = load_fixture('request_12345.xml')
         cls.req_2_xml = load_fixture('request_23456.xml')
         cls.req_3_xml = load_fixture('request_52542.xml')
@@ -300,3 +301,14 @@ class ModelTests(unittest.TestCase):
         )
         self.assertEqual(reviewer_singular.testplanreviewer(), 'a')
         self.assertEqual(reviewer_plural.testplanreviewer(), 'a')
+
+    def test_parse_comment(self):
+        comment = Comment.parse(self.remote, self.comment_1_xml)[0]
+        self.assertEqual(comment.id, '1322')
+        self.assertEqual(comment.who, 'anonymous')
+        self.assertEqual(comment.text, 'test comment - please remove')
+
+    def test_parse_empty_comment(self):
+        comment_data = '<comments request="0"/>'
+        comments = Comment.parse(self.remote, comment_data)
+        self.assertEqual([], comments)

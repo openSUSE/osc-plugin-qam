@@ -1,6 +1,6 @@
 from __future__ import print_function
 from .utils import load_fixture
-from oscqam.remotes import RequestRemote, GroupRemote, UserRemote
+from oscqam.remotes import CommentRemote, RequestRemote, GroupRemote, UserRemote
 
 
 class MockRemote(object):
@@ -15,11 +15,13 @@ class MockRemote(object):
 
     """
     def __init__(self):
+        self.delete_calls = []
         self.post_calls = []
         self.overrides = {}
         self.requests = RequestRemote(self)
         self.groups = GroupRemote(self)
         self.users = UserRemote(self)
+        self.comments = CommentRemote(self)
 
     def _load(self, prefix, id):
         name = "%s_%s.xml" % (prefix, id)
@@ -44,6 +46,10 @@ class MockRemote(object):
             else:
                 raise
         return self._load(cls, identifier)
+
+    def delete(self, *args, **kwargs):
+        called = "Call-Args: %s. Call-Kwargs: %s" % (args, kwargs)
+        self.delete_calls.append(called)
 
     def post(self, *args, **kwargs):
         called = "Call-Args: %s. Call-Kwargs: %s" % (args, kwargs)

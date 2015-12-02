@@ -1,7 +1,5 @@
 from __future__ import print_function
 import logging
-import os
-import prettytable
 import sys
 from osc import cmdln
 import osc.commandline
@@ -10,10 +8,11 @@ import osc.conf
 from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
-                            InfoAction)
+                            InfoAction, DeleteCommentAction)
+from oscqam.formatters import VerboseOutput, TabularOutput
+from oscqam.fields import ReportFields
 from oscqam.models import ReportedError
 from oscqam.remotes import RemoteFacade
-from oscqam.fields import ReportFields
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -24,49 +23,17 @@ class ConflictingOptions(ReportedError):
     pass
 
 
-def output_list(sep, value):
-    """Join lists on the given separator and return strings unaltered.
-
-    :param sep: Separator to join a list on.
-    :type list_transform: str
-
-    :param value: Output value.
-    :type value: :class:`str} or list(L{str`)
-
-    :return: str
-    """
-    return sep.join(value) if isinstance(value, list) else value
+class NoCommentsError(ReportedError):
+    def __init__(self):
+        super(ReportedError, self).__init__('No comments were found.')
 
 
-def verbose_output(data, keys):
-    """Output the data in verbose format."""
-    length = max([len(str(k)) for k in keys])
-    output = []
-    str_template = "{{0:{length}s}}: {{1}}".format(length = length)
-    for row in data:
-        for i, datum in enumerate(row):
-            key = keys[i]
-            datum = output_list(", ", datum)
-            output.append(str_template.format(key, datum))
-        output.append("-----------------------")
-    return os.linesep.join(output)
-
-
-def tabular_output(data, headers):
-    """Format data for output in a table.
-
-    Args:
-        - headers: Headers of the table.
-        - data: The data to be printed as a table. The data is expected to be
-                provided as a list of lists: [[row1], [row2], [row3]]
-    """
-    table_formatter = prettytable.PrettyTable(headers)
-    table_formatter.align = 'l'
-    table_formatter.border = True
-    for row in data:
-        row = [output_list(os.linesep, value) for value in row]
-        table_formatter.add_row(row)
-    return table_formatter
+class InvalidCommentIdError(ReportedError):
+    def __init__(self, id, comments):
+        msg = 'Id {0} is not in valid ids: {1}'.format(
+            id, ', '.join([c.id for c in comments])
+        )
+        super(ReportedError, self).__init__(msg)
 
 
 class QamInterpreter(cmdln.Cmdln):
@@ -150,11 +117,9 @@ class QamInterpreter(cmdln.Cmdln):
         :type keys: [str]
         """
         listdata = action()
-        formatter = tabular_output if tabular else verbose_output
+        formatter = TabularOutput() if tabular else VerboseOutput()
         if listdata:
-            listdata = [datum.values(keys)
-                        for datum in listdata]
-            print(formatter(listdata, keys))
+            print(formatter.output(keys, listdata))
 
     @cmdln.option('-F',
                   '--fields',
@@ -329,6 +294,30 @@ class QamInterpreter(cmdln.Cmdln):
         self.request_id = request_id
         action = CommentAction(self.api, self.affected_user, self.request_id,
                                comment)
+        action()
+
+    @cmdln.alias('rmcomment')
+    def do_deletecomment(self, subcmd, opts, request_id):
+        """${cmd_name}: Remove a comment for the given request.
+
+        The command will list all available comments of the request to allow
+        choosing the one to remove.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        self._set_required_params(opts)
+        request = self.api.requests.by_id(request_id)
+        if not request.comments:
+            raise NoCommentsError()
+        print("CommentID: Message")
+        print("------------------")
+        for comment in request.comments:
+            print("{0}: {1}".format(comment.id, comment.text))
+        comment_id = raw_input("Comment-Id to remove: ")
+        if comment_id not in [c.id for c in request.comments]:
+            raise InvalidCommentIdError(comment_id, request.comments)
+        action = DeleteCommentAction(self.api, self.affected_user, comment_id)
         action()
 
     @cmdln.alias('q')

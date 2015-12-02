@@ -214,3 +214,10 @@ class ActionTests(unittest.TestCase):
                                         template_factory = lambda r: r)
         requests = list(action._load_listdata([request_1, request_2]))
         self.assertEqual(1, len(requests))
+
+    def test_remove_comment(self):
+        action = actions.DeleteCommentAction(self.mock_remote,
+                                             self.user_id,
+                                             '0')
+        action()
+        self.assertEqual(len(self.mock_remote.delete_calls), 1)
