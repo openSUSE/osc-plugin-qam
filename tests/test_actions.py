@@ -30,6 +30,7 @@ class ActionTests(unittest.TestCase):
         self.single_assign_single_open = 'oneassignoneopen'
         self.two_assigned = 'twoassigned'
         self.multi_available_assign = 'twoqam'
+        self.rejected = 'request_rejected.xml'
         self.template = load_fixture('template.txt')
 
     def test_undo(self):
@@ -43,6 +44,10 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(actions.NonMatchingGroupsError, assign_action)
 
     def test_infer_groups_match(self):
+        args = {'project': 'SUSE:Maintenance:130',
+                'withfullhistory': '1',
+                'view': 'collection'}
+        self.mock_remote.register_url('request', lambda: "<request />", args)
         assign_action = actions.AssignAction(self.mock_remote, self.user_id,
                                              self.sle_open,
                                              template_factory = lambda r: True)
@@ -79,6 +84,10 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(actions.UninferableError, assign)
 
     def test_assign_multiple_groups_explicit(self):
+        args = {'project': 'SUSE:Maintenance:130',
+                'withfullhistory': '1',
+                'view': 'collection'}
+        self.mock_remote.register_url('request', lambda: "<request />", args)
         out = StringIO.StringIO()
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
@@ -128,7 +137,9 @@ class ActionTests(unittest.TestCase):
 
     def test_list_assigned_user(self):
         self.mock_remote.register_url(
-            'request', lambda: load_fixture('search_request.xml')
+            'request', lambda: load_fixture('search_request.xml'),
+            {'states': 'new,review', 'user': 'anonymous',
+             'view': 'collection', 'withfullhistory': '1'}
         )
         action = actions.ListAssignedUserAction(
             self.mock_remote, self.user_id, template_factory = lambda r: True
@@ -221,3 +232,34 @@ class ActionTests(unittest.TestCase):
                                              '0')
         action()
         self.assertEqual(len(self.mock_remote.delete_calls), 1)
+
+    def test_assign_previous_reject_not_old_reviewer(self):
+        self.mock_remote.register_url(
+            'request',
+            lambda: load_fixture(self.rejected),
+            {'project': 'SUSE:Maintenance:130',
+             'view': 'collection', 'withfullhistory': '1'},
+        )
+        assign = actions.AssignAction(self.mock_remote, 'anonymous2',
+                                      self.multi_available_assign,
+                                      group = 'qam-test',
+                                      template_factory = lambda r: r)
+        self.assertRaises(actions.NotPreviousReviewerError, assign)
+
+    def test_assign_previous_reject_old_reviewer(self):
+        out = StringIO.StringIO()
+        self.mock_remote.register_url(
+            'request',
+            lambda: load_fixture(self.rejected),
+            {'project': 'SUSE:Maintenance:130',
+             'view': 'collection', 'withfullhistory': '1'},
+        )
+        assign = actions.AssignAction(self.mock_remote, 'anonymous',
+                                      self.multi_available_assign,
+                                      group = 'qam-test',
+                                      template_factory = lambda r: r,
+                                      out = out)
+        assign()
+        self.assertEqual(assign.out.getvalue(),
+                         "Assigned Unknown User (anonymous@nowhere.none) "
+                         "to qam-test for 56789.\n")

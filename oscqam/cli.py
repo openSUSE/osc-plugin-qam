@@ -8,7 +8,8 @@ import osc.conf
 from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
-                            InfoAction, DeleteCommentAction)
+                            InfoAction, DeleteCommentAction,
+                            NotPreviousReviewerError)
 from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
 from oscqam.models import ReportedError
@@ -63,6 +64,26 @@ class QamInterpreter(cmdln.Cmdln):
         else:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
 
+    def yes_no(self, question, default = 'no'):
+        if default not in ('yes', 'no'):
+            raise ValueError("Default must be 'yes' or 'no'")
+        valid = {'y': True, 'yes': True,
+                 'n': False, 'no': False}
+        if default == 'yes':
+            default = 'y'
+            prompt = '[Y/n]'
+        else:
+            default = 'n'
+            prompt = '[y/N]'
+        while True:
+            answer = raw_input(' '.join[question, prompt]).lower()
+            if not answer:
+                return valid[default]
+            elif valid.get(answer, None):
+                return valid[valid[answer]]
+            else:
+                print("Invalid choice, please use 'yes' or 'no'")
+
     @cmdln.option('-U',
                   '--user',
                   help = 'User to assign for this request.')
@@ -104,7 +125,14 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         action = AssignAction(self.api, self.affected_user, self.request_id,
                               group)
-        action()
+        try:
+            action()
+        except NotPreviousReviewerError as e:
+            print(str(e))
+            force = self.yes_no("Do you still want to assign yourself?")
+            if not force:
+                return
+            action(force=force)
 
     def _list_requests(self, action, tabular, keys):
         """Display the requests from the action.

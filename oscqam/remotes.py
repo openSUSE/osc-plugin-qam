@@ -143,6 +143,19 @@ class RequestRemote(object):
                                  self.remote.get(self.endpoint, params))
         return Request.filter_by_project("SUSE:Maintenance", requests)
 
+    def for_incident(self, incident):
+        """Return all requests for the given incident that have a qam-group
+        as reviewer.
+        """
+        params = {'project': incident,
+                  'view': 'collection',
+                  'withfullhistory': '1'}
+        requests = Request.parse(self.remote,
+                                 self.remote.get(self.endpoint, params))
+        return [request for request in requests
+                if any([r.reviewer.is_qam_group()
+                        for r in request.review_list()])]
+
     def by_id(self, req_id):
         req_id = Request.parse_request_id(req_id)
         endpoint = "/".join([self.endpoint, req_id])
