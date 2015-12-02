@@ -5,6 +5,7 @@ ChangeLog
 =====
 
 - Add comments features: allow listing and deletion.
+- Check previous rejects when assigning tester.
 
 0.7.1
 =====
