@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.8.0
+=====
+
+- Add comments features: allow listing and deletion.
+
 0.7.1
 =====
 
