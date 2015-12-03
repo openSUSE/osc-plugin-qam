@@ -2,11 +2,13 @@
 Tester workflows
 ================
 
-There are two workflows:
+There are three workflows:
 
 1. `Find and test an update`_
 
 2. `List updates you are currently testing`_
+
+3. `Check comments`_
 
 Find and test an update
 =======================
@@ -121,3 +123,57 @@ the ``assigned`` command with the ``-U`` parameter:
 .. code:: bash
 
    ibs qam assigned -U <user>
+
+Check comments
+==============
+
+Apart from working with requests the plugin also allows viewing, adding and
+removing comments attached to requests.
+
+Add a comment
+-------------
+
+To add a comment to a request use the ``comment`` command:
+
+.. code:: bash
+
+   ibs qam comment <request_id> "<comment_message>"
+
+View comments
+-------------
+
+It is possible to have comments be part of the output of any command that
+allows the use of the ``--fields`` parameter.
+
+Simple add a ``--fields Comments`` field to your desired output.
+
+.. code:: bash
+
+   ibs qam list --fields ReviewRequestID --fields Comments --fields Rating
+
+Delete comments
+---------------
+
+To remove a comment you added to a request use the ``deletecomment`` or
+``rmcomment`` command with the ``ReviewRequestID`` you want to remove a
+comment from.
+
+.. code:: bash
+
+   ibs qam deletecomment <request_id>
+
+The plugin will then list all found comments and you have to input the
+comment_id of the comment you want to remove:
+
+.. code:: bash
+
+    CommentID: Message
+    ------------------
+    11946: OK
+    Comment-Id to remove:
+
+In the given example input 11946 to remove the comment.
+
+.. note::
+
+   You can only remove comments that you created yourself.
