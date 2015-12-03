@@ -12,3 +12,10 @@ check:
 release:
 
 	bs-update -P QA:Maintenance -d . HEAD
+
+doc:
+
+	rm Documentation/modules.rst
+	rm Documentation/oscqam.rst
+	sphinx-apidoc oscqam -o Documentation
+	pushd Documentation && make html
