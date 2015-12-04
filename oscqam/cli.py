@@ -132,7 +132,7 @@ class QamInterpreter(cmdln.Cmdln):
             force = self.yes_no("Do you still want to assign yourself?")
             if not force:
                 return
-            action(force=force)
+            action(force = force)
 
     def _list_requests(self, action, tabular, keys):
         """Display the requests from the action.
