@@ -263,3 +263,21 @@ class ActionTests(unittest.TestCase):
         self.assertEqual(assign.out.getvalue(),
                          "Assigned Unknown User (anonymous@nowhere.none) "
                          "to qam-test for 56789.\n")
+
+    def test_assign_previous_reject_not_old_reviewer_force(self):
+        out = StringIO.StringIO()
+        self.mock_remote.register_url(
+            'request',
+            lambda: load_fixture(self.rejected),
+            {'project': 'SUSE:Maintenance:130',
+             'view': 'collection', 'withfullhistory': '1'},
+        )
+        assign = actions.AssignAction(self.mock_remote, 'anonymous2',
+                                      self.multi_available_assign,
+                                      group = 'qam-test',
+                                      template_factory = lambda r: r,
+                                      force = True, out = out)
+        assign()
+        self.assertEqual(assign.out.getvalue(),
+                         "Assigned Unknown User (anon2@nowhere.none) "
+                         "to qam-test for 56789.\n")
