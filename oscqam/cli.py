@@ -76,11 +76,11 @@ class QamInterpreter(cmdln.Cmdln):
             default = 'n'
             prompt = '[y/N]'
         while True:
-            answer = raw_input(' '.join[question, prompt]).lower()
+            answer = raw_input(' '.join([question, prompt])).lower()
             if not answer:
                 return valid[default]
-            elif valid.get(answer, None):
-                return valid[valid[answer]]
+            elif valid.get(answer, None) != None:
+                return valid[answer]
             else:
                 print("Invalid choice, please use 'yes' or 'no'")
 
