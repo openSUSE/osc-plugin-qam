@@ -1,5 +1,5 @@
 from distutils.version import StrictVersion
 
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 
 strict_version = StrictVersion(__version__)

@@ -1,6 +1,11 @@
 ChangeLog 
 #########
 
+0.8.1
+=====
+
+- Fix bug when assigning a previously rejected update.
+
 0.8.0
 =====
 
