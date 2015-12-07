@@ -132,7 +132,9 @@ class QamInterpreter(cmdln.Cmdln):
             force = self.yes_no("Do you still want to assign yourself?")
             if not force:
                 return
-            action(force = force)
+            action = AssignAction(self.api, self.affected_user, self.request_id,
+                                  group, force = force)
+            action()
 
     def _list_requests(self, action, tabular, keys):
         """Display the requests from the action.
