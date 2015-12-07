@@ -453,6 +453,8 @@ class AssignAction(OscAction):
             return
         declined_requests = [request for request in related_requests
                              if request.state.name == Request.STATE_DECLINED]
+        if not declined_requests:
+            return
         reviewers = [review.reviewer for review in request.review_list()
                      for request in declined_requests
                      if isinstance(review, UserReview)]
