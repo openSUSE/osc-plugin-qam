@@ -1,4 +1,5 @@
 from __future__ import print_function
+from oscqam import strict_version
 import logging
 import sys
 from osc import cmdln
@@ -349,6 +350,10 @@ class QamInterpreter(cmdln.Cmdln):
             raise InvalidCommentIdError(comment_id, request.comments)
         action = DeleteCommentAction(self.api, self.affected_user, comment_id)
         action()
+
+    def do_version(self, subcmd, opts):
+        """${cmd_name}: Print the plugin's version."""
+        print(strict_version)
 
     @cmdln.alias('q')
     @cmdln.alias('Q')
