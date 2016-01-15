@@ -166,6 +166,35 @@ class Reviewer(object):
         pass
 
 
+class GroupFilter(object):
+    """Methods that allow filtering on groups."""
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def is_qam_group(self):
+        pass
+
+    @classmethod
+    def for_remote(cls, remote):
+        """Return the correct Filter for the given remote."""
+        if 'opensuse' in remote.remote:
+            return OBSGroupFilter()
+        else:
+            return IBSGroupFilter()
+
+
+class OBSGroupFilter(GroupFilter):
+    """Methods that allow filtering on groups from OBS."""
+    def is_qam_group(self, group):
+        return group.name.startswith('qa-opensuse.org')
+
+
+class IBSGroupFilter(GroupFilter):
+    """Methods that allow filtering on groups from IBS."""
+    def is_qam_group(self, group):
+        return group.name.startswith('qam') and group.name != 'qam-auto'
+
+
 class Group(XmlFactoryMixin, Reviewer):
     """A group object from the build service.
     """
@@ -173,6 +202,7 @@ class Group(XmlFactoryMixin, Reviewer):
     def __init__(self, remote, attributes, children):
         super(Group, self).__init__(remote, attributes, children)
         self.remote = remote
+        self.filter = GroupFilter.for_remote(remote)
         if 'title' in children:
             # We set name to title to ensure equality.  This allows us to
             # prevent having to query *all* groups we need via this method,
@@ -192,7 +222,7 @@ class Group(XmlFactoryMixin, Reviewer):
         # https://gitlab.suse.de/l3ms/osc-plugins (osc-checker-qa.py).
         # It is excluded here, as it does not require manual review
         # by a QAM member.
-        return self.name.startswith('qam') and self.name != 'qam-auto'
+        return self.filter.is_qam_group(self)
 
     def __hash__(self):
         # We don't want to hash to the same as only the string.
@@ -214,8 +244,6 @@ class User(XmlFactoryMixin, Reviewer):
     """Wraps a user of the obs in an object.
 
     """
-    QAM_SRE = re.compile(".*qam.*")
-
     def __init__(self, remote, attributes, children):
         super(User, self).__init__(remote, attributes, children)
         self.remote = remote
@@ -235,7 +263,7 @@ class User(XmlFactoryMixin, Reviewer):
     def qam_groups(self):
         """Return only the groups that are part of the qam-workflow."""
         return [group for group in self.groups
-                if User.QAM_SRE.match(group.name)]
+                if group.is_qam_group()]
 
     def is_qam_group(self):
         return False
