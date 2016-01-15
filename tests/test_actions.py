@@ -281,3 +281,24 @@ class ActionTests(unittest.TestCase):
         self.assertEqual(assign.out.getvalue(),
                          "Assigned Unknown User (anon2@nowhere.none) "
                          "to qam-test for 56789.\n")
+
+    def test_assign_skip_template(self):
+        """Assign a request without a testreport template."""
+        out = StringIO.StringIO()
+        self.mock_remote.register_url(
+            'request',
+            lambda: load_fixture(self.rejected),
+            {'project': 'SUSE:Maintenance:130',
+             'view': 'collection', 'withfullhistory': '1'},
+        )
+        def raiser(request):
+            raise models.TemplateNotFoundError("")
+        assign = actions.AssignAction(self.mock_remote, self.user_id,
+                                      self.multi_available_assign,
+                                      group = 'qam-test',
+                                      template_factory = raiser,
+                                      out = out, template_required = False)
+        assign()
+        self.assertEqual(assign.out.getvalue(),
+                         "Assigned Unknown User (anonymous@nowhere.none) "
+                         "to qam-test for 56789.\n")
