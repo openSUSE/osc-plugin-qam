@@ -1,6 +1,13 @@
 ChangeLog
 #########
 
+0.10.0
+======
+
+- Add OBS support to the plugin:
+  - Commands tested & available: open / assigned / info.
+  - Commands untested: assign / unassign / accept / reject.
+
 0.9.0
 =====
 
