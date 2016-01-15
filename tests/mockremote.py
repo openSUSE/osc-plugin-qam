@@ -23,6 +23,7 @@ class MockRemote(object):
         self.groups = GroupRemote(self)
         self.users = UserRemote(self)
         self.comments = CommentRemote(self)
+        self.remote = 'suse-remote'
 
     def _load(self, prefix, id):
         name = "%s_%s.xml" % (prefix, id)
