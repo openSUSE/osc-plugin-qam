@@ -131,7 +131,6 @@ class QamInterpreter(cmdln.Cmdln):
         template_required = False if opts.skip_template else True
         action = AssignAction(self.api, self.affected_user, self.request_id,
                               group, template_required = template_required)
-        import pdb; pdb.set_trace()
         try:
             action()
         except NotPreviousReviewerError as e:
