@@ -456,6 +456,37 @@ class Assignment(object):
         return list(assignments)
 
 
+class RequestFilter(object):
+    """Methods that allow filtering on requests."""
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def maintenance_requests(self, requests):
+        pass
+
+    @classmethod
+    def for_remote(cls, remote):
+        """Return the correct Filter for the given remote."""
+        if 'opensuse' in remote.remote:
+            return OBSRequestFilter()
+        else:
+            return IBSRequestFilter()
+
+
+class OBSRequestFilter(RequestFilter):
+    PREFIX = "openSUSE:Maintenance"
+
+    def maintenance_requests(self, requests):
+        return [r for r in requests if self.PREFIX in r.src_project]
+
+
+class IBSRequestFilter(RequestFilter):
+    PREFIX = "SUSE:Maintenance"
+
+    def maintenance_requests(self, requests):
+        return [r for r in requests if self.PREFIX in r.src_project]
+
+
 class Request(osc.core.Request, XmlFactoryMixin):
     """Wrapper around osc request object to add logic required by the
     qam-plugin.
@@ -499,7 +530,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
     REVIEW_USER = 'BY_USER'
     REVIEW_GROUP = 'BY_GROUP'
     REVIEW_OTHER = 'BY_OTHER'
-    COMPLETE_REQUEST_ID_SRE = re.compile("SUSE:Maintenance:\d+:(?P<req>\d+)")
+    COMPLETE_REQUEST_ID_SRE = re.compile(
+        "(open)?SUSE:Maintenance:\d+:(?P<req>\d+)"
+    )
 
     def __init__(self, remote):
         self.remote = remote

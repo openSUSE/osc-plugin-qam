@@ -3,7 +3,7 @@ import urllib2
 
 import osc
 
-from .models import Comment, Group, Request, User
+from .models import Comment, Group, Request, User, RequestFilter
 from .utils import memoize
 
 
@@ -103,7 +103,9 @@ class RequestRemote(object):
         params.update(kwargs)
         search = "/".join(["search", self.endpoint])
         requests = Request.parse(self.remote, self.remote.get(search, params))
-        return Request.filter_by_project("SUSE:Maintenance", requests)
+        return RequestFilter.for_remote(
+            self.remote
+        ).maintenance_requests(requests)
 
     def open_for_groups(self, groups, **kwargs):
         """Will return all requests of the given type for the given groups
@@ -141,7 +143,9 @@ class RequestRemote(object):
                   'withfullhistory': '1'}
         requests = Request.parse(self.remote,
                                  self.remote.get(self.endpoint, params))
-        return Request.filter_by_project("SUSE:Maintenance", requests)
+        return RequestFilter.for_remote(
+            self.remote
+        ).maintenance_requests(requests)
 
     def for_incident(self, incident):
         """Return all requests for the given incident that have a qam-group
