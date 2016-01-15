@@ -1,5 +1,10 @@
-ChangeLog 
+ChangeLog
 #########
+
+0.9.0
+=====
+
+- Add flag to assign action to not check if a template exists.
 
 0.8.1
 =====
