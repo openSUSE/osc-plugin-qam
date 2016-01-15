@@ -405,11 +405,13 @@ class AssignAction(OscAction):
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
     def __init__(self, remote, user, request_id, group = None,
-                 template_factory = Template, force = False, **kwargs):
+                 template_factory = Template, force = False,
+                 template_required = True, **kwargs):
         super(AssignAction, self).__init__(remote, user, **kwargs)
         self.request = remote.requests.by_id(request_id)
         self.group = remote.groups.for_name(group) if group else None
         self.template_factory = template_factory
+        self.template_required = template_required
         self.force = force
 
     def template_exists(self):
@@ -464,7 +466,8 @@ class AssignAction(OscAction):
     def validate(self):
         if self.force:
             return
-        self.template_exists()
+        if self.template_required:
+            self.template_exists()
         self.first_group_assigned()
         self.check_previous_rejects()
 

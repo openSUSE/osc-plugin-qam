@@ -108,6 +108,10 @@ class QamInterpreter(cmdln.Cmdln):
     @cmdln.option('-G',
                   '--group',
                   help = 'Group to assign the user for.')
+    @cmdln.option('--skip-template',
+                  action = 'store_true',
+                  default = False,
+                  help = 'Will not check if a template exists.')
     def do_assign(self, subcmd, opts, request_id):
         """${cmd_name}: Assign the request to the user.
 
@@ -124,8 +128,10 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         group = opts.group if opts.group else None
+        template_required = False if opts.skip_template else True
         action = AssignAction(self.api, self.affected_user, self.request_id,
-                              group)
+                              group, template_required = template_required)
+        import pdb; pdb.set_trace()
         try:
             action()
         except NotPreviousReviewerError as e:
@@ -389,6 +395,8 @@ class QamInterpreter(cmdln.Cmdln):
               '--verbose',
               action = 'store_true',
               help = 'Generate verbose output.')
+@cmdln.option('--skip-template',
+              help = 'Will not check if a template exists.')
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
