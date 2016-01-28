@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.10.1
+======
+
+- Fix assign action for OBS.
+
 0.10.0
 ======
 
