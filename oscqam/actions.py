@@ -491,7 +491,7 @@ class AssignAction(OscAction):
         user_groups = set(self.user.qam_groups)
         reviews = [review for review in self.request.review_list() if
                    (isinstance(review, GroupReview) and review.open
-                    and review.reviewer.name.startswith('qam'))]
+                    and review.reviewer.is_qam_group())]
         review_groups = [review.reviewer for review in reviews]
         open_groups = set(review_groups)
         if not open_groups:
