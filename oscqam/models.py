@@ -544,6 +544,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self._priority = None
         self._reviews = []
 
+    def active(self):
+        return self.state == 'new' or self.state == 'review'
+
     @property
     def incident_priority(self):
         if not self._priority:

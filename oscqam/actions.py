@@ -344,7 +344,17 @@ class ListAction(OscAction):
 
 class ListOpenAction(ListAction):
     def load_requests(self):
+        def assigned(req):
+            """Check if the request is assigned to the user that requests the
+            listing."""
+            for review in req.assigned_roles:
+                if review.reviewer == self.user:
+                    return True
+            return False
+
         user_requests = set(self.remote.requests.for_user(self.user))
+        filters = lambda req: req.active() and assigned(req)
+        user_requests = set(filter(filters, user_requests))
         qam_groups = self.user.qam_groups
         if not qam_groups:
             raise ReportedError("You are not part of a qam group. "
