@@ -1,6 +1,13 @@
 ChangeLog
 #########
 
+0.11.0
+======
+
+- Added 'my' command to list requests assigned to the current user.
+- Changed 'open' command: will no longer lists requests that the user
+  is already assigned to.
+
 0.10.1
 ======
 
