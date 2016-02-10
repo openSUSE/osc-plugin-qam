@@ -151,6 +151,42 @@ class XmlFactoryMixin(object):
         return cls.parse_et(remote, root, tag, cls)
 
 
+class Attribute(XmlFactoryMixin):
+    reject_reason = "MAINT:RejectReason"
+
+    @classmethod
+    def parse(cls, remote, xml):
+        return super(Attribute, cls).parse(remote, xml, 'attribute')
+
+    @classmethod
+    def preset(cls, remote, preset, *value):
+        """Create a new attribute from a default attribute.
+
+        Default attributes are stored as class-variables on this class.
+        """
+        namespace, name = preset.split(":")
+        return Attribute(remote,
+                         {'namespace': namespace, 'name': name},
+                         {'value': value})
+
+    def __eq__(self, other):
+        if not isinstance(other, Attribute):
+            return False
+        return (self.namespace == other.namespace and
+                self.name == other.name and
+                self.value == other.value)
+
+    def xml(self):
+        """Turn this attribute into XML."""
+        root = ET.Element('attribute')
+        root.set('name', self.name)
+        root.set('namespace', self.namespace)
+        for val in self.value:
+            value = ET.SubElement(root, 'value')
+            value.text = val
+        return ET.tostring(root)
+
+
 class Reviewer(object):
     """Superclass for possible reviewer-classes.
     """
