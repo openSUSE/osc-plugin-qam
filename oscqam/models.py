@@ -716,7 +716,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
             The reason will be added as an attribute to the Maintenance
             incident.
         """
-        if reason and not self.remote.obs:
+        if reason:
             reject_reason = self.attribute(Attribute.reject_reason)
             reason_value = "{0}:{1}".format(self.reqid, reason.flag)
             if not reject_reason:

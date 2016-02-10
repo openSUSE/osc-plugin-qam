@@ -30,14 +30,6 @@ class RemoteFacade(object):
         self.users = UserRemote(self)
         self.projects = ProjectRemote(self)
 
-    @property
-    def obs(self):
-        return 'opensuse' in self.remote
-
-    @property
-    def ibs(self):
-        return 'api.suse.de' in self.remote
-
     def _check_for_error(self, answer):
         ret_code = answer.getcode()
         if ret_code >= 400 and ret_code < 600:
