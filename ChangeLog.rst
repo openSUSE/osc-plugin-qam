@@ -7,7 +7,6 @@ ChangeLog
 - Added 'reject_reasons' to the rejection-command:
   It is now required to specify *why* a request was rejected.
   The reason will be stored in the corresponding Maintenance Incident.
-- 'reject_reasons' do not currently work in the open build service.
 
 0.11.0
 ======
