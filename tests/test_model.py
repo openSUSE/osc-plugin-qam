@@ -3,8 +3,9 @@ from urllib2 import HTTPError
 from StringIO import StringIO
 import unittest
 import osc
-from oscqam.models import (Request, Template, MissingSourceProjectError, User,
-                           Group, Assignment, Comment)
+from oscqam.models import (Attribute, Request, Template,
+                           MissingSourceProjectError, User, Group,
+                           Assignment, Comment)
 from .utils import load_fixture, create_template_data
 from .mockremote import MockRemote
 
@@ -312,3 +313,43 @@ class ModelTests(unittest.TestCase):
         comment_data = '<comments request="0"/>'
         comments = Comment.parse(self.remote, comment_data)
         self.assertEqual([], comments)
+
+    def test_attribute_parsing(self):
+        attribute = Attribute.parse(
+            self.remote,
+            load_fixture('reject_reason_attribute.xml')
+        )[0]
+        self.assertEqual(attribute.value, ['12345:abc', '23456:def'])
+
+    def test_attribute_writing(self):
+        attribute = Attribute.parse(
+            self.remote,
+            load_fixture('reject_reason_attribute.xml')
+        )[0]
+        self.assertEqual(attribute.xml(),
+                         '<attribute name="RejectReason" namespace="MAINT">'
+                         '<value>12345:abc</value>'
+                         '<value>23456:def</value>'
+                         '</attribute>')
+
+    def test_attribute_get(self):
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
+            prj = request.src_project
+        )
+        attribute = Attribute.parse(
+            self.remote,
+            load_fixture('reject_reason_attribute.xml')
+        )[0]
+        self.remote.register_url(
+            endpoint,
+            lambda: load_fixture('reject_reason_attribute.xml')
+        )
+        self.assertEqual(attribute, request.attribute('MAINT:RejectReason'))
+
+    def test_attribute_post(self):
+        reject = Attribute.preset(self.remote,
+                                  Attribute.reject_reason,
+                                  'Some_Value')
+        self.remote.projects.set_attribute('oscqam:test', reject)
+        self.assertEquals(len(self.remote.post_calls), 1)
