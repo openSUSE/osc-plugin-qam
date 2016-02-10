@@ -1,0 +1,6 @@
+<attributes>
+  <attribute name="RejectReason" namespace="MAINT">
+    <value>12345:abc</value>
+    <value>23456:def</value>
+  </attribute>
+</attributes>

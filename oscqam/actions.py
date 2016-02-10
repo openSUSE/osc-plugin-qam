@@ -642,10 +642,11 @@ class RejectAction(OscAction):
     """
     DECLINE_MSG = "Will decline {request} for {user}."
 
-    def __init__(self, remote, user, request_id, message = None):
+    def __init__(self, remote, user, request_id, reason, message = None):
         super(RejectAction, self).__init__(remote, user)
         self.request = remote.requests.by_id(request_id)
         self._template = None
+        self.reason = reason
         self.message = message
 
     @property
@@ -664,7 +665,9 @@ class RejectAction(OscAction):
         print(msg)
         if not comment:
             raise ActionError("Must provide a message for reject.")
-        self.request.review_decline(user = self.user, comment = comment)
+        self.request.review_decline(user = self.user,
+                                    comment = comment,
+                                    reason = self.reason)
 
 
 class CommentAction(OscAction):

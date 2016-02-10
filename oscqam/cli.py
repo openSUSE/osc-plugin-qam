@@ -15,6 +15,7 @@ from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
 from oscqam.models import ReportedError
 from oscqam.remotes import RemoteFacade
+from oscqam.reject_reasons import RejectReason
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ class QamInterpreter(cmdln.Cmdln):
 
     name = 'osc qam'
     all_columns_string = ", ".join([str(f) for f in ReportFields.all_fields])
+    all_reasons_string = ", ".join([r.flag for r in RejectReason])
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
@@ -298,12 +300,43 @@ class QamInterpreter(cmdln.Cmdln):
         keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
 
+    def query_enum(self, enum, id, desc):
+        """Query the user to specify one specific option from an enum.
+
+        The enum needs a method 'from_id' that returns the enum for
+        the given id.
+
+        :param enum: The enum class to query for
+
+        :param id: Function that returns a unique id for a enum-member.
+        :type id: enum -> object
+
+        :param desc: Function that returns a descriptive text
+                for a enum-member.
+        :type id: enum -> str
+
+        :returns: enum selected by the user.
+
+        """
+        ids = [id(member) for member in enum]
+        for member in enum:
+            print("{0}. {1}".format(id(member), desc(member)))
+        number = input("Please specify one of the options: ")
+        if number not in ids:
+            print("Invalid number specified: {0}".format(ids))
+            return self.query_enum(enum, id, desc)
+        return enum.from_id(number)
+
     @cmdln.option('-U',
                   '--user',
                   help = 'User that rejects this request.')
     @cmdln.option('-M',
                   '--message',
                   help = 'Message to use for rejection-comment.')
+    @cmdln.option('-R',
+                  '--reason',
+                  help = 'Reason the request was rejected: '
+                         + all_reasons_string)
     def do_reject(self, subcmd, opts, request_id):
         """${cmd_name}: Reject the request for the user.
 
@@ -316,8 +349,12 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         message = opts.message if opts.message else None
+        reason = (RejectReason.from_str(opts.reason) if opts.reason
+                  else self.query_enum(RejectReason,
+                                       lambda r: r.enum_id,
+                                       lambda r: r.text))
         action = RejectAction(self.api, self.affected_user, self.request_id,
-                              message)
+                              reason, message)
         action()
 
     @cmdln.option('-U',
@@ -411,6 +448,9 @@ class QamInterpreter(cmdln.Cmdln):
 @cmdln.option('-M',
               '--message',
               help = 'Message to use for the command.')
+@cmdln.option('-R',
+              '--reason',
+              help = 'Reason a request has to be rejected.')
 @cmdln.option('-T',
               '--tabular',
               action = 'store_true',

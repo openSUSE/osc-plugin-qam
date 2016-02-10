@@ -1,7 +1,8 @@
 import os
 import StringIO
 import unittest
-from oscqam import actions, cli, models, fields, remotes
+from oscqam import (actions, cli, models, fields, remotes,
+                    reject_reasons)
 from .utils import load_fixture, create_template_data
 from .mockremote import MockRemote
 
@@ -110,15 +111,42 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(actions.MultipleReviewsError, unassign)
 
     def test_reject_not_failed(self):
+        """Can not reject a request when the test report is not failed."""
         request = self.mock_remote.requests.by_id(self.cloud_open)
         template = models.Template(request,
                                    tr_getter = lambda x: self.template)
-        action = actions.RejectAction(self.mock_remote, self.user_id,
-                                      self.cloud_open)
+        action = actions.RejectAction(
+            self.mock_remote, self.user_id,
+            self.cloud_open,
+            reject_reasons.RejectReason.administrative
+        )
         action._template = template
         with self.assertRaises(models.TestResultMismatchError) as context:
             action()
         self.assertIn(models.Template.base_url, str(context.exception))
+
+    def test_reject_posts_reason(self):
+        """Rejecting a request will post a reason attribute."""
+        request = self.mock_remote.requests.by_id(self.cloud_open)
+        template = models.Template(request,
+                                   tr_getter = lambda x: """SUMMARY: FAILED
+
+                                   comment: Something broke.""")
+        endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
+            prj = request.src_project
+        )
+        self.mock_remote.register_url(
+            endpoint,
+            lambda: load_fixture('reject_reason_attribute.xml')
+        )
+        action = actions.RejectAction(
+            self.mock_remote, self.user_id,
+            self.cloud_open,
+            reject_reasons.RejectReason.administrative
+        )
+        action._template = template
+        action()
+        self.assertEquals(len(self.mock_remote.post_calls), 2)
 
     def test_assign_no_report(self):
         def raiser(request):

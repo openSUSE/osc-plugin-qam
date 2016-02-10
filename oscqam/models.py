@@ -151,6 +151,42 @@ class XmlFactoryMixin(object):
         return cls.parse_et(remote, root, tag, cls)
 
 
+class Attribute(XmlFactoryMixin):
+    reject_reason = "MAINT:RejectReason"
+
+    @classmethod
+    def parse(cls, remote, xml):
+        return super(Attribute, cls).parse(remote, xml, 'attribute')
+
+    @classmethod
+    def preset(cls, remote, preset, *value):
+        """Create a new attribute from a default attribute.
+
+        Default attributes are stored as class-variables on this class.
+        """
+        namespace, name = preset.split(":")
+        return Attribute(remote,
+                         {'namespace': namespace, 'name': name},
+                         {'value': value})
+
+    def __eq__(self, other):
+        if not isinstance(other, Attribute):
+            return False
+        return (self.namespace == other.namespace and
+                self.name == other.name and
+                self.value == other.value)
+
+    def xml(self):
+        """Turn this attribute into XML."""
+        root = ET.Element('attribute')
+        root.set('name', self.name)
+        root.set('namespace', self.namespace)
+        for val in self.value:
+            value = ET.SubElement(root, 'value')
+            value.text = val
+        return ET.tostring(root)
+
+
 class Reviewer(object):
     """Superclass for possible reviewer-classes.
     """
@@ -543,6 +579,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self._assigned_roles = None
         self._priority = None
         self._reviews = []
+        self._attributes = {}
 
     def active(self):
         return self.state == 'new' or self.state == 'review'
@@ -616,6 +653,21 @@ class Request(osc.core.Request, XmlFactoryMixin):
                     return ''
         return ''
 
+    def attribute(self, attribute):
+        """Load the specified attribute for this request.
+
+        As requests right now can not contain attributes the attribute will be
+        loaded from the corresponding source-project.
+        """
+        if attribute not in self._attributes:
+            attributes = self.remote.projects.get_attribute(
+                self.src_project, attribute
+            )
+            if len(attributes) == 1:
+                attributes = attributes[0]
+            self._attributes[attribute] = attributes
+        return self._attributes[attribute]
+
     def review_action(self, params, user = None, group = None, comment = None):
         if not user and not group:
             raise AttributeError("group or user required for this action.")
@@ -648,10 +700,32 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params = {'cmd': 'addreview'}
         self.review_action(params, user, group, comment)
 
-    def review_decline(self, user = None, group = None, comment = None):
+    def review_decline(self, user = None, group = None, comment = None,
+                       reason = None):
         """Will decline the reviewrequest for the given user or group.
 
+        :param user: The user declining the request.
+
+        :param group: The group the request should be declined for.
+
+        :param comment: A comment that will be added to describe why the
+            request was declined.
+
+        :param reason: A L{oscqam.reject_reasons.RejectReason} that
+            explains why the request was declined.
+            The reason will be added as an attribute to the Maintenance
+            incident.
         """
+        if reason:
+            reject_reason = self.attribute(Attribute.reject_reason)
+            reason_value = "{0}:{1}".format(self.reqid, reason.flag)
+            if not reject_reason:
+                reject_reason = Attribute.preset(self.remote,
+                                                 Attribute.reject_reason,
+                                                 reason_value)
+            else:
+                reject_reason.value.append(reason_value)
+            self.remote.projects.set_attribute(self, reject_reason)
         params = {'cmd': 'changereviewstate',
                   'newstate': 'declined'}
         self.review_action(params, user, group, comment)
