@@ -114,6 +114,86 @@ Make sure to set the following fields in your test report:
    status: FAILED
    comment: <reason>
 
+You have to either provide a ``reason`` using a ``flag``
+(``--reason``) or use the interactive UI when rejecting a request.
+
+The possible values of the reason flag can be checked using the help:
+
+.. code:: bash
+
+   ibs qam help reject
+
+   reject: Reject the request for the user.
+
+   The command either uses the configured user or the user passed via
+   the `-u` flag.
+
+   Usage:
+       osc qam reject REQUEST_ID
+
+   Options:
+       -h, --help          show this help message and exit
+       -R REASON, --reason=REASON
+                           Reason the request was rejected: admin, retracted, build_problem, not_fixed,
+                           regression, false_reject, tracking_issue
+       -M MESSAGE, --message=MESSAGE
+                           Message to use for rejection-comment.
+       -U USER, --user=USER
+                           User that rejects this request.
+
+A more detailed listing of possible reasons for rejection (including
+examples):
+
+1) Administrative
+
+   - more fixes
+
+   - Security overrides Maintenance
+
+2) Retracted request
+
+   - not needed
+
+   - not fixed (and reported by other parties)
+
+   - End of life of the product
+
+3) Build problems
+
+   - problem with the build/release numbers
+
+   - wrong channels/products/architectures
+
+   - missing packages in the build (not in patchinfo!)
+
+4) Tracked issue(s) not fixed
+
+   - bad upstream fix
+
+   - bad back-port
+
+   - incomplete fix
+
+5) Regression
+
+   - run-time regression
+
+   - dependency/installation issue
+
+6) False reject
+
+   - test setup error
+
+   - manager override to release despite findings
+
+7) Incident tracking issues:
+
+   - bad bug list
+
+   - bad CVE list
+
+   - other issues with patchinfo metadata
+
 List updates you are currently testing
 ======================================
 
