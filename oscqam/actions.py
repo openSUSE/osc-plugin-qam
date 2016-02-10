@@ -665,7 +665,9 @@ class RejectAction(OscAction):
         print(msg)
         if not comment:
             raise ActionError("Must provide a message for reject.")
-        self.request.review_decline(user = self.user, comment = comment)
+        self.request.review_decline(user = self.user,
+                                    comment = comment,
+                                    reason = self.reason)
 
 
 class CommentAction(OscAction):
