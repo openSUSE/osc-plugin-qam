@@ -3,7 +3,7 @@ import urllib2
 
 import osc
 
-from .models import Comment, Group, Request, User, RequestFilter
+from .models import Attribute, Comment, Group, Request, User, RequestFilter
 from .utils import memoize
 
 
@@ -28,6 +28,7 @@ class RemoteFacade(object):
         self.groups = GroupRemote(self)
         self.requests = RequestRemote(self)
         self.users = UserRemote(self)
+        self.projects = ProjectRemote(self)
 
     def _check_for_error(self, answer):
         ret_code = answer.getcode()
@@ -237,3 +238,33 @@ class CommentRemote(object):
     def delete(self, comment_id):
         endpoint = '{0}/{1}'.format(self.delete_endpoint, comment_id)
         self.remote.delete(endpoint)
+
+
+class ProjectRemote(object):
+    create_body = """<attributes>
+    {attribute}
+    </attributes>
+    """
+
+    endpoint = 'source'
+
+    def __init__(self, remote):
+        self.remote = remote
+
+    def get_attribute(self, project, attribute_name):
+        """Return the attribute value for the given project."""
+        url = "{endpoint}/{project}/_attribute/{attrib}".format(
+            endpoint = self.endpoint,
+            project = project,
+            attrib = attribute_name
+        )
+        return Attribute.parse(self.remote,
+                               self.remote.get(url))
+
+    def set_attribute(self, project, attribute):
+        endpoint = '{0}/{1}/_attribute/{2}:{3}'.format(self.endpoint,
+                                                       project,
+                                                       attribute.namespace,
+                                                       attribute.name)
+        self.remote.post(endpoint,
+                         self.create_body.format(attribute = attribute.xml()))
