@@ -700,8 +700,21 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params = {'cmd': 'addreview'}
         self.review_action(params, user, group, comment)
 
+    def _build_reject_attribute(self, reasons):
+        reject_reason = self.attribute(Attribute.reject_reason)
+        reason_values = map(lambda reason: "{0}:{1}".format(self.reqid,
+                                                            reason.flag),
+                            reasons)
+        if not reject_reason:
+            reject_reason = Attribute.preset(self.remote,
+                                             Attribute.reject_reason,
+                                             *reason_values)
+        else:
+            map(lambda r: reject_reason.value.append(r), reason_values)
+        return reject_reason
+
     def review_decline(self, user = None, group = None, comment = None,
-                       reason = None):
+                       reasons = None):
         """Will decline the reviewrequest for the given user or group.
 
         :param user: The user declining the request.
@@ -716,16 +729,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
             The reason will be added as an attribute to the Maintenance
             incident.
         """
-        if reason:
-            reject_reason = self.attribute(Attribute.reject_reason)
-            reason_value = "{0}:{1}".format(self.reqid, reason.flag)
-            if not reject_reason:
-                reject_reason = Attribute.preset(self.remote,
-                                                 Attribute.reject_reason,
-                                                 reason_value)
-            else:
-                reject_reason.value.append(reason_value)
-            self.remote.projects.set_attribute(self, reject_reason)
+        if reasons:
+            reason = self._build_reject_attribute(reasons)
+            self.remote.projects.set_attribute(self, reason)
         params = {'cmd': 'changereviewstate',
                   'newstate': 'declined'}
         self.review_action(params, user, group, comment)

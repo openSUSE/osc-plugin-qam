@@ -142,7 +142,7 @@ class ActionTests(unittest.TestCase):
         action = actions.RejectAction(
             self.mock_remote, self.user_id,
             self.cloud_open,
-            reject_reasons.RejectReason.administrative
+            [reject_reasons.RejectReason.administrative]
         )
         action._template = template
         action()

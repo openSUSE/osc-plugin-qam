@@ -3,6 +3,7 @@ from urllib2 import HTTPError
 from StringIO import StringIO
 import unittest
 import osc
+from oscqam.reject_reasons import RejectReason
 from oscqam.models import (Attribute, Request, Template,
                            MissingSourceProjectError, User, Group,
                            Assignment, Comment)
@@ -353,3 +354,25 @@ class ModelTests(unittest.TestCase):
                                   'Some_Value')
         self.remote.projects.set_attribute('oscqam:test', reject)
         self.assertEquals(len(self.remote.post_calls), 1)
+
+    def test_build_reject_reason(self):
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
+            prj = request.src_project
+        )
+        self.remote.register_url(
+            endpoint,
+            lambda: load_fixture('reject_reason_attribute_empty.xml')
+        )
+        reject_reasons = [RejectReason.administrative,
+                          RejectReason.build_problem]
+        attribute = request._build_reject_attribute(reject_reasons)
+        value1 = "{reqid}:{admin}".format(
+            reqid = request.reqid,
+            admin = RejectReason.administrative.flag
+        )
+        value2 = "{reqid}:{build}".format(
+            reqid = request.reqid,
+            build = RejectReason.build_problem.flag
+        )
+        self.assertEquals(attribute.value, (value1, value2))

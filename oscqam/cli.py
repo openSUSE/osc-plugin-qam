@@ -48,6 +48,7 @@ class QamInterpreter(cmdln.Cmdln):
     ${help_list}
     """
     INTERPRETER_QUIT = 3
+    SUBQUERY_QUIT = 4
 
     def __init__(self, parent_cmdln, *args, **kwargs):
         cmdln.Cmdln.__init__(self, *args, **kwargs)
@@ -321,11 +322,17 @@ class QamInterpreter(cmdln.Cmdln):
         ids = [id(member) for member in enum]
         for member in enum:
             print("{0}. {1}".format(id(member), desc(member)))
-        number = input("Please specify one of the options: ")
-        if number not in ids:
-            print("Invalid number specified: {0}".format(ids))
-            return self.query_enum(enum, id, desc)
-        return enum.from_id(number)
+        print("q. Quit")
+        user_input = raw_input("Please specify the options "
+                               "(separate multiple values with ,): ")
+        if user_input.lower() == 'q':
+            return self.SUBQUERY_QUIT
+        numbers = map(lambda s: int(s.strip()), user_input.split(','))
+        for number in numbers:
+            if number not in ids:
+                print("Invalid number specified: {0}".format(number))
+                return self.query_enum(enum, id, desc)
+        return map(enum.from_id, numbers)
 
     @cmdln.option('-U',
                   '--user',
@@ -335,6 +342,7 @@ class QamInterpreter(cmdln.Cmdln):
                   help = 'Message to use for rejection-comment.')
     @cmdln.option('-R',
                   '--reason',
+                  action = 'append',
                   help = 'Reason the request was rejected: '
                          + all_reasons_string)
     def do_reject(self, subcmd, opts, request_id):
@@ -349,12 +357,14 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         message = opts.message if opts.message else None
-        reason = (RejectReason.from_str(opts.reason) if opts.reason
-                  else self.query_enum(RejectReason,
-                                       lambda r: r.enum_id,
-                                       lambda r: r.text))
+        reasons = (map(RejectReason.from_str, opts.reason) if opts.reason
+                   else self.query_enum(RejectReason,
+                                        lambda r: r.enum_id,
+                                        lambda r: r.text))
+        if reasons == self.SUBQUERY_QUIT:
+            return
         action = RejectAction(self.api, self.affected_user, self.request_id,
-                              reason, message)
+                              reasons, message)
         action()
 
     @cmdln.option('-U',
@@ -450,6 +460,7 @@ class QamInterpreter(cmdln.Cmdln):
               help = 'Message to use for the command.')
 @cmdln.option('-R',
               '--reason',
+              action = 'append',
               help = 'Reason a request has to be rejected.')
 @cmdln.option('-T',
               '--tabular',
