@@ -21,23 +21,19 @@ class InvalidRejectError(ReportedError):
 
 class RejectReason(Enum):
     administrative = (0, "admin", "Administrative "
-                      "(e.g. more fixes or security overrides maintenance)")
+                      "(e.g. pack more fixes into the updates)")
     retracted = (1, "retracted", "Retracted "
-                 "(e.g. EOL of products. Fix not needed or not fixed)")
+                 "(e.g. fix not needed)")
     build_problem = (2, "build_problem", "Build problem "
-                     "e.g. wrong build/release number, "
-                     "wrong channels/products/archs or "
-                     "missing packages in build)")
+                     "(e.g. wrong rpm $version-$release)")
     not_fixed = (3, "not_fixed", "Issues not fixed "
-                 "(e.g. bad or incomplete upstream fix or backport)")
+                 "(e.g. incomplete back-port or upstream fix)")
     regression = (4, "regression", "Regression "
-                  "(e.g. runtime regression or "
-                  "dependency/installation issues)")
+                  "(e.g. run-time regression or installation issues)")
     false_reject = (5, "false_reject", "False reject "
-                    "(e.g. test setup error or manager overrides release)")
+                    "(e.g. spoiled results due to test setup error)")
     tracking_issue = (6, "tracking_issue", "Incident tracking issue "
-                      "(e.g. bad bug list, bad CVE list or issues with "
-                      "patchinfo metadata)")
+                      "(e.g. bad bug list or issues with patchinfo metadata)")
 
     def __init__(self, enum_id, flag, text):
         """
