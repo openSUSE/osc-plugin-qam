@@ -1,6 +1,16 @@
 ChangeLog
 #########
 
+0.12.2
+======
+
+- Pass correct project to set_attribute call.
+
+0.12.1
+======
+
+- Can specify multiple 'reject_reasons'
+
 0.12.0
 ======
 
