@@ -731,7 +731,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         """
         if reasons:
             reason = self._build_reject_attribute(reasons)
-            self.remote.projects.set_attribute(self, reason)
+            self.remote.projects.set_attribute(self.src_project, reason)
         params = {'cmd': 'changereviewstate',
                   'newstate': 'declined'}
         self.review_action(params, user, group, comment)
