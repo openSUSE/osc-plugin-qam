@@ -147,6 +147,7 @@ class ActionTests(unittest.TestCase):
         action._template = template
         action()
         self.assertEquals(len(self.mock_remote.post_calls), 2)
+        self.assertIn(request.src_project, self.mock_remote.post_calls[0])
 
     def test_assign_no_report(self):
         def raiser(request):
