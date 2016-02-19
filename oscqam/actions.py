@@ -418,12 +418,15 @@ class AssignAction(OscAction):
     AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
-    def __init__(self, remote, user, request_id, group = None,
+    def __init__(self, remote, user, request_id, groups = None,
                  template_factory = Template, force = False,
                  template_required = True, **kwargs):
         super(AssignAction, self).__init__(remote, user, **kwargs)
         self.request = remote.requests.by_id(request_id)
-        self.group = remote.groups.for_name(group) if group else None
+        if groups:
+            self.groups = [remote.groups.for_name(group) for group in groups]
+        else:
+            self.groups = None
         self.template_factory = template_factory
         self.template_required = template_required
         self.force = force
@@ -486,8 +489,8 @@ class AssignAction(OscAction):
         self.check_previous_rejects()
 
     def action(self):
-        if self.group:
-            self.assign(self.group)
+        if self.groups:
+            self.assign(self.groups)
         else:
             group = self.infer_group()
             # TODO: Ensure that the user actually wants this?
@@ -517,20 +520,21 @@ class AssignAction(OscAction):
             )
         group = both.pop()
         print(AssignAction.AUTO_INFER_MSG.format(group = group))
-        return group
+        return [group]
 
-    def assign(self, group):
+    def assign(self, groups):
         self.validate()
-        msg = AssignAction.ASSIGN_USER_MSG.format(
-            user = self.user, group = group, request = self.request
-        )
-        comment = AssignAction.ASSIGN_COMMENT.format(
-            prefix = PREFIX, user = self.user, group = group
-        )
-        self.request.review_assign(reviewer = self.user,
-                                   group = group,
-                                   comment = comment)
-        self.print(msg)
+        for group in groups:
+            msg = AssignAction.ASSIGN_USER_MSG.format(
+                user = self.user, group = group, request = self.request
+            )
+            comment = AssignAction.ASSIGN_COMMENT.format(
+                prefix = PREFIX, user = self.user, group = group
+            )
+            self.request.review_assign(reviewer = self.user,
+                                       group = group,
+                                       comment = comment)
+            self.print(msg)
 
 
 class UnassignAction(OscAction):
@@ -540,18 +544,21 @@ class UnassignAction(OscAction):
     UNASSIGN_COMMENT = "{prefix}::unassign::{user.login}::{group.name}"
     UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
 
-    def __init__(self, remote, user, request_id, group = None):
-        super(UnassignAction, self).__init__(remote, user)
+    def __init__(self, remote, user, request_id, groups = None, **kwargs):
+        super(UnassignAction, self).__init__(remote, user, **kwargs)
         self.request = remote.requests.by_id(request_id)
-        self._group = remote.groups.for_name(group) if group else None
+        if groups:
+            self._groups = [remote.groups.for_name(group) for group in groups]
+        else:
+            self._groups = None
 
-    def group(self):
-        if self._group:
-            return self._group
-        return self.infer_group()
+    def groups(self):
+        if self._groups:
+            return self._groups
+        return self.infer_groups()
 
     def action(self):
-        self.unassign(self.group())
+        self.unassign(self.groups())
 
     def possible_groups(self):
         """Will return all groups the user assigned himself for and is
@@ -563,7 +570,7 @@ class UnassignAction(OscAction):
                 possible_groups.append(role.group)
         return possible_groups
 
-    def infer_group(self):
+    def infer_groups(self):
         """Find the exact group the user is currently reviewing and return it.
 
         :return: Group in review by the user.
@@ -576,9 +583,7 @@ class UnassignAction(OscAction):
         groups = self.possible_groups()
         if not groups:
             raise NoReviewError(self.user)
-        elif len(groups) > 1:
-            raise MultipleReviewsError(self.user, groups)
-        return groups.pop()
+        return groups
 
     def unassign(self, group):
         msg = UnassignAction.UNASSIGN_USER_MSG.format(
