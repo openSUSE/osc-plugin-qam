@@ -28,6 +28,7 @@ class ModelTests(unittest.TestCase):
         cls.req_invalid = load_fixture('request_no_src.xml')
         cls.req_sle11sp4 = load_fixture('request_sle11sp4.xml')
         cls.req_qam_auto = load_fixture('request_qam_auto.xml')
+        cls.req_two_assign = load_fixture('request_twoassign.xml')
         cls.template = load_fixture('template.txt')
         cls.template_rh = load_fixture('template_rh.txt')
         cls.user = load_fixture('person_anonymous.xml')
@@ -88,6 +89,15 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(len(assigned), 1)
         self.assertEqual(assigned[0].user.login, 'anonymous')
         self.assertEqual(assigned[0].group.name, 'qam-sle')
+
+    def test_assigned_multiple_roles(self):
+        request = Request.parse(self.remote, self.req_two_assign)[0]
+        assigned = request.assigned_roles
+        self.assertEqual(len(assigned), 2)
+        self.assertEqual(assigned[0].user.login, 'anonymous')
+        self.assertEqual(assigned[0].group.name, 'qam-sle')
+        self.assertEqual(assigned[1].user.login, 'anonymous')
+        self.assertEqual(assigned[1].group.name, 'qam-cloud')
 
     def test_assigned_roles_sle11_sp4(self):
         request = Request.parse(self.remote, self.req_sle11sp4)[0]

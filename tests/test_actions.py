@@ -62,7 +62,7 @@ class ActionTests(unittest.TestCase):
 
     def test_unassign_explicit_group(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
-                                          self.non_open, 'qam-sle')
+                                          self.non_open, ['qam-sle'])
         unassign()
         self.assertEqual(len(self.mock_remote.post_calls), 2)
 
@@ -92,7 +92,7 @@ class ActionTests(unittest.TestCase):
         out = StringIO.StringIO()
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
-                                      group = 'qam-test',
+                                      groups = ['qam-test'],
                                       template_factory = lambda r: True,
                                       out = out)
         assign()
@@ -106,9 +106,18 @@ class ActionTests(unittest.TestCase):
         self.assertRaises(actions.NoReviewError, unassign)
 
     def test_unassign_multiple_groups(self):
+        out = StringIO.StringIO()
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
-                                          self.two_assigned)
-        self.assertRaises(actions.MultipleReviewsError, unassign)
+                                          self.two_assigned, out = out)
+        unassign()
+        self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
+                      "from twoassigned for group qam-sle",
+                      unassign.out.getvalue())
+        self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
+                      "from twoassigned for group qam-cloud",
+                      unassign.out.getvalue())
+        self.assertIn("Will close review for Unknown User "
+                      "(anonymous@nowhere.none)", unassign.out.getvalue())
 
     def test_reject_not_failed(self):
         """Can not reject a request when the test report is not failed."""
@@ -154,15 +163,9 @@ class ActionTests(unittest.TestCase):
             raise models.TemplateNotFoundError("")
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
-                                      group = 'qam-test',
+                                      groups = ['qam-test'],
                                       template_factory = raiser)
         self.assertRaises(actions.ReportNotYetGeneratedError, assign)
-
-    def test_assign_only_one_group(self):
-        assign = actions.AssignAction(self.mock_remote, self.user_id,
-                                      self.one_assigned, group = 'qam-test',
-                                      template_factory = lambda r: True)
-        self.assertRaises(actions.OneGroupAssignedError, assign)
 
     def test_list_assigned_user(self):
         self.mock_remote.register_url(
@@ -271,7 +274,7 @@ class ActionTests(unittest.TestCase):
         )
         assign = actions.AssignAction(self.mock_remote, 'anonymous2',
                                       self.multi_available_assign,
-                                      group = 'qam-test',
+                                      groups = ['qam-test'],
                                       template_factory = lambda r: r)
         self.assertRaises(actions.NotPreviousReviewerError, assign)
 
@@ -285,7 +288,7 @@ class ActionTests(unittest.TestCase):
         )
         assign = actions.AssignAction(self.mock_remote, 'anonymous',
                                       self.multi_available_assign,
-                                      group = 'qam-test',
+                                      groups = ['qam-test'],
                                       template_factory = lambda r: r,
                                       out = out)
         assign()
@@ -303,7 +306,7 @@ class ActionTests(unittest.TestCase):
         )
         assign = actions.AssignAction(self.mock_remote, 'anonymous2',
                                       self.multi_available_assign,
-                                      group = 'qam-test',
+                                      groups = ['qam-test'],
                                       template_factory = lambda r: r,
                                       force = True, out = out)
         assign()
@@ -324,7 +327,7 @@ class ActionTests(unittest.TestCase):
             raise models.TemplateNotFoundError("")
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
-                                      group = 'qam-test',
+                                      groups = ['qam-test'],
                                       template_factory = raiser,
                                       out = out, template_required = False)
         assign()
