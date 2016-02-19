@@ -13,6 +13,10 @@ release:
 
 	bs-update -P QA:Maintenance -d . HEAD
 
+beta:
+
+	bs-update -P home:bergmannf -d . HEAD
+
 doc:
 
 	rm Documentation/modules.rst
