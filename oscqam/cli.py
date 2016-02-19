@@ -111,7 +111,8 @@ class QamInterpreter(cmdln.Cmdln):
     @cmdln.option('-G',
                   '--group',
                   action = 'append',
-                  help = 'Group to assign the user for.')
+                  help = 'Groups to assign the user for.'
+                  'Pass multiple groups passing flag multiple times.')
     @cmdln.option('--skip-template',
                   action = 'store_true',
                   default = False,
@@ -374,7 +375,8 @@ class QamInterpreter(cmdln.Cmdln):
     @cmdln.option('-G',
                   '--group',
                   action = 'append',
-                  help = 'Group to reassign to this request.')
+                  help = 'Groups to reassign to this request.'
+                  'Pass multiple groups passing flag multiple times.')
     def do_unassign(self, subcmd, opts, request_id):
         """${cmd_name}: Unassign the request for the user.
 
@@ -457,7 +459,8 @@ class QamInterpreter(cmdln.Cmdln):
 @cmdln.option('-G',
               '--group',
               action = 'append',
-              help = 'Group to use for the command.')
+              help = 'Define the groups to use for the command.'
+              'Pass multiple groups passing flag multiple times.')
 @cmdln.option('-M',
               '--message',
               help = 'Message to use for the command.')
