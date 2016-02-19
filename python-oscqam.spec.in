@@ -66,5 +66,6 @@ ln -s %{OSCQAMPATH}cli.py %{buildroot}%{OSCPLUGINPATH}cli.py
 %{OSCQAMPATH}
 %{OSCPLUGINPATH}
 %{python_sitelib}/python_oscqam-%{version}-py%{py_ver}.egg-info
+%{python_sitelib}/python_oscqam-%{version}-py%{py_ver}.egg-info/
 
 %changelog
