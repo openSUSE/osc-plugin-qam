@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.13.0
+======
+
+- Allow > 1 group to be assigned at a time.
+
 0.12.2
 ======
 
