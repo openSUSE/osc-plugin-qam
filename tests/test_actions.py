@@ -62,7 +62,7 @@ class ActionTests(unittest.TestCase):
 
     def test_unassign_explicit_group(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
-                                          self.non_open, ['qam-sle'])
+                                          self.non_open, ['qam-test'])
         unassign()
         self.assertEqual(len(self.mock_remote.post_calls), 2)
 
@@ -71,6 +71,16 @@ class ActionTests(unittest.TestCase):
                                           self.assigned)
         unassign()
         self.assertEqual(len(self.mock_remote.post_calls), 2)
+
+    def test_unassign_subset_group(self):
+        out = StringIO.StringIO()
+        unassign = actions.UnassignAction(self.mock_remote, self.user_id,
+                                          self.two_assigned, ['qam-sle'],
+                                          out = out)
+        unassign()
+        self.assertEqual(len(self.mock_remote.post_calls), 1)
+        self.assertNotIn("Will close review for Unknown User "
+                         "(anonymous@nowhere.none)", unassign.out.getvalue())
 
     def test_assign_non_matching_groups(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,

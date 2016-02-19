@@ -543,7 +543,8 @@ class UnassignAction(OscAction):
         return self.infer_groups()
 
     def action(self):
-        self.unassign(self.groups())
+        assigned_groups = self.infer_groups()
+        self.unassign(self.groups(), assigned_groups)
 
     def possible_groups(self):
         """Will return all groups the user assigned himself for and is
@@ -570,7 +571,8 @@ class UnassignAction(OscAction):
             raise NoReviewError(self.user)
         return groups
 
-    def unassign(self, groups):
+    def unassign(self, groups, assigned_groups):
+        difference = set(assigned_groups).difference(set(groups))
         for group in groups:
             msg = UnassignAction.UNASSIGN_USER_MSG.format(
                 user = self.user, group = group, request = self.request
@@ -588,14 +590,15 @@ class UnassignAction(OscAction):
                 lambda: self.request.review_accept(group = group,
                                                    comment = undo_comment)
             )
-        msg = UnassignAction.ACCEPT_USER_MSG.format(
-            user = self.user, request = self.request
-        )
-        self.print(msg)
-        self.request.review_accept(user = self.user, comment = comment)
-        self.undo_stack.append(
-            lambda: self.request.review_reopen(user = self.user)
-        )
+        if not difference:
+            msg = UnassignAction.ACCEPT_USER_MSG.format(
+                user = self.user, request = self.request
+            )
+            self.print(msg)
+            self.request.review_accept(user = self.user, comment = comment)
+            self.undo_stack.append(
+                lambda: self.request.review_reopen(user = self.user)
+            )
 
 
 class ApproveAction(OscAction):
