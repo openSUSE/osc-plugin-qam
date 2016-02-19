@@ -527,6 +527,7 @@ class UnassignAction(OscAction):
     """
     UNASSIGN_COMMENT = "{prefix}::unassign::{user.login}::{group.name}"
     UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
+    ACCEPT_USER_MSG = "Will close review for {user}"
 
     def __init__(self, remote, user, request_id, groups = None, **kwargs):
         super(UnassignAction, self).__init__(remote, user, **kwargs)
@@ -569,23 +570,28 @@ class UnassignAction(OscAction):
             raise NoReviewError(self.user)
         return groups
 
-    def unassign(self, group):
-        msg = UnassignAction.UNASSIGN_USER_MSG.format(
-            user = self.user, group = group, request = self.request
+    def unassign(self, groups):
+        for group in groups:
+            msg = UnassignAction.UNASSIGN_USER_MSG.format(
+                user = self.user, group = group, request = self.request
+            )
+            self.print(msg)
+            comment = UnassignAction.UNASSIGN_COMMENT.format(
+                prefix = PREFIX, user = self.user, group = group
+            )
+            undo_comment = AssignAction.ASSIGN_COMMENT.format(
+                prefix = PREFIX, user = self.user, group = group
+            )
+            self.request.review_reopen(group = group,
+                                       comment = comment)
+            self.undo_stack.append(
+                lambda: self.request.review_accept(group = group,
+                                                   comment = undo_comment)
+            )
+        msg = UnassignAction.ACCEPT_USER_MSG.format(
+            user = self.user, request = self.request
         )
-        print(msg)
-        comment = UnassignAction.UNASSIGN_COMMENT.format(
-            prefix = PREFIX, user = self.user, group = group
-        )
-        undo_comment = AssignAction.ASSIGN_COMMENT.format(
-            prefix = PREFIX, user = self.user, group = group
-        )
-        self.request.review_reopen(group = group,
-                                   comment = comment)
-        self.undo_stack.append(
-            lambda: self.request.review_accept(group = group,
-                                               comment = undo_comment)
-        )
+        self.print(msg)
         self.request.review_accept(user = self.user, comment = comment)
         self.undo_stack.append(
             lambda: self.request.review_reopen(user = self.user)

@@ -64,13 +64,13 @@ class ActionTests(unittest.TestCase):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
                                           self.non_open, ['qam-sle'])
         unassign()
-        self.assertEqual(len(self.mock_remote.post_calls), 1)
+        self.assertEqual(len(self.mock_remote.post_calls), 2)
 
     def test_unassign_inferred_group(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
                                           self.assigned)
         unassign()
-        self.assertEqual(len(self.mock_remote.post_calls), 1)
+        self.assertEqual(len(self.mock_remote.post_calls), 2)
 
     def test_assign_non_matching_groups(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
@@ -116,6 +116,8 @@ class ActionTests(unittest.TestCase):
         self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
                       "from twoassigned for group qam-cloud",
                       unassign.out.getvalue())
+        self.assertIn("Will close review for Unknown User "
+                      "(anonymous@nowhere.none)", unassign.out.getvalue())
 
     def test_reject_not_failed(self):
         """Can not reject a request when the test report is not failed."""
