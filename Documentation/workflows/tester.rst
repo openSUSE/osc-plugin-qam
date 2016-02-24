@@ -71,10 +71,34 @@ Using only the request-id is also possible.
 
    ibs qam assign 12345
 
-By default the ``assign``-command (as well as the ``unassign``-command) will
-try to automatically find the group you can be assigned (or unassigned) for.
-This might not work if the plugin finds more than one possible group: in this
-case pass the group's name explicitly via the ``-G`` flag.
+By default the ``assign``-command (as well as the
+``unassign``-command) will try to automatically find the group you can
+be assigned (or unassigned) for.  This might not work if the plugin
+finds more than one possible group: in this case pass the group names
+explicitly via the ``-G`` flag (you can pass more than one group by
+repeating the flag).
+
+.. code:: bash
+
+   ibs qam assign -G 'qam-atk' -G 'qam-sle' 12345
+
+Unassigning updates
+-------------------
+
+When you realize that an update can not be tested or finished by you,
+you can unassign yourself.
+
+When you are assigned to multiple groups, using the command without
+any ``--group`` flag will unassign *all* groups you are assigned for.
+
+Passing the ``--group`` flag will only unassign the passed groups:
+
+.. code:: bash
+
+   ibs qam unassign -G 'qam-atk' 12345
+
+This will leave you as a reviewer for the groups you did not unassign
+for.
 
 Finishing updates
 -----------------
@@ -203,6 +227,14 @@ the ``assigned`` command with the ``-U`` parameter:
 .. code:: bash
 
    ibs qam assigned -U <user>
+
+To list the updates currently tested by you, a shortcut command is
+provided as well: ``my``, which is equivalent to ``ibs qam assigned -U
+"$your_username"``
+
+.. code:: bash
+
+   ibs qam my
 
 Check comments
 ==============
