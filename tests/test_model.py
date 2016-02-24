@@ -94,10 +94,11 @@ class ModelTests(unittest.TestCase):
         request = Request.parse(self.remote, self.req_two_assign)[0]
         assigned = request.assigned_roles
         self.assertEqual(len(assigned), 2)
-        self.assertEqual(assigned[0].user.login, 'anonymous')
-        self.assertEqual(assigned[0].group.name, 'qam-sle')
-        self.assertEqual(assigned[1].user.login, 'anonymous')
-        self.assertEqual(assigned[1].group.name, 'qam-cloud')
+        groups = [a.group.name for a in assigned]
+        logins = [a.user.login for a in assigned]
+        self.assertIn('anonymous', logins)
+        self.assertIn('qam-sle', groups)
+        self.assertIn('qam-cloud', groups)
 
     def test_assigned_roles_sle11_sp4(self):
         request = Request.parse(self.remote, self.req_sle11sp4)[0]
