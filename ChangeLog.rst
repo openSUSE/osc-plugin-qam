@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.13.1
+======
+
+- Fix rejection if a maintenance incident has already (exactly) one
+  reject.
+
 0.13.0
 ======
 
