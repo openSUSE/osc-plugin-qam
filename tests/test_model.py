@@ -387,3 +387,41 @@ class ModelTests(unittest.TestCase):
             build = RejectReason.build_problem.flag
         )
         self.assertEquals(attribute.value, (value1, value2))
+
+    def test_build_reject_reason_existing_reason(self):
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
+            prj = request.src_project
+        )
+        self.remote.register_url(
+            endpoint,
+            lambda: load_fixture('reject_reason_tracking.xml')
+        )
+        reject_reasons = [RejectReason.build_problem]
+        attribute = request._build_reject_attribute(reject_reasons)
+        value1 = "{reqid}:{track}".format(
+            reqid = request.reqid,
+            track = RejectReason.tracking_issue.flag
+        )
+        value2 = "{reqid}:{build}".format(
+            reqid = request.reqid,
+            build = RejectReason.build_problem.flag
+        )
+        self.assertEquals(attribute.value, [value1, value2])
+
+    def test_build_reject_reason_existing_reasons(self):
+        request = Request.parse(self.remote, self.req_1_xml)[0]
+        endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
+            prj = request.src_project
+        )
+        self.remote.register_url(
+            endpoint,
+            lambda: load_fixture('reject_reason_attribute.xml')
+        )
+        reject_reasons = [RejectReason.build_problem]
+        attribute = request._build_reject_attribute(reject_reasons)
+        value2 = "{reqid}:{build}".format(
+            reqid = request.reqid,
+            build = RejectReason.build_problem.flag
+        )
+        self.assertEquals(attribute.value, ['12345:abc', '23456:def', value2])

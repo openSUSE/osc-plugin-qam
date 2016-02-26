@@ -1,0 +1,5 @@
+<attributes>
+  <attribute name="RejectReason" namespace="MAINT">
+    <value>12345:tracking_issue</value>
+  </attribute>
+</attributes>

@@ -154,6 +154,13 @@ class XmlFactoryMixin(object):
 class Attribute(XmlFactoryMixin):
     reject_reason = "MAINT:RejectReason"
 
+    def __init__(self, remote, attributes, children):
+        super(Attribute, self).__init__(remote, attributes, children)
+        # We expect the value to be a sequence type even if there is only
+        # one reasons specified.
+        if not hasattr(self.value, '__iter__'):
+            self.value = [self.value]
+
     @classmethod
     def parse(cls, remote, xml):
         return super(Attribute, cls).parse(remote, xml, 'attribute')
