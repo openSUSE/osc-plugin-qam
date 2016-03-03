@@ -7,6 +7,7 @@ import osc.commandline
 import osc.conf
 
 from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
+                            ListGroupAction, ListAssignedGroupAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
                             InfoAction, DeleteCommentAction,
@@ -162,6 +163,12 @@ class QamInterpreter(cmdln.Cmdln):
         if listdata:
             print(formatter.output(keys, listdata))
 
+    @cmdln.option('-G',
+                  '--group',
+                  action = 'append',
+                  default = [],
+                  help = 'Only requests containing open reviews for the given '
+                  'groups will be output.')
     @cmdln.option('-F',
                   '--fields',
                   action = 'append',
@@ -200,10 +207,19 @@ class QamInterpreter(cmdln.Cmdln):
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self._set_required_params(opts)
         fields = ReportFields.review_fields_by_opts(opts)
-        action = ListOpenAction(self.api, self.affected_user)
+        if opts.group:
+            action = ListGroupAction(self.api, self.affected_user, opts.group)
+        else:
+            action = ListOpenAction(self.api, self.affected_user)
         keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
 
+    @cmdln.option('-G',
+                  '--group',
+                  action = 'append',
+                  default = [],
+                  help = 'Only requests containing assigned reviews for the  '
+                  'given groups will be output.')
     @cmdln.option('-F',
                   '--fields',
                   action = 'append',
@@ -237,10 +253,15 @@ class QamInterpreter(cmdln.Cmdln):
         """
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
+        if opts.user and opts.group:
+            raise ConflictingOptions("Only pass '-U' or '-G' not both")
         self._set_required_params(opts)
         fields = ReportFields.review_fields_by_opts(opts)
         if opts.user:
             action = ListAssignedUserAction(self.api, self.affected_user)
+        elif opts.group:
+            action = ListAssignedGroupAction(self.api, self.affected_user,
+                                             opts.group)
         else:
             action = ListAssignedAction(self.api, self.affected_user)
         keys = fields.fields(action)

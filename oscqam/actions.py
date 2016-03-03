@@ -363,6 +363,18 @@ class ListOpenAction(ListAction):
         return self.merge_requests(user_requests, group_requests)
 
 
+class ListGroupAction(ListAction):
+    def __init__(self, remote, user, groups, template_factory = Template):
+        super(ListGroupAction, self).__init__(remote, user,
+                                              template_factory)
+        if not groups:
+            raise AttributeError("Can not list groups without any groups.")
+        self.groups = [self.remote.groups.for_name(group) for group in groups]
+
+    def load_requests(self):
+        return set(self.remote.requests.open_for_groups(self.groups))
+
+
 class ListAssignedAction(ListAction):
     """Action to list assigned requests.
     """
@@ -384,6 +396,28 @@ class ListAssignedAction(ListAction):
                       if group.is_qam_group()]
         return set([request for request in
                     self.remote.requests.review_for_groups(qam_groups)])
+
+
+class ListAssignedGroupAction(ListAssignedAction):
+    def __init__(self, remote, user, groups, template_factory = Template):
+        super(ListAssignedGroupAction, self).__init__(remote, user,
+                                                      template_factory)
+        if not groups:
+            raise AttributeError("Can not list groups without any groups.")
+        self.groups = [self.remote.groups.for_name(group) for group in groups]
+
+    def in_review(self, reviews):
+        for review in reviews:
+            if review.reviewer in self.groups:
+                return True
+        return False
+
+    def load_requests(self):
+        group_requests = set(self.remote.requests.review_for_groups(
+            self.groups
+        ))
+        return set([request for request in group_requests
+                    if self.in_review(request.review_list())])
 
 
 class ListAssignedUserAction(ListAssignedAction):
