@@ -48,6 +48,17 @@ To find updates you can test, use the ``open`` command:
    2. You are already reviewing for the request, but the review is not yet
       finished.
 
+If you wish to only see updates for a specific group that are open for
+review you can use the '-G' or '--group' flag with the group as
+argument.
+
+You can also show reviewable updates for multiple groups by passing
+the flag more than once.
+
+.. code:: bash
+
+   ibs qam open -G 'qam-manager' -G 'qam-sle'
+
 Assigning updates
 -----------------
 

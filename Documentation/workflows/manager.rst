@@ -13,6 +13,16 @@ List all updates assigned to a member of a QAM group.
 
    ibs qam assigned
 
+If you wish to only see updates that are assigned for a specific group
+you can use the '-G' or '--group' flag with the group as argument.
+
+You can also show reviewable updates for multiple groups by passing
+the flag more than once.
+
+.. code:: bash
+
+   ibs qam assigned -G 'qam-manager' -G 'qam-sle'
+
 List unassigned groups for updates
 ==================================
 
