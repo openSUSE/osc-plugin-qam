@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.14.0
+======
+
+- Can now limit groups shown in 'open'/'assigned' commands via '-G'
+  flag.
+
 0.13.1
 ======
 
