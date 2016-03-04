@@ -19,7 +19,7 @@ beta:
 
 doc:
 
-	rm Documentation/modules.rst
-	rm Documentation/oscqam.rst
+	rm -f Documentation/modules.rst
+	rm -f Documentation/oscqam.rst
 	sphinx-apidoc oscqam -o Documentation
 	pushd Documentation && make html
