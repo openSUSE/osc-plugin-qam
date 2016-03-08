@@ -293,6 +293,9 @@ class QamInterpreter(cmdln.Cmdln):
         """
         self._set_required_params(opts)
         opts.user = self.affected_user
+        # If we call do_assigned we have to make sure that the optparse.Values
+        # instance adheres to the expected interface.
+        setattr(opts, 'group', [])
         self.do_assigned(subcmd, opts)
 
     @cmdln.option('-F',
