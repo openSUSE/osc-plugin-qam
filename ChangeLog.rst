@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.14.1
+======
+
+- Fix 'do_my' method: now calls 'do_assigned' with a valid opts.
+
 0.14.0
 ======
 
