@@ -1,3 +1,4 @@
+# -*- encoding: UTF-8 -*-
 """Defines domain-objects that encapsulate state without logic.
 """
 from .compat import total_ordering
@@ -44,6 +45,13 @@ class Priority(object):
 
     def __str__(self):
         return "{0}".format(self.priority)
+
+
+class BetaPriority(Priority):
+    """Store the priority of this request's associated incident.
+    """
+    def __str__(self):
+        return "{0} (𝞫)".format(self.priority)
 
 
 class UnknownPriority(Priority):
