@@ -563,20 +563,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     @property
     def incident_priority(self):
         if not self._priority:
-            endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(
-                self.src_project
-            )
-            try:
-                xml = ET.fromstring(self.remote.get(endpoint))
-            except urllib2.HTTPError:
-                logger.error("Priority not found: %s", endpoint)
-                self._priority = self.UnknownPriority()
-            else:
-                value = xml.find(".//value")
-                try:
-                    self._priority = self.Priority(value.text)
-                except AttributeError:
-                    self._priority = self.UnknownPriority()
+            self._priority = self.remote.priorities.for_request(self)
         return self._priority
 
     @property

@@ -7,6 +7,7 @@ from oscqam.reject_reasons import RejectReason
 from oscqam.models import (Attribute, Request, Template,
                            MissingSourceProjectError, User, Group,
                            Assignment, Comment)
+from oscqam.domains import Priority, UnknownPriority
 from .utils import load_fixture, create_template_data
 from .mockremote import MockRemote
 
@@ -234,7 +235,7 @@ class ModelTests(unittest.TestCase):
             "</attributes>"
         ))
         incident_priority = request.incident_priority
-        self.assertEqual(incident_priority, Request.Priority(100))
+        self.assertEqual(incident_priority, Priority(100))
 
     def test_incident_priority_empty(self):
         request = Request.parse(self.remote, self.req_1_xml)[0]
@@ -244,7 +245,7 @@ class ModelTests(unittest.TestCase):
         )
         self.remote.register_url(endpoint, lambda: "<attributes/>")
         incident_priority = request.incident_priority
-        self.assertEqual(incident_priority, Request.UnknownPriority())
+        self.assertEqual(incident_priority, UnknownPriority())
 
     def test_no_incident_priority(self):
         def raise_http():
@@ -256,12 +257,12 @@ class ModelTests(unittest.TestCase):
         )
         self.remote.register_url(endpoint, raise_http)
         request = Request.parse(self.remote, self.req_1_xml)[0]
-        self.assertEqual(request.incident_priority, Request.UnknownPriority())
+        self.assertEqual(request.incident_priority, UnknownPriority())
 
     def test_priority_str(self):
-        priority = Request.UnknownPriority()
+        priority = UnknownPriority()
         self.assertEqual("None", str(priority))
-        priority = Request.Priority(100)
+        priority = Priority(100)
         self.assertEqual("100", str(priority))
 
     def test_unassigned_roles(self):

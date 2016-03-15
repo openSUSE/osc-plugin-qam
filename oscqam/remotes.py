@@ -1,9 +1,16 @@
 import urllib
 import urllib2
 
+try:
+    from xml.etree import cElementTree as ET
+except ImportError:
+    import cElementTree as ET
+
 import osc
 
+from .domains import Priority, UnknownPriority
 from .models import Attribute, Comment, Group, Request, User, RequestFilter
+from .parsers import BetaPriorityCsvParser
 from .utils import memoize
 
 
@@ -29,6 +36,7 @@ class RemoteFacade(object):
         self.requests = RequestRemote(self)
         self.users = UserRemote(self)
         self.projects = ProjectRemote(self)
+        self.priorities = PriorityRemote(self)
 
     def _check_for_error(self, answer):
         ret_code = answer.getcode()
@@ -268,3 +276,43 @@ class ProjectRemote(object):
                                                        attribute.name)
         self.remote.post(endpoint,
                          self.create_body.format(attribute = attribute.xml()))
+
+
+class PriorityRemote(object):
+    """Get priority information for a request (if available)."""
+    endpoint = "/source/{0}/_attribute/OBS:IncidentPriority"
+    beta_endpoint = "http://maintenance.suse.de/ibs/output/qa.csv"
+
+    def load_beta_priority():
+        """Attempt to load beta priority from the web service.
+
+        If this fails return an empty iterable.
+        """
+        try:
+            return urllib2.urlopen(PriorityRemote.beta_endpoint)
+        except urllib2.HTTPError:
+            return None
+
+    def __init__(self, remote, beta_prio = load_beta_priority):
+        self.remote = remote
+        parser = BetaPriorityCsvParser()
+        self.beta_priorities = parser(beta_prio())
+
+    def _default_priority(self, request):
+        endpoint = self.endpoint.format(request.src_project)
+        try:
+            xml = ET.fromstring(self.remote.get(endpoint))
+        except urllib2.HTTPError:
+            return UnknownPriority()
+        else:
+            value = xml.find(".//value")
+            try:
+                return Priority(value.text)
+            except AttributeError:
+                return UnknownPriority()
+
+    def for_request(self, request):
+        if request.reqid in self.beta_priorities:
+            return self.beta_priorities[request.reqid]
+        else:
+            return self._default_priority(request)
