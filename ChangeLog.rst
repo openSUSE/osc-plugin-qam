@@ -1,6 +1,13 @@
 ChangeLog
 #########
 
+0.15.0
+======
+
+- Use beta-priority to order requests instead of normal priority.
+- Fallback to normal-priority if beta-priority can not be loaded.
+
+
 0.14.1
 ======
 
