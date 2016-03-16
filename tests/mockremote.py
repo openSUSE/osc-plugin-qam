@@ -2,7 +2,7 @@ from __future__ import print_function
 from collections import defaultdict
 from .utils import load_fixture
 from oscqam.remotes import (CommentRemote, RequestRemote, GroupRemote,
-                            UserRemote, ProjectRemote)
+                            UserRemote, ProjectRemote, PriorityRemote)
 
 
 class MockRemote(object):
@@ -25,6 +25,7 @@ class MockRemote(object):
         self.users = UserRemote(self)
         self.comments = CommentRemote(self)
         self.projects = ProjectRemote(self)
+        self.priorities = PriorityRemote(self, beta_prio = lambda: {})
         self.remote = 'suse-remote'
 
     def _load(self, prefix, id):

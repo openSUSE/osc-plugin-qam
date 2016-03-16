@@ -16,6 +16,7 @@ import osc.core
 import osc.oscerr
 
 from .compat import total_ordering
+from .domains import Priority, UnknownPriority
 from .parsers import TemplateParser
 
 logging.basicConfig()
@@ -534,38 +535,6 @@ class Request(osc.core.Request, XmlFactoryMixin):
     """Wrapper around osc request object to add logic required by the
     qam-plugin.
     """
-    @total_ordering
-    class Priority(object):
-        """Store the priority of this request's associated incident.
-        """
-        def __init__(self, prio):
-            self.priority = int(prio)
-
-        def __eq__(self, other):
-            return self.priority == other.priority
-
-        def __lt__(self, other):
-            return (self.priority > other.priority)
-
-        def __str__(self):
-            return "{0}".format(self.priority)
-
-    class UnknownPriority(Priority):
-        def __init__(self):
-            self.priority = None
-
-        def __eq__(self, other):
-            return isinstance(other, Request.UnknownPriority)
-
-        def __lt__(self, other):
-            return False
-
-        def __str__(self):
-            return unicode(self).encode('utf-8')
-
-        def __unicode__(self):
-            return u"{0}".format(self.priority)
-
     STATE_NEW = 'new'
     STATE_REVIEW = 'review'
     STATE_DECLINED = 'declined'
@@ -594,20 +563,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     @property
     def incident_priority(self):
         if not self._priority:
-            endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(
-                self.src_project
-            )
-            try:
-                xml = ET.fromstring(self.remote.get(endpoint))
-            except urllib2.HTTPError:
-                logger.error("Priority not found: %s", endpoint)
-                self._priority = self.UnknownPriority()
-            else:
-                value = xml.find(".//value")
-                try:
-                    self._priority = self.Priority(value.text)
-                except AttributeError:
-                    self._priority = self.UnknownPriority()
+            self._priority = self.remote.priorities.for_request(self)
         return self._priority
 
     @property

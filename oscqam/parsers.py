@@ -1,11 +1,12 @@
 """Parsers to turn (external) data into a more usable formats.
 """
 from collections import defaultdict
+import csv
 from itertools import takewhile, dropwhile
 import logging
 import re
 
-from .domains import Rating
+from .domains import Rating, BetaPriority, UnknownPriority
 
 
 logging.basicConfig()
@@ -123,3 +124,17 @@ class TemplateParser(object):
             else:
                 log_entries[key] = value
         return log_entries
+
+
+class BetaPriorityCsvParser(object):
+    def __call__(self, csv_data):
+        priorities = {}
+        if not csv_data:
+            return priorities
+        csv_reader = csv.reader(csv_data, delimiter=";")
+        for line in csv_reader:
+            if line[5].isdigit():
+                priorities[line[0]] = BetaPriority(line[5])
+            else:
+                priorities[line[0]] = UnknownPriority()
+        return priorities
