@@ -716,6 +716,8 @@ class RejectAction(OscAction):
         msg = RejectAction.DECLINE_MSG.format(user = self.user,
                                               request = self.request)
         print(msg)
+        comment = "{prefix}::{comment}".format(prefix=PREFIX,
+                                               comment=comment)
         self.request.review_decline(user = self.user,
                                     comment = comment,
                                     reasons = self.reason)
