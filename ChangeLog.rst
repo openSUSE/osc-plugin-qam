@@ -6,6 +6,9 @@ ChangeLog
 
 - Use beta-priority to order requests instead of normal priority.
 - Fallback to normal-priority if beta-priority can not be loaded.
+- Rejects no longer proceed if no comment is set, even if a message is
+  provided.
+- Reject comments will now be prefixed by the plugins [oscqam] prefix.
 
 
 0.14.1
