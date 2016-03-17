@@ -144,6 +144,26 @@ class ActionTests(unittest.TestCase):
             action()
         self.assertIn(models.Template.base_url, str(context.exception))
 
+    def test_reject_no_comment(self):
+        """Can not reject a request when the test report is not failed."""
+        request = self.mock_remote.requests.by_id(self.cloud_open)
+        template = models.Template(
+            request,
+            tr_getter = lambda x: ("SUMMARY: FAILED"
+                                   "\n"
+                                   "comment: NONE"
+                                   "\n"
+                                   "\n"
+                                   "$Author: test$")
+        )
+        action = actions.RejectAction(
+            self.mock_remote, self.user_id,
+            self.cloud_open,
+            reject_reasons.RejectReason.administrative
+        )
+        action._template = template
+        self.assertRaises(actions.NoCommentError, action)
+
     def test_reject_posts_reason(self):
         """Rejecting a request will post a reason attribute."""
         request = self.mock_remote.requests.by_id(self.cloud_open)

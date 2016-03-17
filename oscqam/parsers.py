@@ -121,6 +121,8 @@ class TemplateParser(object):
                 log_entries[key] = split_srcrpms(value)
             elif key == "Rating":
                 log_entries[key] = Rating(value)
+            elif key == "comment" and value == 'NONE':
+                log_entries[key] = None
             else:
                 log_entries[key] = value
         return log_entries

@@ -146,6 +146,14 @@ class NotPreviousReviewerError(ReportedError):
         )
 
 
+class NoCommentError(ReportedError):
+    _msg = ("The request you want to reject must have a comment set in the "
+            "testreport.")
+
+    def __init__(self):
+        super(NoCommentError, self).__init__(self._msg)
+
+
 def multi_level_sort(xs, criteria):
     """Sort the given collection based on multiple criteria.
     The criteria will be sorted by in the given order, whereas each group
@@ -687,16 +695,27 @@ class RejectAction(OscAction):
             self._template = Template(self.request)
         return self._template
 
-    def action(self):
+    def validate(self):
+        """Check preconditions to be met before a request can be approved.
+
+        :raises: :class:`oscqam.models.TestResultMismatchError` or
+            :class:`oscqam.models.TestPlanReviewerNotSetError` if conditions
+            are not met.
+
+        """
         self.template.failed()
+        if not self.template.log_entries['comment']:
+            raise NoCommentError()
+
+
+    def action(self):
+        self.validate()
         comment = self.template.log_entries['comment']
-        if self.message or not comment:
+        if self.message:
             comment = self.message
         msg = RejectAction.DECLINE_MSG.format(user = self.user,
                                               request = self.request)
         print(msg)
-        if not comment:
-            raise ActionError("Must provide a message for reject.")
         self.request.review_decline(user = self.user,
                                     comment = comment,
                                     reasons = self.reason)
