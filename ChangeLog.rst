@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.15.1
+======
+
+- Fix SSL connection to https://maintenance.suse.de
+
 0.15.0
 ======
 
