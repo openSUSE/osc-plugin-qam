@@ -1,5 +1,6 @@
 import urllib
 import urllib2
+import ssl
 
 try:
     from xml.etree import cElementTree as ET
@@ -281,15 +282,17 @@ class ProjectRemote(object):
 class PriorityRemote(object):
     """Get priority information for a request (if available)."""
     endpoint = "/source/{0}/_attribute/OBS:IncidentPriority"
-    beta_endpoint = "http://maintenance.suse.de/ibs/output/qa.csv"
+    beta_endpoint = "https://maintenance.suse.de/ibs/output/qa.csv"
 
     def load_beta_priority():
         """Attempt to load beta priority from the web service.
 
         If this fails return an empty iterable.
         """
+        ctx = ssl.create_default_context()
         try:
-            return urllib2.urlopen(PriorityRemote.beta_endpoint)
+            return urllib2.urlopen(PriorityRemote.beta_endpoint,
+                                   context=ctx)
         except urllib2.HTTPError:
             return None
 
