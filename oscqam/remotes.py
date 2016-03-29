@@ -12,7 +12,7 @@ import osc
 from .domains import Priority, UnknownPriority
 from .models import Attribute, Comment, Group, Request, User, RequestFilter
 from .parsers import BetaPriorityCsvParser
-from .utils import memoize
+from .utils import memoize, https
 
 
 class RemoteError(Exception):
@@ -289,12 +289,7 @@ class PriorityRemote(object):
 
         If this fails return an empty iterable.
         """
-        ctx = ssl.create_default_context()
-        try:
-            return urllib2.urlopen(PriorityRemote.beta_endpoint,
-                                   context=ctx)
-        except urllib2.HTTPError:
-            return None
+        return https(PriorityRemote.beta_endpoint)
 
     def __init__(self, remote, beta_prio = load_beta_priority):
         self.remote = remote

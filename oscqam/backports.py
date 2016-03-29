@@ -1,5 +1,12 @@
 """This module provides required backports for older python versions.
 """
+from collections import namedtuple
+import httplib
+try:
+    import requests
+    imp_requests = True
+except ImportError:
+    imp_requests = False
 
 
 def total_ordering(cls):
@@ -51,3 +58,10 @@ def total_ordering(cls):
             opfunc.__doc__ = getattr(int, opname).__doc__
             setattr(cls, opname, opfunc)
     return cls
+
+
+def https26(url):
+    if not imp_requests:
+        raise AttributeError("Requests library not found, but required for 2.6")
+    response = requests.get(url)
+    return response.text.splitlines()

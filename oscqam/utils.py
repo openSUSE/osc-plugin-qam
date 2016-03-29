@@ -1,4 +1,8 @@
+import urllib2
+import ssl
+
 from functools import wraps
+from .backports import https26
 import logging
 
 logging.basicConfig()
@@ -23,3 +27,13 @@ def memoize(func):
         cache[arguments] = result
         return result
     return wrapped
+
+
+def https(url):
+    try:
+        ctx = ssl.create_default_context()
+        return urllib2.urlopen(url, context=ctx)
+    except AttributeError:
+        return https26(url)
+    except urllib2.HTTPError:
+        return None
