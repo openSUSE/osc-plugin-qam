@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.15.2
+======
+
+- Provide alternate implementation for SSL connection on python 2.6
+  versions: utilizes requests library.
+
 0.15.1
 ======
 
