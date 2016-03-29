@@ -31,6 +31,9 @@ Requires: osc >= 0.148.0
 Requires: python-futures
 Requires: python-enum34
 Requires: python-PrettyTable
+%if 0%{?suse_version} && 0%{?suse_version} <= 1110
+Requires: python-requests
+%endif
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 %py_requires
 %if 0%{?suse_version} && 0%{?suse_version} <= 1110
