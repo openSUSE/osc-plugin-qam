@@ -255,8 +255,7 @@ class Report(object):
             names = sorted([str(r.reviewer) for r in reviews])
             value = " ".join(names)
         elif field == ReportField.package_streams:
-            packages = [p for p in self.request.packages]
-            value = " ".join(packages)
+            value = [p for p in self.request.packages]
         elif field == ReportField.assigned_roles:
             roles = self.request.assigned_roles
             value = [str(r) for r in roles]

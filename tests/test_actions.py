@@ -364,3 +364,20 @@ class ActionTests(unittest.TestCase):
         self.assertEqual(assign.out.getvalue(),
                          "Assigned Unknown User (anonymous@nowhere.none) "
                          "to qam-test for 56789.\n")
+
+    def test_report(self):
+        report = create_template_data(**{"SUMMARY": "PASSED",
+                                         "Test Plan Reviewer": "someone"})
+        request = self.mock_remote.requests.by_id(self.cloud_open)
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        report = actions.Report(
+            request = request,
+            template_factory = lambda _: template
+        )
+        self.assertEqual(report.value(fields.ReportField.assigned_roles),
+                         ["qam-sle -> Unknown User (anonymous@nowhere.none)"])
+        self.assertEqual(report.value(fields.ReportField.package_streams),
+                         ["update-test-trival.SUSE_SLE-12_Update"])
+        self.assertEqual(report.value(fields.ReportField.unassigned_roles),
+                         'qam-cloud')
