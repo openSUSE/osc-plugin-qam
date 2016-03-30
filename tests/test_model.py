@@ -125,6 +125,16 @@ class ModelTests(unittest.TestCase):
             ["glibc", "glibc-devel"]
         )
 
+    def test_template_splits_bugs(self):
+        template_data = create_template_data(
+            Bugs = "100001, 100002, 100003"
+        )
+        self.assertEqual(
+            self.create_template(template_data = template_data)
+            .log_entries['Bugs'],
+            ["100001", "100002", "100003"]
+        )
+
     def test_template_splits_products(self):
         self.assertEqual(
             self.create_template().log_entries['Products'],

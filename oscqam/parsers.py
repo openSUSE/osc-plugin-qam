@@ -26,16 +26,15 @@ def until(snippet, lines):
     return list(takewhile(lambda line: not line.startswith(snippet), lines))
 
 
-def split_packages(package_line):
-    """Parse a 'Packages' line from a template-log into a list of individual
-    packages.
+def split_comma(line):
+    """Parse a line from a template-log into a list.
 
     :type package_line: str
 
     :returns: [str]
 
     """
-    return [v.strip() for v in package_line.split(",")]
+    return [v.strip() for v in line.split(",")]
 
 
 def split_products(product_line):
@@ -114,7 +113,9 @@ class TemplateParser(object):
         for key in entries:
             value = '\n'.join(entries[key])
             if key == 'Packages':
-                log_entries[key] = split_packages(value)
+                log_entries[key] = split_comma(value)
+            elif key == 'Bugs':
+                log_entries[key] = split_comma(value)
             elif key == 'Products':
                 log_entries[key] = split_products(value)
             elif key == "SRCRPMs":
