@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.15.3
+======
+
+- Fix incorrect formatting of 'Package-Streams' field.
+- Fix incorrect formatting of 'Bugs' field.
+
 0.15.2
 ======
 
