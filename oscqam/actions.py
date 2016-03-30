@@ -252,8 +252,7 @@ class Report(object):
             reviews = [review for review
                         in self.request.review_list_open()
                         if isinstance(review, GroupReview)]
-            names = sorted([str(r.reviewer) for r in reviews])
-            value = " ".join(names)
+            value = sorted([str(r.reviewer) for r in reviews])
         elif field == ReportField.package_streams:
             value = [p for p in self.request.packages]
         elif field == ReportField.assigned_roles:

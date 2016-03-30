@@ -82,6 +82,7 @@ class Formatter(object):
             ReportField.package_streams: self.list_formatter,
             ReportField.products: self.list_formatter,
             ReportField.srcrpms: self.list_formatter,
+            ReportField.unassigned_roles: self.list_formatter,
             ReportField.assigned_roles: self.list_formatter,
         }
         for formatter in formatters:

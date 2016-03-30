@@ -380,4 +380,4 @@ class ActionTests(unittest.TestCase):
         self.assertEqual(report.value(fields.ReportField.package_streams),
                          ["update-test-trival.SUSE_SLE-12_Update"])
         self.assertEqual(report.value(fields.ReportField.unassigned_roles),
-                         'qam-cloud')
+                         ['qam-cloud'])
