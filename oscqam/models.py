@@ -841,16 +841,16 @@ class Template(object):
     """Facade to web-based templates.
     The templates can be found in:
 
-    ``http://qam.suse.de/testreports/``
+    ``http://qam.suse.de/repos/testreports/``
     """
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
     STATUS_UNKNOWN = 2
-    base_url = "http://qam.suse.de/testreports/"
+    base_url = "http://qam.suse.de/repos/testreports/"
 
     def get_testreport_web(log_path):
         """Load the template belonging to the request from
-        http://qam.suse.de/testreports/.
+        http://qam.suse.de/repos/testreports/.
 
         :param request: The request this template is associated with.
         :type request: :class:`oscqam.models.Request`
