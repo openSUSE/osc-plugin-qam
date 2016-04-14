@@ -465,6 +465,7 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.alias('q')
     @cmdln.alias('Q')
+    @cmdln.alias('exit')
     def do_quit(self, subcmd, opts):
         """${cmd_name}: Quit the qam-subinterpreter."""
         self.stop = True
