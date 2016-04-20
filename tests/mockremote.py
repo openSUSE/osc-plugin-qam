@@ -37,13 +37,7 @@ class MockRemote(object):
             return repr(args)
         return "None"
 
-    def get(self, *args, **kwargs):
-        """Replacement for HTTP-get requests.
-
-        Will first check if the requested URL is registered as an override.
-        If so the override-data will be returned, otherwise the URL will
-        be mapped to the filesystem storage for test-fixtures.
-        """
+    def overwrite(self, *args, **kwargs):
         url = args[0]
         args = args[1:]
         if url in self.overrides:
@@ -51,6 +45,20 @@ class MockRemote(object):
             enc = self._encode_args(*args)
             if enc in self.overrides[url]:
                 return self.overrides[url][enc]()
+        return None
+
+    def get(self, *args, **kwargs):
+        """Replacement for HTTP-get requests.
+
+        Will first check if the requested URL is registered as an override.
+        If so the override-data will be returned, otherwise the URL will
+        be mapped to the filesystem storage for test-fixtures.
+        """
+        overwrite = self.overwrite(*args, **kwargs)
+        if overwrite:
+            return overwrite
+        url = args[0]
+        args = args[1:]
         try:
             cls, identifier = url.split("/", 1)
         except ValueError:
@@ -67,6 +75,9 @@ class MockRemote(object):
 
     def post(self, *args, **kwargs):
         called = "Call-Args: %s. Call-Kwargs: %s" % (args, kwargs)
+        overwrite = self.overwrite(*args, **kwargs)
+        if overwrite:
+            return overwrite
         self.post_calls.append(called)
 
     def register_url(self, url, callback, *args):
@@ -77,6 +88,9 @@ class MockRemote(object):
 
         :param callback: Function to call when the url is hit.
         :type callback: () -> Either(str | Exception)
+
+        :param *args: Additional arguments that might be passed to in the body
+                      of the request.
 
         """
         enc = self._encode_args(*args)

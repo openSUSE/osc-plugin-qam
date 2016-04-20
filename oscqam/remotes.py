@@ -42,8 +42,8 @@ class RemoteFacade(object):
     def _check_for_error(self, answer):
         ret_code = answer.getcode()
         if ret_code >= 400 and ret_code < 600:
-            raise urllib2.HTTPError(answer.url, ret_code, answer.msg,
-                                    answer.headers, answer.fp)
+            raise RemoteError(answer.url, ret_code, answer.msg,
+                              answer.headers, answer.fp)
 
     def delete(self, endpoint, params = None):
         url = '/'.join([self.remote, endpoint])
@@ -72,10 +72,13 @@ class RemoteFacade(object):
 
     def post(self, endpoint, data = None):
         url = '/'.join([self.remote, endpoint])
-        remote = osc.core.http_POST(url, data = data)
-        self._check_for_error(remote)
-        xml = remote.read()
-        return xml
+        try:
+            remote = osc.core.http_POST(url, data = data)
+            self._check_for_error(remote)
+            xml = remote.read()
+            return xml
+        except urllib2.HTTPError as e:
+            raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
 
 
 class RequestRemote(object):

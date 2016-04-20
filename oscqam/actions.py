@@ -611,6 +611,23 @@ class UnassignAction(OscAction):
             raise NoReviewError(self.user)
         return groups
 
+    def undo_reopen(self, group, comment):
+        def _():
+            self.print("UNDO: Undoing reopening of group {group}".format(
+                group = group
+            ))
+            self.request.review_accept(group = group,
+                                    comment = comment)
+        return _
+
+    def undo_accept(self, user):
+        def _():
+            self.print("UNDO: Undoing accepting user {user}".format(
+                user = user
+            ))
+            self.request.review_reopen(user = self.user)
+        return _
+
     def unassign(self, groups, assigned_groups):
         difference = set(assigned_groups).difference(set(groups))
         for group in groups:
@@ -627,8 +644,7 @@ class UnassignAction(OscAction):
             self.request.review_reopen(group = group,
                                        comment = comment)
             self.undo_stack.append(
-                lambda: self.request.review_accept(group = group,
-                                                   comment = undo_comment)
+                self.undo_reopen(group, undo_comment)
             )
         if not difference:
             msg = UnassignAction.ACCEPT_USER_MSG.format(
@@ -637,7 +653,7 @@ class UnassignAction(OscAction):
             self.print(msg)
             self.request.review_accept(user = self.user, comment = comment)
             self.undo_stack.append(
-                lambda: self.request.review_reopen(user = self.user)
+                self.undo_accept(self.user)
             )
 
 
@@ -645,7 +661,7 @@ class ApproveAction(OscAction):
     """Approve a review for a user.
 
     """
-    APPROVE_MSG = "Will approve {request} for {user}."
+    APPROVE_MSG = """Will approve {request} for {user}."""
 
     def __init__(self, remote, user, request_id, template_factory = Template):
         super(ApproveAction, self).__init__(remote, user)

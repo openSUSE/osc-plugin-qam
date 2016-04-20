@@ -381,3 +381,29 @@ class ActionTests(unittest.TestCase):
                          ["update-test-trival.SUSE_SLE-12_Update"])
         self.assertEqual(report.value(fields.ReportField.unassigned_roles),
                          ['qam-cloud'])
+
+    def test_unassign_permission_error(self):
+        def raiser():
+            raise remotes.RemoteError(None, None, None, None, None)
+        out = StringIO.StringIO()
+        self.mock_remote.register_url(
+            'request/twoassigned?newstate=accepted&'
+            'cmd=changereviewstate&by_user=anonymous',
+            raiser,
+            "[qamosc]::accept::Unknown User (anonymous@nowhere.none)::None"
+        )
+        unassign = actions.UnassignAction(self.mock_remote, self.user_id,
+                                          self.two_assigned, out = out)
+        unassign()
+        self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
+                      "from twoassigned for group qam-sle",
+                      unassign.out.getvalue())
+        self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
+                      "from twoassigned for group qam-cloud",
+                      unassign.out.getvalue())
+        self.assertIn("Will close review for Unknown User "
+                      "(anonymous@nowhere.none)", unassign.out.getvalue())
+        self.assertIn("UNDO: Undoing reopening of group qam-cloud",
+                      unassign.out.getvalue())
+        self.assertIn("UNDO: Undoing reopening of group qam-sle",
+                      unassign.out.getvalue())
