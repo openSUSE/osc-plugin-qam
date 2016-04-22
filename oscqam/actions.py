@@ -565,7 +565,7 @@ class UnassignAction(OscAction):
     """Will unassign the user from the review and reopen the request for
     the group the user assign himself for.
     """
-    UNASSIGN_COMMENT = "unassign {user.login} -> {group.name}"
+    UNASSIGN_COMMENT = "unassign {user.login} -> {group}"
     UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
     ACCEPT_USER_MSG = "Will close review for {user}"
 
@@ -636,7 +636,7 @@ class UnassignAction(OscAction):
             )
             self.print(msg)
             comment = UnassignAction.UNASSIGN_COMMENT.format(
-                prefix = PREFIX, user = self.user, group = group
+                user = self.user, group = group.name
             )
             undo_comment = AssignAction.ASSIGN_COMMENT.format(
                 prefix = PREFIX, user = self.user, group = group
@@ -649,6 +649,10 @@ class UnassignAction(OscAction):
         if not difference:
             msg = UnassignAction.ACCEPT_USER_MSG.format(
                 user = self.user, request = self.request
+            )
+            comment = UnassignAction.UNASSIGN_COMMENT.format(
+                user = self.user,
+                group = ', '.join([str(g) for g in sorted(groups)])
             )
             self.print(msg)
             self.request.review_accept(user = self.user, comment = comment)

@@ -391,7 +391,7 @@ class ActionTests(unittest.TestCase):
             'cmd=changereviewstate&by_user=anonymous',
             raiser,
             "[oscqam] accept for Unknown User (anonymous@nowhere.none) "
-            "(<no group>): unassign anonymous -> qam-cloud"
+            "(<no group>): unassign anonymous -> qam-sle, qam-cloud"
         )
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
                                           self.two_assigned, out = out)
