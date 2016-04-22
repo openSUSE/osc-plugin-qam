@@ -543,7 +543,7 @@ class AssignAction(OscAction):
                 )
             )
         group = both.pop()
-        print(AssignAction.AUTO_INFER_MSG.format(group = group))
+        self.print(AssignAction.AUTO_INFER_MSG.format(group = group))
         return [group]
 
     def assign(self, groups):
@@ -565,7 +565,7 @@ class UnassignAction(OscAction):
     """Will unassign the user from the review and reopen the request for
     the group the user assign himself for.
     """
-    UNASSIGN_COMMENT = "{prefix}::unassign::{user.login}::{group.name}"
+    UNASSIGN_COMMENT = "unassign {user.login} -> {group.name}"
     UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
     ACCEPT_USER_MSG = "Will close review for {user}"
 
@@ -661,10 +661,11 @@ class ApproveAction(OscAction):
     """Approve a review for a user.
 
     """
-    APPROVE_MSG = """Will approve {request} for {user}."""
+    APPROVE_MSG = """Will approve {request} for {user}. Testreport: {url}"""
 
-    def __init__(self, remote, user, request_id, template_factory = Template):
-        super(ApproveAction, self).__init__(remote, user)
+    def __init__(self, remote, user, request_id, template_factory = Template,
+                 out = sys.stdout):
+        super(ApproveAction, self).__init__(remote, user, out = out)
         self.request = remote.requests.by_id(request_id)
         self.template = self.request.get_template(template_factory)
 
@@ -681,10 +682,13 @@ class ApproveAction(OscAction):
 
     def action(self):
         self.validate()
+        url = self.template.url()
         msg = ApproveAction.APPROVE_MSG.format(user = self.user,
-                                               request = self.request)
-        print(msg)
-        self.request.review_accept(user = self.user)
+                                               request = self.request,
+                                               url = url)
+        self.print(msg)
+        self.request.review_accept(user = self.user,
+                                   comment = url)
 
 
 class RejectAction(OscAction):
@@ -694,10 +698,11 @@ class RejectAction(OscAction):
     for and will reject that group if possible.
 
     """
-    DECLINE_MSG = "Will decline {request} for {user}."
+    DECLINE_MSG = "Will decline {request} for {user}. Testreport: {url}"
 
-    def __init__(self, remote, user, request_id, reason, message = None):
-        super(RejectAction, self).__init__(remote, user)
+    def __init__(self, remote, user, request_id, reason, message = None,
+                 out = sys.stdout):
+        super(RejectAction, self).__init__(remote, user, out = out)
         self.request = remote.requests.by_id(request_id)
         self._template = None
         self.reason = reason
@@ -721,17 +726,18 @@ class RejectAction(OscAction):
         if not self.template.log_entries['comment']:
             raise NoCommentError()
 
-
     def action(self):
         self.validate()
         comment = self.template.log_entries['comment']
         if self.message:
             comment = self.message
+        url = self.template.url()
         msg = RejectAction.DECLINE_MSG.format(user = self.user,
-                                              request = self.request)
-        print(msg)
-        comment = "{prefix}::{comment}".format(prefix=PREFIX,
-                                               comment=comment)
+                                              request = self.request,
+                                              url = url)
+        self.print(msg)
+        comment = "{comment}\nTestreport: {url}".format(comment = comment,
+                                                        url = url)
         self.request.review_decline(user = self.user,
                                     comment = comment,
                                     reasons = self.reason)

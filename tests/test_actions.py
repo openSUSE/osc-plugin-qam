@@ -407,3 +407,46 @@ class ActionTests(unittest.TestCase):
                       unassign.out.getvalue())
         self.assertIn("UNDO: Undoing reopening of group qam-sle",
                       unassign.out.getvalue())
+
+    def test_decline_output(self):
+        out = StringIO.StringIO()
+        request = self.mock_remote.requests.by_id(self.cloud_open)
+        template = models.Template(request,
+                                   tr_getter = lambda x: """SUMMARY: FAILED
+
+                                   comment: Something broke.""")
+        endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
+            prj = request.src_project
+        )
+        self.mock_remote.register_url(
+            endpoint,
+            lambda: load_fixture('reject_reason_attribute.xml')
+        )
+        action = actions.RejectAction(
+            self.mock_remote, self.user_id,
+            self.cloud_open,
+            [reject_reasons.RejectReason.administrative],
+            out = out
+        )
+        action._template = template
+        action()
+        self.assertIn("Will decline {req} for {user}. Testreport: {url}".format(
+            req = request, user = action.user, url = action.template.url()
+        ), action.out.getvalue())
+
+    def test_approve_output(self):
+        out = StringIO.StringIO()
+        request = self.mock_remote.requests.by_id(self.cloud_open)
+        report = create_template_data(**{"SUMMARY": "PASSED",
+                                         "Test Plan Reviewer": "someone"})
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveAction(
+            self.mock_remote, self.user_id, "12345",
+            template_factory = lambda _: template,
+            out = out
+        )
+        approval()
+        self.assertIn("Will approve {req} for {user}. Testreport: {url}".format(
+            req = request, user = approval.user, url = approval.template.url()
+        ), approval.out.getvalue())

@@ -649,8 +649,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self.review_action(params, group = group, comment = comment)
 
     def review_accept(self, user = None, group = None, comment = None):
-        comment = "[qamosc]::accept::{user}::{group}".format(
-            user = user, group = group
+        comment = self._format_review_comment(
+            "[oscqam] accept for {user} ({group}): {comment}",
+            user = user, group = group, comment = comment
         )
         params = {'cmd': 'changereviewstate',
                   'newstate': 'accepted'}
@@ -662,19 +663,6 @@ class Request(osc.core.Request, XmlFactoryMixin):
         """
         params = {'cmd': 'addreview'}
         self.review_action(params, user, group, comment)
-
-    def _build_reject_attribute(self, reasons):
-        reject_reason = self.attribute(Attribute.reject_reason)
-        reason_values = map(lambda reason: "{0}:{1}".format(self.reqid,
-                                                            reason.flag),
-                            reasons)
-        if not reject_reason:
-            reject_reason = Attribute.preset(self.remote,
-                                             Attribute.reject_reason,
-                                             *reason_values)
-        else:
-            map(lambda r: reject_reason.value.append(r), reason_values)
-        return reject_reason
 
     def review_decline(self, user = None, group = None, comment = None,
                        reasons = None):
@@ -695,9 +683,26 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if reasons:
             reason = self._build_reject_attribute(reasons)
             self.remote.projects.set_attribute(self.src_project, reason)
+        comment = self._format_review_comment(
+            "[oscqam] decline for {user} ({group}): {comment}",
+            user = user, group = group, comment = comment
+        )
         params = {'cmd': 'changereviewstate',
                   'newstate': 'declined'}
         self.review_action(params, user, group, comment)
+
+    def _build_reject_attribute(self, reasons):
+        reject_reason = self.attribute(Attribute.reject_reason)
+        reason_values = map(lambda reason: "{0}:{1}".format(self.reqid,
+                                                            reason.flag),
+                            reasons)
+        if not reject_reason:
+            reject_reason = Attribute.preset(self.remote,
+                                             Attribute.reject_reason,
+                                             *reason_values)
+        else:
+            map(lambda r: reject_reason.value.append(r), reason_values)
+        return reject_reason
 
     def review_reopen(self, user = None, group = None, comment = None):
         """Will reopen a reviewrequest for the given user or group.
@@ -706,6 +711,16 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params = {'cmd': 'changereviewstate',
                   'newstate': 'new'}
         self.review_action(params, user, group, comment)
+
+    def _format_review_comment(self, comment_format, user = None,
+                             group = None, comment = None):
+        if not group:
+            group = "<no group>"
+        if not user:
+            user = "<no user>"
+        if not comment:
+            comment = "<no comment>"
+        return comment_format.format(user = user, group = group, comment = comment)
 
     def review_list(self):
         """Returns all reviews as a list.
@@ -882,11 +897,8 @@ class Template(object):
         :type parser: :class:`oscqam.parsers.TemplateParser`
 
         """
-        self._log_path = "{base}{prj}:{reqid}/log".format(
-            base = self.base_url,
-            prj = request.src_project,
-            reqid = request.reqid
-        )
+        self._request = request
+        self._log_path = self.url()
         self.log_entries = parser(tr_getter(self._log_path))
 
     def failed(self):
@@ -934,6 +946,13 @@ class Template(object):
         elif summary.upper() == "FAILED":
             return Template.STATUS_FAILURE
         return Template.STATUS_UNKNOWN
+
+    def url(self):
+        return "{base}{prj}:{reqid}/log".format(
+            base = self.base_url,
+            prj = self._request.src_project,
+            reqid = self._request.reqid
+        )
 
 
 def monkeypatch():
