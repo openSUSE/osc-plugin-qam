@@ -390,7 +390,8 @@ class ActionTests(unittest.TestCase):
             'request/twoassigned?newstate=accepted&'
             'cmd=changereviewstate&by_user=anonymous',
             raiser,
-            "[qamosc]::accept::Unknown User (anonymous@nowhere.none)::None"
+            "[oscqam] accept for Unknown User (anonymous@nowhere.none) "
+            "(<no group>): unassign anonymous -> qam-cloud"
         )
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
                                           self.two_assigned, out = out)
