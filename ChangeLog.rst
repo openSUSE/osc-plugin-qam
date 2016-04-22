@@ -1,6 +1,14 @@
 ChangeLog
 #########
 
+0.16.0
+======
+
+- Bugfix: unassign action no longer leaves buildservice in
+  inconsistent state if one of the steps can not be completed.
+- New alias for quit: 'quit'.
+- Will output url to testreport in reject / approve actions' comments.
+
 0.15.3
 ======
 
