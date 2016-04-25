@@ -262,6 +262,8 @@ class Report(object):
             value = self.request.incident_priority
         elif field == ReportField.comments:
             value = self.request.comments
+        elif field == ReportField.creator:
+            value = self.request.creator
         else:
             value = entries[str(field)]
         return value
@@ -389,7 +391,8 @@ class ListAssignedAction(ListAction):
                       ReportField.rating,
                       ReportField.products,
                       ReportField.incident_priority,
-                      ReportField.assigned_roles]
+                      ReportField.assigned_roles,
+                      ReportField.creator]
 
     def in_review_by_user(self, reviews):
         for review in reviews:
@@ -442,7 +445,8 @@ class InfoAction(ListAction):
                       ReportField.products,
                       ReportField.incident_priority,
                       ReportField.assigned_roles,
-                      ReportField.unassigned_roles]
+                      ReportField.unassigned_roles,
+                      ReportField.creator]
 
     def __init__(self, remote, user_id, request_id):
         super(InfoAction, self).__init__(remote, user_id)

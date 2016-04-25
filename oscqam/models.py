@@ -580,6 +580,16 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return self._comments
 
     @property
+    def creator(self):
+        for history in self.statehistory:
+            if history.description == "Request created":
+                self._creator = self.remote.users.by_name(history.who)
+                break
+        else:
+            self._creator = "Unknown"
+        return self._creator
+
+    @property
     def groups(self):
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
