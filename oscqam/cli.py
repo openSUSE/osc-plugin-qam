@@ -471,6 +471,10 @@ class QamInterpreter(cmdln.Cmdln):
         self.stop = True
         return self.INTERPRETER_QUIT
 
+    def _do_EOF(self, argv):
+        cmdln.Cmdln._do_EOF(self, argv)
+        return self.INTERPRETER_QUIT
+
 
 @cmdln.option('-A',
               '--assigned',
