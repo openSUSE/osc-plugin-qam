@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.17.0
+======
+
+- Add 'creator' field to 'info' and 'assigned' commands.
+- Correctly handle 'end of transmission'.
+
 0.16.0
 ======
 
