@@ -99,7 +99,8 @@ class ReportFields(object):
                   ReportField.unassigned_roles,
                   ReportField.assigned_roles,
                   ReportField.package_streams,
-                  ReportField.incident_priority]
+                  ReportField.incident_priority,
+                  ReportField.creator]
 
     def fields(self, _):
         return self.all_fields
