@@ -21,7 +21,9 @@ def terminal_dimensions(fd = None):
     :returns: (int, int) tuple with rows and columns.
     """
     if not fd:
-        fd = sys.stdin.fileno()
+        if not sys.stdout.isatty():
+            return (0, 0)
+        fd = sys.stdout.fileno()
     dim = fcntl.ioctl(fd, termios.TIOCGWINSZ, '0000')
     rows, columns = struct.unpack('hh', dim)
     if rows == 0 and columns == 0:
