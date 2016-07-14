@@ -154,6 +154,16 @@ class NoCommentError(ReportedError):
         super(NoCommentError, self).__init__(self._msg)
 
 
+class NotAssignedError(ReportedError):
+    _msg = "The user {user} is not assigned to this update."
+
+    def __init__(self, user):
+        super(NotAssignedError, self).__init__(
+            self._msg.format(user = user)
+        )
+
+
+
 def multi_level_sort(xs, criteria):
     """Sort the given collection based on multiple criteria.
     The criteria will be sorted by in the given order, whereas each group
@@ -677,6 +687,14 @@ class ApproveAction(OscAction):
         self.request = remote.requests.by_id(request_id)
         self.template = self.request.get_template(template_factory)
 
+    def reviews_assigned(self):
+        """Ensure that the user was assigned before accepting."""
+        for review in self.request.assigned_roles:
+            if review.user == self.user:
+                return True
+        else:
+            raise NotAssignedError(self.user)
+
     def validate(self):
         """Check preconditions to be met before a request can be approved.
 
@@ -685,6 +703,7 @@ class ApproveAction(OscAction):
             are not met.
 
         """
+        self.reviews_assigned()
         self.template.testplanreviewer()
         self.template.passed()
 

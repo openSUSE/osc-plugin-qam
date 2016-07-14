@@ -451,3 +451,20 @@ class ActionTests(unittest.TestCase):
         self.assertIn("Will approve {req} for {user}. Testreport: {url}".format(
             req = request, user = approval.user, url = approval.template.url()
         ), approval.out.getvalue())
+
+    def test_approve_not_assigned(self):
+        """A user can not approve an update that is not assigned to him."""
+        unassigned_request = self.mock_remote.requests.by_id(
+            self.multi_available_assign
+        )
+        report = create_template_data(**{"SUMMARY": "PASSED",
+                                         "Test Plan Reviewer": "someone"})
+        template = models.Template(unassigned_request,
+                                   tr_getter = lambda x: report)
+        approve_action = actions.ApproveAction(
+            self.mock_remote,
+            self.user_id,
+            self.multi_available_assign,
+            template_factory = lambda _: template
+        )
+        self.assertRaises(actions.NotAssignedError, approve_action)
