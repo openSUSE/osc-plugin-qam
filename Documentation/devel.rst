@@ -84,6 +84,44 @@ Procedure
 3. git tag v<version>
 4. git push && git push <remote> refs/tags/v<version>
 
+Using a virtual environment
+---------------------------
+
+To process to setup a virtual environment for the plugin is a little more
+involved than or other projects due to dependencies of `osc`.
+
+The process is as follows:
+
+- Install development headers for `python`, `openssl` and `libcurl`:
+
+.. code:: bash
+
+   sudo zypper in python-devel openssl-devel libcurl-devel
+
+- Create the virtualenvironment and switch to it.
+
+- Install the dependencies for `osc`:
+
+.. code:: bash
+
+   pip install pycurl urlgrabber
+
+- Install the osc version referenced by this repository:
+
+.. code:: bash
+
+   git submodule init
+
+   git submodule update
+
+   pip install ./osc
+
+- Install this project into the virtualenvironment:
+
+.. code:: bash
+
+   pip install -e .
+
 Bug reporting
 -------------
 
