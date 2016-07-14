@@ -29,7 +29,7 @@ class ConflictingOptions(ReportedError):
 
 class NoCommentsError(ReportedError):
     def __init__(self):
-        super(ReportedError, self).__init__('No comments were found.')
+        super(NoCommentsError, self).__init__('No comments were found.')
 
 
 class InvalidCommentIdError(ReportedError):
@@ -37,7 +37,7 @@ class InvalidCommentIdError(ReportedError):
         msg = 'Id {0} is not in valid ids: {1}'.format(
             id, ', '.join([c.id for c in comments])
         )
-        super(ReportedError, self).__init__(msg)
+        super(InvalidCommentIdError, self).__init__(msg)
 
 
 class QamInterpreter(cmdln.Cmdln):
