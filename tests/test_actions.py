@@ -107,7 +107,7 @@ class ActionTests(unittest.TestCase):
                                       out = out)
         assign()
         self.assertEqual(assign.out.getvalue(),
-                         "Assigned Unknown User (anonymous@nowhere.none) "
+                         "Assigning Unknown User (anonymous@nowhere.none) "
                          "to qam-test for 56789.\n")
 
     def test_unassign_no_group(self):
@@ -120,10 +120,10 @@ class ActionTests(unittest.TestCase):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
                                           self.two_assigned, out = out)
         unassign()
-        self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
+        self.assertIn("Unassigning Unknown User (anonymous@nowhere.none) "
                       "from twoassigned for group qam-sle",
                       unassign.out.getvalue())
-        self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
+        self.assertIn("Unassigning Unknown User (anonymous@nowhere.none) "
                       "from twoassigned for group qam-cloud",
                       unassign.out.getvalue())
         self.assertIn("Will close review for Unknown User "
@@ -323,7 +323,7 @@ class ActionTests(unittest.TestCase):
                                       out = out)
         assign()
         self.assertEqual(assign.out.getvalue(),
-                         "Assigned Unknown User (anonymous@nowhere.none) "
+                         "Assigning Unknown User (anonymous@nowhere.none) "
                          "to qam-test for 56789.\n")
 
     def test_assign_previous_reject_not_old_reviewer_force(self):
@@ -341,7 +341,7 @@ class ActionTests(unittest.TestCase):
                                       force = True, out = out)
         assign()
         self.assertEqual(assign.out.getvalue(),
-                         "Assigned Unknown User (anon2@nowhere.none) "
+                         "Assigning Unknown User (anon2@nowhere.none) "
                          "to qam-test for 56789.\n")
 
     def test_assign_skip_template(self):
@@ -362,7 +362,7 @@ class ActionTests(unittest.TestCase):
                                       out = out, template_required = False)
         assign()
         self.assertEqual(assign.out.getvalue(),
-                         "Assigned Unknown User (anonymous@nowhere.none) "
+                         "Assigning Unknown User (anonymous@nowhere.none) "
                          "to qam-test for 56789.\n")
 
     def test_report(self):
@@ -390,24 +390,23 @@ class ActionTests(unittest.TestCase):
             'request/twoassigned?newstate=accepted&'
             'cmd=changereviewstate&by_user=anonymous',
             raiser,
-            "[oscqam] accept for Unknown User (anonymous@nowhere.none) "
-            "(<no group>): unassign anonymous -> qam-sle, qam-cloud"
+            "[oscqam] Unassigning Unknown User (anonymous@nowhere.none) from "
+            "twoassigned for group qam-cloud, qam-sle."
         )
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
                                           self.two_assigned, out = out)
         unassign()
-        self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
+        value = unassign.out.getvalue()
+        self.assertIn("Unassigning Unknown User (anonymous@nowhere.none) "
                       "from twoassigned for group qam-sle",
-                      unassign.out.getvalue())
-        self.assertIn("Will unassign Unknown User (anonymous@nowhere.none) "
+                      value)
+        self.assertIn("Unassigning Unknown User (anonymous@nowhere.none) "
                       "from twoassigned for group qam-cloud",
-                      unassign.out.getvalue())
+                      value)
         self.assertIn("Will close review for Unknown User "
-                      "(anonymous@nowhere.none)", unassign.out.getvalue())
-        self.assertIn("UNDO: Undoing reopening of group qam-cloud",
-                      unassign.out.getvalue())
-        self.assertIn("UNDO: Undoing reopening of group qam-sle",
-                      unassign.out.getvalue())
+                      "(anonymous@nowhere.none)", value)
+        self.assertIn("UNDO: Undoing reopening of group qam-cloud", value)
+        self.assertIn("UNDO: Undoing reopening of group qam-sle", value)
 
     def test_decline_output(self):
         out = StringIO.StringIO()
@@ -431,9 +430,12 @@ class ActionTests(unittest.TestCase):
         )
         action._template = template
         action()
-        self.assertIn("Will decline {req} for {user}. Testreport: {url}".format(
-            req = request, user = action.user, url = action.template.url()
-        ), action.out.getvalue())
+        self.assertIn(
+            "Declining request {req} for {user}. See Testreport: {url}".format(
+                req = request,
+                user = action.user,
+                url = action.template.url()
+            ), action.out.getvalue())
 
     def test_approve_output(self):
         out = StringIO.StringIO()
@@ -448,9 +450,13 @@ class ActionTests(unittest.TestCase):
             out = out
         )
         approval()
-        self.assertIn("Will approve {req} for {user}. Testreport: {url}".format(
-            req = request, user = approval.user, url = approval.template.url()
-        ), approval.out.getvalue())
+        self.assertIn("Approving {req} for {user} ({group}). Testreport: {url}"
+                      .format(
+                          req = request,
+                          user = approval.user,
+                          url = approval.template.url(),
+                          group = 'qam-sle',
+                      ), approval.out.getvalue())
 
     def test_approve_not_assigned(self):
         """A user can not approve an update that is not assigned to him."""

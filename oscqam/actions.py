@@ -345,8 +345,7 @@ class InfoAction(ListAction):
 
 
 class AssignAction(OscAction):
-    ASSIGN_COMMENT = "{prefix}::assign::{user.login}::{group.name}"
-    ASSIGN_USER_MSG = ("Assigned {user} to {group} for {request}.")
+    ASSIGN_MSG = "Assigning {user} to {group} for {request}."
     AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
 
@@ -431,15 +430,12 @@ class AssignAction(OscAction):
     def assign(self, groups):
         self.validate()
         for group in groups:
-            msg = AssignAction.ASSIGN_USER_MSG.format(
+            msg = AssignAction.ASSIGN_MSG.format(
                 user = self.user, group = group, request = self.request
-            )
-            comment = AssignAction.ASSIGN_COMMENT.format(
-                prefix = PREFIX, user = self.user, group = group
             )
             self.request.review_assign(reviewer = self.user,
                                        group = group,
-                                       comment = comment)
+                                       comment = msg)
             self.print(msg)
 
 
@@ -447,8 +443,7 @@ class UnassignAction(OscAction):
     """Will unassign the user from the review and reopen the request for
     the group the user assign himself for.
     """
-    UNASSIGN_COMMENT = "unassign {user.login} -> {group}"
-    UNASSIGN_USER_MSG = "Will unassign {user} from {request} for group {group}"
+    UNASSIGN_MSG = "Unassigning {user} from {request} for group {group}."
     ACCEPT_USER_MSG = "Will close review for {user}"
 
     def __init__(self, remote, user, request_id, groups = None, **kwargs):
@@ -503,18 +498,15 @@ class UnassignAction(OscAction):
     def unassign(self, groups, assigned_groups):
         difference = set(assigned_groups).difference(set(groups))
         for group in groups:
-            msg = UnassignAction.UNASSIGN_USER_MSG.format(
+            msg = UnassignAction.UNASSIGN_MSG.format(
                 user = self.user, group = group, request = self.request
             )
             self.print(msg)
-            comment = UnassignAction.UNASSIGN_COMMENT.format(
-                user = self.user, group = group.name
-            )
-            undo_comment = AssignAction.ASSIGN_COMMENT.format(
-                prefix = PREFIX, user = self.user, group = group
+            undo_comment = AssignAction.ASSIGN_MSG.format(
+                user = self.user, group = group, request = self.request
             )
             self.request.review_reopen(group = group,
-                                       comment = comment)
+                                       comment = msg)
             self.undo_stack.append(
                 self.undo_reopen(group, undo_comment)
             )
@@ -522,9 +514,10 @@ class UnassignAction(OscAction):
             msg = UnassignAction.ACCEPT_USER_MSG.format(
                 user = self.user, request = self.request
             )
-            comment = UnassignAction.UNASSIGN_COMMENT.format(
+            comment = UnassignAction.UNASSIGN_MSG.format(
                 user = self.user,
-                group = ', '.join([str(g) for g in sorted(groups)])
+                request = self.request,
+                group = ', '.join(sorted([str(g) for g in groups]))
             )
             self.print(msg)
             self.request.review_accept(user = self.user, comment = comment)
@@ -537,7 +530,8 @@ class ApproveAction(OscAction):
     """Approve a review for a user.
 
     """
-    APPROVE_MSG = """Will approve {request} for {user}. Testreport: {url}"""
+    APPROVE_MSG = ("Approving {request} for {user} ({groups}). "
+                   "Testreport: {url}")
 
     def __init__(self, remote, user, request_id, template_factory = Template,
                  out = sys.stdout):
@@ -557,8 +551,8 @@ class ApproveAction(OscAction):
         """Check preconditions to be met before a request can be approved.
 
         :raises: :class:`oscqam.models.TestResultMismatchError` or
-            :class:`oscqam.models.TestPlanReviewerNotSetError` if conditions
-            are not met.
+        :class:`oscqam.models.TestPlanReviewerNotSetError` if conditions
+        are not met.
 
         """
         self.reviews_assigned()
@@ -568,12 +562,14 @@ class ApproveAction(OscAction):
     def action(self):
         self.validate()
         url = self.template.url()
+        groups = ", ".join([str(g) for g in self.user.in_review_groups(self.request)])
         msg = ApproveAction.APPROVE_MSG.format(user = self.user,
+                                               groups = groups,
                                                request = self.request,
                                                url = url)
         self.print(msg)
         self.request.review_accept(user = self.user,
-                                   comment = url)
+                                   comment = msg)
 
 
 class RejectAction(OscAction):
@@ -583,7 +579,7 @@ class RejectAction(OscAction):
     for and will reject that group if possible.
 
     """
-    DECLINE_MSG = "Will decline {request} for {user}. Testreport: {url}"
+    DECLINE_MSG = "Declining request {request} for {user}. See Testreport: {url}"
 
     def __init__(self, remote, user, request_id, reason, message = None,
                  out = sys.stdout):
@@ -621,10 +617,8 @@ class RejectAction(OscAction):
                                               request = self.request,
                                               url = url)
         self.print(msg)
-        comment = "{comment}\nTestreport: {url}".format(comment = comment,
-                                                        url = url)
         self.request.review_decline(user = self.user,
-                                    comment = comment,
+                                    comment = msg,
                                     reasons = self.reason)
 
 

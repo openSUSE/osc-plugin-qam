@@ -648,10 +648,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self.review_action(params, group = group, comment = comment)
 
     def review_accept(self, user = None, group = None, comment = None):
-        comment = self._format_review_comment(
-            "[oscqam] accept for {user} ({group}): {comment}",
-            user = user, group = group, comment = comment
-        )
+        comment = self._format_review_comment(comment)
         params = {'cmd': 'changereviewstate',
                   'newstate': 'accepted'}
         self.review_action(params, user, group, comment)
@@ -660,6 +657,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         """Will add a new reviewrequest for the given user or group.
 
         """
+        comment = self._format_review_comment(comment)
         params = {'cmd': 'addreview'}
         self.review_action(params, user, group, comment)
 
@@ -682,10 +680,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if reasons:
             reason = self._build_reject_attribute(reasons)
             self.remote.projects.set_attribute(self.src_project, reason)
-        comment = self._format_review_comment(
-            "[oscqam] decline for {user} ({group}): {comment}",
-            user = user, group = group, comment = comment
-        )
+        comment = self._format_review_comment(comment)
         params = {'cmd': 'changereviewstate',
                   'newstate': 'declined'}
         self.review_action(params, user, group, comment)
@@ -711,15 +706,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
                   'newstate': 'new'}
         self.review_action(params, user, group, comment)
 
-    def _format_review_comment(self, comment_format, user = None,
-                             group = None, comment = None):
-        if not group:
-            group = "<no group>"
-        if not user:
-            user = "<no user>"
+    def _format_review_comment(self, comment):
         if not comment:
-            comment = "<no comment>"
-        return comment_format.format(user = user, group = group, comment = comment)
+            return None
+        return "[oscqam] {comment}".format(comment = comment)
 
     def review_list(self):
         """Returns all reviews as a list.
