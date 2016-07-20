@@ -138,8 +138,8 @@ class Report(object):
         entries = self.template.log_entries
         if field == ReportField.unassigned_roles:
             reviews = [review for review
-                        in self.request.review_list_open()
-                        if isinstance(review, GroupReview)]
+                       in self.request.review_list_open()
+                       if isinstance(review, GroupReview)]
             value = sorted([str(r.reviewer) for r in reviews])
         elif field == ReportField.package_streams:
             value = [p for p in self.request.packages]
@@ -408,33 +408,23 @@ class AssignAction(OscAction):
         if self.groups:
             self.assign(self.groups)
         else:
-            group = self.infer_group()
+            group = self.reviewable_group()
             # TODO: Ensure that the user actually wants this?
             self.assign(group)
 
-    def infer_group(self):
-        """Based on the given user and request id search for a group that
+    def reviewable_group(self):
+        """Based on the given user and request search for a group that
         the user could do the review for.
 
         """
-        user_groups = set(self.user.qam_groups)
-        reviews = [review for review in self.request.review_list() if
-                   (isinstance(review, GroupReview) and review.open
-                    and review.reviewer.is_qam_group())]
-        review_groups = [review.reviewer for review in reviews]
-        open_groups = set(review_groups)
-        if not open_groups:
-            raise NoQamReviewsError(self.request.review_list_accepted())
-        both = user_groups.intersection(open_groups)
-        if not both:
-            raise NonMatchingGroupsError(self.user, user_groups, open_groups)
-        if len(both) > 1:
+        groups = self.user.reviewable_groups(self.request)
+        if len(groups) > 1:
             raise UninferableError(
                 AssignAction.MULTIPLE_GROUPS_MSG.format(
-                    groups = [str(g) for g in both]
+                    groups = [str(g) for g in groups]
                 )
             )
-        group = both.pop()
+        group = groups.pop()
         self.print(AssignAction.AUTO_INFER_MSG.format(group = group))
         return [group]
 
@@ -472,23 +462,13 @@ class UnassignAction(OscAction):
     def groups(self):
         if self._groups:
             return self._groups
-        return self.infer_groups()
+        return self.review_groups()
 
     def action(self):
-        assigned_groups = self.infer_groups()
+        assigned_groups = self.review_groups()
         self.unassign(self.groups(), assigned_groups)
 
-    def possible_groups(self):
-        """Will return all groups the user assigned himself for and is
-        currently in the state of doing a review.
-        """
-        possible_groups = []
-        for role in self.request.assigned_roles:
-            if role.user == self.user:
-                possible_groups.append(role.group)
-        return possible_groups
-
-    def infer_groups(self):
+    def review_groups(self):
         """Find the exact group the user is currently reviewing and return it.
 
         :return: Group in review by the user.
@@ -498,7 +478,7 @@ class UnassignAction(OscAction):
             the user.
 
         """
-        groups = self.possible_groups()
+        groups = self.user.in_review_groups(self.request)
         if not groups:
             raise NoReviewError(self.user)
         return groups
@@ -509,7 +489,7 @@ class UnassignAction(OscAction):
                 group = group
             ))
             self.request.review_accept(group = group,
-                                    comment = comment)
+                                       comment = comment)
         return _
 
     def undo_accept(self, user):

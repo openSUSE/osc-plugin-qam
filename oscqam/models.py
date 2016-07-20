@@ -268,6 +268,36 @@ class User(XmlFactoryMixin, Reviewer):
         return [group for group in self.groups
                 if group.is_qam_group()]
 
+    def reviewable_groups(self, request):
+        """Return groups the user could review for the given request.
+
+        :param request: Request to check for open groups.
+        :type request: :class:`oscqam.models.Request`
+
+        :returns: set(:class:`oscqam.models.Group`)
+        """
+        user_groups = set(self.qam_groups)
+        reviews = [review for review in request.review_list() if
+                   (isinstance(review, GroupReview) and review.open
+                    and review.reviewer.is_qam_group())]
+        if not reviews:
+            raise NoQamReviewsError(reviews)
+        review_groups = [review.reviewer for review in reviews]
+        open_groups = set(review_groups)
+        both = user_groups.intersection(open_groups)
+        if not both:
+            raise NonMatchingGroupsError(self,
+                                         user_groups,
+                                         open_groups)
+        return both
+
+    def in_review_groups(self, request):
+        reviewing_groups = []
+        for role in request.assigned_roles:
+            if role.user == self:
+                reviewing_groups.append(role.group)
+        return reviewing_groups
+
     def is_qam_group(self):
         return False
 
