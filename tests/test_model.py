@@ -5,8 +5,9 @@ import unittest
 import osc
 from oscqam.reject_reasons import RejectReason
 from oscqam.models import (Attribute, Request, Template,
-                           MissingSourceProjectError, User, Group,
+                           User, Group,
                            Assignment, Comment)
+from oscqam.errors import MissingSourceProjectError
 from oscqam.remotes import PriorityRemote
 from oscqam.domains import Priority, BetaPriority, UnknownPriority
 from .utils import load_fixture, create_template_data

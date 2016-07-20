@@ -17,6 +17,12 @@ import osc.oscerr
 
 from .compat import total_ordering
 from .domains import Priority, UnknownPriority
+from .errors import (NoQamReviewsError,
+                     NonMatchingGroupsError,
+                     MissingSourceProjectError,
+                     TestPlanReviewerNotSetError,
+                     TestResultMismatchError,
+                     TemplateNotFoundError)
 from .parsers import TemplateParser
 
 logging.basicConfig()
@@ -32,53 +38,6 @@ def et_iter(elementtree, tag):
         return elementtree.iter(tag)
     else:
         return elementtree.getiterator(tag)
-
-
-class ReportedError(RuntimeError):
-    """Raise on exceptions that can only be reported but not handled."""
-
-
-class InvalidRequestError(ReportedError):
-    """Raise when a request object is missing required information."""
-    def __init__(self, request):
-        super(InvalidRequestError, self).__init__(
-            "Invalid build service request: {0}".format(request)
-        )
-
-
-class MissingSourceProjectError(InvalidRequestError):
-    """Raise when a request is missing the source project property."""
-    def __init__(self, request):
-        super(MissingSourceProjectError, self).__init__(
-            "Invalid build service request: "
-            "{0} has no source project.".format(request)
-        )
-
-
-class TemplateNotFoundError(ReportedError):
-    """Raise when a template could not be found."""
-    def __init__(self, message):
-        super(TemplateNotFoundError, self).__init__(
-            "Report could not be loaded: {0}".format(message)
-        )
-
-
-class TestResultMismatchError(ReportedError):
-    _msg = "Request-Status not '{0}': please check report: {1}"
-
-    def __init__(self, expected, log_path):
-        super(TestResultMismatchError, self).__init__(
-            self._msg.format(expected, log_path)
-        )
-
-
-class TestPlanReviewerNotSetError(ReportedError):
-    _msg = ("The testreport ({path}) is missing a test plan reviewer.")
-
-    def __init__(self, path):
-        super(TestPlanReviewerNotSetError, self).__init__(
-            self._msg.format(path = path)
-        )
 
 
 class XmlFactoryMixin(object):

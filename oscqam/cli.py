@@ -10,11 +10,10 @@ from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
                             ListGroupAction, ListAssignedGroupAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
-                            InfoAction, DeleteCommentAction,
-                            NotPreviousReviewerError)
+                            InfoAction, DeleteCommentAction)
+from oscqam.errors import NotPreviousReviewerError, ReportedError
 from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
-from oscqam.models import ReportedError
 from oscqam.remotes import RemoteFacade
 from oscqam.reject_reasons import RejectReason
 

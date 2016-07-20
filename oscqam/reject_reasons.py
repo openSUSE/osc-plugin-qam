@@ -3,7 +3,7 @@
 
 """
 from enum import Enum
-from .models import ReportedError
+from .errors import ReportedError
 
 
 class InvalidRejectError(ReportedError):

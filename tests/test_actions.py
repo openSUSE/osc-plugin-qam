@@ -1,7 +1,7 @@
 import os
 import StringIO
 import unittest
-from oscqam import (actions, cli, models, fields, remotes,
+from oscqam import (actions, cli, errors, models, fields, remotes,
                     reject_reasons)
 from .utils import load_fixture, create_template_data
 from .mockremote import MockRemote
@@ -42,7 +42,7 @@ class ActionTests(unittest.TestCase):
     def test_infer_no_groups_match(self):
         assign_action = actions.AssignAction(self.mock_remote, self.user_id,
                                              self.cloud_open)
-        self.assertRaises(actions.NonMatchingGroupsError, assign_action)
+        self.assertRaises(errors.NonMatchingGroupsError, assign_action)
 
     def test_infer_groups_match(self):
         args = {'project': 'SUSE:Maintenance:130',
@@ -58,7 +58,7 @@ class ActionTests(unittest.TestCase):
     def test_infer_groups_no_qam_reviews(self):
         assign_action = actions.AssignAction(self.mock_remote, self.user_id,
                                              self.non_qam)
-        self.assertRaises(actions.NoQamReviewsError, assign_action)
+        self.assertRaises(errors.NoQamReviewsError, assign_action)
 
     def test_unassign_explicit_group(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
@@ -86,13 +86,13 @@ class ActionTests(unittest.TestCase):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.single_assign_single_open,
                                       template_factory = lambda r: True)
-        self.assertRaises(actions.NonMatchingGroupsError, assign)
+        self.assertRaises(errors.NonMatchingGroupsError, assign)
 
     def test_assign_multiple_groups(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
                                       template_factory = lambda r: True)
-        self.assertRaises(actions.UninferableError, assign)
+        self.assertRaises(errors.UninferableError, assign)
 
     def test_assign_multiple_groups_explicit(self):
         args = {'project': 'SUSE:Maintenance:130',
@@ -113,7 +113,7 @@ class ActionTests(unittest.TestCase):
     def test_unassign_no_group(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
                                           self.non_qam)
-        self.assertRaises(actions.NoReviewError, unassign)
+        self.assertRaises(errors.NoReviewError, unassign)
 
     def test_unassign_multiple_groups(self):
         out = StringIO.StringIO()
@@ -140,7 +140,7 @@ class ActionTests(unittest.TestCase):
             reject_reasons.RejectReason.administrative
         )
         action._template = template
-        with self.assertRaises(models.TestResultMismatchError) as context:
+        with self.assertRaises(errors.TestResultMismatchError) as context:
             action()
         self.assertIn(models.Template.base_url, str(context.exception))
 
@@ -162,7 +162,7 @@ class ActionTests(unittest.TestCase):
             reject_reasons.RejectReason.administrative
         )
         action._template = template
-        self.assertRaises(actions.NoCommentError, action)
+        self.assertRaises(errors.NoCommentError, action)
 
     def test_reject_posts_reason(self):
         """Rejecting a request will post a reason attribute."""
@@ -190,12 +190,12 @@ class ActionTests(unittest.TestCase):
 
     def test_assign_no_report(self):
         def raiser(request):
-            raise models.TemplateNotFoundError("")
+            raise errors.TemplateNotFoundError("")
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
                                       groups = ['qam-test'],
                                       template_factory = raiser)
-        self.assertRaises(actions.ReportNotYetGeneratedError, assign)
+        self.assertRaises(errors.ReportNotYetGeneratedError, assign)
 
     def test_list_assigned_user(self):
         self.mock_remote.register_url(
@@ -233,7 +233,7 @@ class ActionTests(unittest.TestCase):
             self.mock_remote, self.user_id, "12345",
             template_factory = lambda _: template
         )
-        self.assertRaises(models.TestPlanReviewerNotSetError, approval)
+        self.assertRaises(errors.TestPlanReviewerNotSetError, approval)
 
     def test_approval_no_testplanreviewer_key(self):
         request = self.mock_remote.requests.by_id(self.cloud_open)
@@ -244,7 +244,7 @@ class ActionTests(unittest.TestCase):
             self.mock_remote, self.user_id, "12345",
             template_factory = lambda _: template
         )
-        self.assertRaises(models.TestPlanReviewerNotSetError, approval)
+        self.assertRaises(errors.TestPlanReviewerNotSetError, approval)
 
     def test_approval_requires_status_passed(self):
         request = self.mock_remote.requests.by_id(self.cloud_open)
@@ -256,7 +256,7 @@ class ActionTests(unittest.TestCase):
             self.mock_remote, self.user_id, "12345",
             template_factory = lambda _: template
         )
-        self.assertRaises(models.TestResultMismatchError, approval)
+        self.assertRaises(errors.TestResultMismatchError, approval)
 
     def test_approval(self):
         request = self.mock_remote.requests.by_id(self.cloud_open)
@@ -279,7 +279,7 @@ class ActionTests(unittest.TestCase):
 
     def test_load_requests_with_exception(self):
         def raise_template_not_found(self):
-            raise models.TemplateNotFoundError("Test error")
+            raise errors.TemplateNotFoundError("Test error")
         request_1 = self.mock_remote.requests.by_id(self.cloud_open)
         request_2 = self.mock_remote.requests.by_id(self.non_open)
         request_2.get_template = raise_template_not_found
@@ -306,7 +306,7 @@ class ActionTests(unittest.TestCase):
                                       self.multi_available_assign,
                                       groups = ['qam-test'],
                                       template_factory = lambda r: r)
-        self.assertRaises(actions.NotPreviousReviewerError, assign)
+        self.assertRaises(errors.NotPreviousReviewerError, assign)
 
     def test_assign_previous_reject_old_reviewer(self):
         out = StringIO.StringIO()
@@ -354,7 +354,7 @@ class ActionTests(unittest.TestCase):
              'view': 'collection', 'withfullhistory': '1'},
         )
         def raiser(request):
-            raise models.TemplateNotFoundError("")
+            raise errors.TemplateNotFoundError("")
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.multi_available_assign,
                                       groups = ['qam-test'],
@@ -467,4 +467,4 @@ class ActionTests(unittest.TestCase):
             self.multi_available_assign,
             template_factory = lambda _: template
         )
-        self.assertRaises(actions.NotAssignedError, approve_action)
+        self.assertRaises(errors.NotAssignedError, approve_action)
