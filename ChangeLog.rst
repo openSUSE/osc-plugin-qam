@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.18.0
+======
+
+- Internal refactoring: errors, messages.
+- Fix bnc#989567.
+
 0.17.1
 ======
 
