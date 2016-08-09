@@ -32,6 +32,7 @@ class ActionTests(unittest.TestCase):
         self.two_assigned = 'twoassigned'
         self.multi_available_assign = 'twoqam'
         self.rejected = 'request_rejected.xml'
+        self.one_open = 'sletest'
         self.template = load_fixture('template.txt')
 
     def test_undo(self):
@@ -229,8 +230,8 @@ class ActionTests(unittest.TestCase):
                                          "Test Plan Reviewer": ""})
         template = models.Template(request,
                                    tr_getter = lambda x: report)
-        approval = actions.ApproveAction(
-            self.mock_remote, self.user_id, "12345",
+        approval = actions.ApproveUserAction(
+            self.mock_remote, self.user_id, "12345", self.user_id,
             template_factory = lambda _: template
         )
         self.assertRaises(errors.TestPlanReviewerNotSetError, approval)
@@ -240,8 +241,8 @@ class ActionTests(unittest.TestCase):
         report = create_template_data(SUMMARY = "PASSED")
         template = models.Template(request,
                                    tr_getter = lambda x: report)
-        approval = actions.ApproveAction(
-            self.mock_remote, self.user_id, "12345",
+        approval = actions.ApproveUserAction(
+            self.mock_remote, self.user_id, "12345", self.user_id,
             template_factory = lambda _: template
         )
         self.assertRaises(errors.TestPlanReviewerNotSetError, approval)
@@ -252,8 +253,8 @@ class ActionTests(unittest.TestCase):
                                          "Test Plan Reviewer": "someone"})
         template = models.Template(request,
                                    tr_getter = lambda x: report)
-        approval = actions.ApproveAction(
-            self.mock_remote, self.user_id, "12345",
+        approval = actions.ApproveUserAction(
+            self.mock_remote, self.user_id, "12345", self.user_id,
             template_factory = lambda _: template
         )
         self.assertRaises(errors.TestResultMismatchError, approval)
@@ -264,8 +265,8 @@ class ActionTests(unittest.TestCase):
                                          "Test Plan Reviewer": "someone"})
         template = models.Template(request,
                                    tr_getter = lambda x: report)
-        approval = actions.ApproveAction(
-            self.mock_remote, self.user_id, "12345",
+        approval = actions.ApproveUserAction(
+            self.mock_remote, self.user_id, "12345", self.user_id,
             template_factory = lambda _: template
         )
         approval()
@@ -444,8 +445,8 @@ class ActionTests(unittest.TestCase):
                                          "Test Plan Reviewer": "someone"})
         template = models.Template(request,
                                    tr_getter = lambda x: report)
-        approval = actions.ApproveAction(
-            self.mock_remote, self.user_id, "12345",
+        approval = actions.ApproveUserAction(
+            self.mock_remote, self.user_id, "12345", self.user_id,
             template_factory = lambda _: template,
             out = out
         )
@@ -453,7 +454,7 @@ class ActionTests(unittest.TestCase):
         self.assertIn("Approving {req} for {user} ({group}). Testreport: {url}"
                       .format(
                           req = request,
-                          user = approval.user,
+                          user = approval.reviewer,
                           url = approval.template.url(),
                           group = 'qam-sle',
                       ), approval.out.getvalue())
@@ -467,10 +468,43 @@ class ActionTests(unittest.TestCase):
                                          "Test Plan Reviewer": "someone"})
         template = models.Template(unassigned_request,
                                    tr_getter = lambda x: report)
-        approve_action = actions.ApproveAction(
+        approve_action = actions.ApproveUserAction(
             self.mock_remote,
             self.user_id,
             self.multi_available_assign,
+            self.user_id,
             template_factory = lambda _: template
         )
         self.assertRaises(errors.NotAssignedError, approve_action)
+
+    def test_approve_additional_groups(self):
+        """If a user can handle more groups after an approval he will be notified
+        about it.
+
+        """
+        out = StringIO.StringIO()
+        request = self.mock_remote.requests.by_id(
+            self.one_open,
+        )
+        report = create_template_data(**{"SUMMARY": "PASSED",
+                                         "Test Plan Reviewer": "someone"})
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveUserAction(
+            self.mock_remote,
+            self.user_id,
+            self.one_open,
+            self.user_id,
+            template_factory = lambda _: template,
+            out = out,
+        )
+        approval()
+        self.assertIn("Approving {req} for {user} ({group}). Testreport: {url}"
+                      .format(
+                          req = request,
+                          user = approval.reviewer,
+                          url = approval.template.url(),
+                          group = 'qam-sle',
+                      ), approval.out.getvalue())
+        self.assertIn("The following groups could also be reviewed by you: qam-test",
+                      approval.out.getvalue())

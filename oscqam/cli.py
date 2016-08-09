@@ -6,7 +6,7 @@ from osc import cmdln
 import osc.commandline
 import osc.conf
 
-from oscqam.actions import (ApproveAction, AssignAction, ListOpenAction,
+from oscqam.actions import (ApproveUserAction, AssignAction, ListOpenAction,
                             ListGroupAction, ListAssignedGroupAction,
                             ListAssignedAction, ListAssignedUserAction,
                             UnassignAction, RejectAction, CommentAction,
@@ -102,7 +102,8 @@ class QamInterpreter(cmdln.Cmdln):
         """
         self._set_required_params(opts)
         self.request_id = request_id
-        action = ApproveAction(self.api, self.affected_user, self.request_id)
+        action = ApproveUserAction(self.api, self.affected_user,
+                                   self.request_id)
         action()
 
     @cmdln.option('-U',
