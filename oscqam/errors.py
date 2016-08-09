@@ -30,6 +30,18 @@ class NoQamReviewsError(UninferableError):
 
 
 class NonMatchingGroupsError(UninferableError):
+    _msg = ("Expected groups and found groups don't match: "
+            "Expected: {eg}, found-groups: {fg}.")
+
+    def __init__(self, expected_groups, found_groups):
+        message = (self._msg.format(
+            eg = [g.name for g in expected_groups],
+            fg = [r.name for r in found_groups],
+        ))
+        super(NonMatchingGroupsError, self).__init__(message)
+
+
+class NonMatchingUserGroupsError(UninferableError):
     """Error when the user is not a member of a group that still needs to review
     the request.
 
@@ -43,7 +55,7 @@ class NonMatchingGroupsError(UninferableError):
             ug = [g.name for g in user_groups],
             og = [r.name for r in open_groups],
         ))
-        super(NonMatchingGroupsError, self).__init__(message)
+        super(NonMatchingUserGroupsError, self).__init__(message)
 
 
 class InvalidRequestError(ReportedError):

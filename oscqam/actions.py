@@ -12,6 +12,7 @@ import osc.conf
 
 from .errors import (NoCommentError,
                      NonMatchingGroupsError,
+                     NonMatchingUserGroupsError,
                      NotAssignedError,
                      NotPreviousReviewerError,
                      NoReviewError,
@@ -621,9 +622,26 @@ class ApproveUserAction(ApproveAction):
             groups = ', '.join([str(g) for g in self.additional_reviews()])
             msg = self.MORE_GROUPS_MSG.format(groups = groups)
             self.print(msg)
-        except NonMatchingGroupsError:
+        except NonMatchingUserGroupsError:
             pass
 
+
+class ApproveGroupAction(ApproveAction):
+    APPROVE_MSG = "Approving {request} for group {group}."
+
+    def get_reviewer(self, reviewer):
+        return self.remote.groups.for_name(reviewer)
+
+    def validate(self):
+        if self.reviewer not in self.request.groups:
+            raise NonMatchingGroupsError([self.reviewer], self.request.groups)
+
+    def action(self):
+        self.validate()
+        msg = self.APPROVE_MSG.format(request = self.request,
+                                      group = self.reviewer)
+        self.print(msg)
+        self.request.review_accept(group = self.reviewer,
                                    comment = msg)
 
 

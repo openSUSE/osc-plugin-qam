@@ -43,7 +43,7 @@ class ActionTests(unittest.TestCase):
     def test_infer_no_groups_match(self):
         assign_action = actions.AssignAction(self.mock_remote, self.user_id,
                                              self.cloud_open)
-        self.assertRaises(errors.NonMatchingGroupsError, assign_action)
+        self.assertRaises(errors.NonMatchingUserGroupsError, assign_action)
 
     def test_infer_groups_match(self):
         args = {'project': 'SUSE:Maintenance:130',
@@ -87,7 +87,7 @@ class ActionTests(unittest.TestCase):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
                                       self.single_assign_single_open,
                                       template_factory = lambda r: True)
-        self.assertRaises(errors.NonMatchingGroupsError, assign)
+        self.assertRaises(errors.NonMatchingUserGroupsError, assign)
 
     def test_assign_multiple_groups(self):
         assign = actions.AssignAction(self.mock_remote, self.user_id,
@@ -508,3 +508,46 @@ class ActionTests(unittest.TestCase):
                       ), approval.out.getvalue())
         self.assertIn("The following groups could also be reviewed by you: qam-test",
                       approval.out.getvalue())
+
+    def test_approve_group(self):
+        out = StringIO.StringIO()
+        request = self.mock_remote.requests.by_id(
+            self.one_open,
+        )
+        report = create_template_data(**{"SUMMARY": "PASSED",
+                                         "Test Plan Reviewer": "someone"})
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveGroupAction(
+            self.mock_remote,
+            self.user_id,
+            self.one_open,
+            'qam-test',
+            template_factory = lambda _: template,
+            out = out,
+        )
+        approval()
+        self.assertIn("Approving {req} for group {group}."
+                      .format(
+                          req = request,
+                          group = 'qam-test',
+                      ), approval.out.getvalue())
+
+    def test_approve_group_not_in_request(self):
+        out = StringIO.StringIO()
+        request = self.mock_remote.requests.by_id(
+            self.one_open,
+        )
+        report = create_template_data(**{"SUMMARY": "PASSED",
+                                         "Test Plan Reviewer": "someone"})
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveGroupAction(
+            self.mock_remote,
+            self.user_id,
+            self.one_open,
+            'qam-cloud',
+            template_factory = lambda _: template,
+            out = out,
+        )
+        self.assertRaises(errors.NonMatchingGroupsError, approval)

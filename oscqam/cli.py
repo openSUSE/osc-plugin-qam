@@ -6,11 +6,12 @@ from osc import cmdln
 import osc.commandline
 import osc.conf
 
-from oscqam.actions import (ApproveUserAction, AssignAction, ListOpenAction,
-                            ListGroupAction, ListAssignedGroupAction,
-                            ListAssignedAction, ListAssignedUserAction,
-                            UnassignAction, RejectAction, CommentAction,
-                            InfoAction, DeleteCommentAction)
+from oscqam.actions import (ApproveUserAction, ApproveGroupAction,
+                            AssignAction, ListOpenAction, ListGroupAction,
+                            ListAssignedGroupAction, ListAssignedAction,
+                            ListAssignedUserAction, UnassignAction,
+                            RejectAction, CommentAction, InfoAction,
+                            DeleteCommentAction)
 from oscqam.errors import NotPreviousReviewerError, ReportedError
 from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
@@ -90,7 +91,10 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-U',
                   '--user',
-                  help = 'User to assign for this request.')
+                  help = 'User to approve for.')
+    @cmdln.option('-G',
+                  '--group',
+                  help = 'Group to approve for this request.')
     def do_approve(self, subcmd, opts, request_id):
         """${cmd_name}: Approve the request for the user.
 
@@ -102,8 +106,12 @@ class QamInterpreter(cmdln.Cmdln):
         """
         self._set_required_params(opts)
         self.request_id = request_id
-        action = ApproveUserAction(self.api, self.affected_user,
-                                   self.request_id)
+        if opts.group:
+            action = ApproveGroupAction(self.api, self.affected_user,
+                                        self.request_id, opts.group)
+        else:
+            action = ApproveUserAction(self.api, self.affected_user,
+                                       self.request_id, self.affected_user)
         action()
 
     @cmdln.option('-U',
