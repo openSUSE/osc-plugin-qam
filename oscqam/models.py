@@ -18,7 +18,7 @@ import osc.oscerr
 from .compat import total_ordering
 from .domains import Priority, UnknownPriority
 from .errors import (NoQamReviewsError,
-                     NonMatchingGroupsError,
+                     NonMatchingUserGroupsError,
                      MissingSourceProjectError,
                      TestPlanReviewerNotSetError,
                      TestResultMismatchError,
@@ -286,9 +286,9 @@ class User(XmlFactoryMixin, Reviewer):
         open_groups = set(review_groups)
         both = user_groups.intersection(open_groups)
         if not both:
-            raise NonMatchingGroupsError(self,
-                                         user_groups,
-                                         open_groups)
+            raise NonMatchingUserGroupsError(self,
+                                             user_groups,
+                                             open_groups)
         return both
 
     def in_review_groups(self, request):

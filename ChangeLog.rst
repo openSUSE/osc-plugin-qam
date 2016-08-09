@@ -6,6 +6,9 @@ ChangeLog
 
 - Internal refactoring: errors, messages.
 - Fix bnc#989567.
+- Can now approve for groups directly.
+- When approving as a user additional (possible) reviews for the user will be
+  pointed out.
 
 0.17.1
 ======
