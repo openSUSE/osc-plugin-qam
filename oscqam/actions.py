@@ -349,7 +349,8 @@ class InfoAction(ListAction):
 class AssignAction(OscAction):
     ASSIGN_MSG = "Assigning {user} to {group} for {request}."
     AUTO_INFER_MSG = "Found a possible group: {group}."
-    MULTIPLE_GROUPS_MSG = "User could review more than one group: {groups}"
+    MULTIPLE_GROUPS_MSG = ("User could review more than one group: {groups}. "
+                           "Specify the group to review using the -G flag.")
 
     def __init__(self, remote, user, request_id, groups = None,
                  template_factory = Template, force = False,
