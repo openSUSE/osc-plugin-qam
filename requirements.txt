@@ -4,3 +4,4 @@ urlgrabber
 pytest
 mock
 prettytable
+futures

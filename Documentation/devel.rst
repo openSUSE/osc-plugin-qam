@@ -100,7 +100,9 @@ The process is as follows:
 
 - Create the virtualenvironment and switch to it.
 
-- Install the dependencies for `osc`:
+- Install the dependencies for `osc`: when installing `pycurl` make sure to set
+  `PYCURL_SSL_LIBRARY=openssl` otherwise the installation of `urlgrabber` will
+  fail.
 
 .. code:: bash
 
