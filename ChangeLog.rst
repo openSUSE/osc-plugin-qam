@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.18.1
+======
+
+- Fix bnc#998835: better error message and basic return codes.
+
 0.18.0
 ======
 
