@@ -557,6 +557,7 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
                     running = False
         except ReportedError as e:
             print(str(e))
+            ret = e.return_code
         finally:
             restore_osc_stdout()
     return ret

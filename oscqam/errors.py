@@ -1,5 +1,6 @@
 class ReportedError(RuntimeError):
     """Raise on exceptions that can only be reported but not handled."""
+    return_code = 10
 
 
 class UninferableError(ReportedError, ValueError):
