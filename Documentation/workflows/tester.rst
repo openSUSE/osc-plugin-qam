@@ -148,11 +148,12 @@ yourself you can use the following command:
 .. warning::
 
    If you assigned yourself to multiple groups and want to approve only a single
-   group, do **not** use this command to.
+   group, do **not** use the above ``-G`` command.
 
-   This can not be done, as it can not be modeled in the build service:
-   in the build service there is only one review *per user*, even if you assigned
-   yourself to multiple groups.
+   After assigning multiple groups, it is impossible to only approve a single
+   one, as this can not be modeled in the build service: in the build service
+   there is only one review *per user*, even if you assigned yourself to
+   multiple groups.
 
    In that case you have to make sure that the reviews for *both* groups are
    finished before running the normal ``ibs qam approve`` command.
