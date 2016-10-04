@@ -119,6 +119,9 @@ After testing is done either ``approve`` or ``reject`` the update:
 Approve
 ~~~~~~~
 
+If you have assigned some reviews to yourself and want to signal them as
+finished use the following command:
+
 .. code:: bash
 
    ibs qam approve 12345
@@ -134,6 +137,25 @@ Make sure to set the following fields in your test report:
 
    Reports with an ambiguous status field (``PASSED/FAILED``) or missing the
    required other fields will be rejected by the plugin.
+
+If for some reason you want to approve a group that you did not assign to
+yourself you can use the following command:
+
+.. code:: bash
+
+   ibs qam approve -G <group_name> 12345
+
+.. warning::
+
+   If you assigned yourself to multiple groups and want to approve only a single
+   group, do **not** use this command to.
+
+   This can not be done, as it can not be modeled in the build service:
+   in the build service there is only one review *per user*, even if you assigned
+   yourself to multiple groups.
+
+   In that case you have to make sure that the reviews for *both* groups are
+   finished before running the normal ``ibs qam approve`` command.
 
 Reject
 ~~~~~~
