@@ -24,6 +24,7 @@ from .errors import (NoQamReviewsError,
                      TestResultMismatchError,
                      TemplateNotFoundError)
 from .parsers import TemplateParser
+from .utils import https
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -862,11 +863,10 @@ class Template(object):
         :return: Content of the log-file as string.
 
         """
-        try:
-            with contextlib.closing(urllib2.urlopen(log_path)) as log_file:
-                return log_file.read()
-        except urllib2.URLError:
+        report = https(log_path)
+        if not report:
             raise TemplateNotFoundError(log_path)
+        return report.read()
 
     def __init__(self, request, tr_getter = get_testreport_web,
                  parser = TemplateParser()):
