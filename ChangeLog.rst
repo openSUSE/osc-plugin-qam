@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.19.0
+======
+
+- Switch to using HTTPS for testreports, as HTTP gives problem through VPN.
+
 0.18.1
 ======
 
