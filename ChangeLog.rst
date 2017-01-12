@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.19.1
+======
+
+- Fix approval action raising errors if the last qam-group was approved.
+
 0.19.0
 ======
 
