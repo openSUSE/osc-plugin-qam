@@ -33,6 +33,7 @@ class ActionTests(unittest.TestCase):
         self.multi_available_assign = 'twoqam'
         self.rejected = 'request_rejected.xml'
         self.one_open = 'sletest'
+        self.last_qam = 'approval_last_qam'
         self.template = load_fixture('template.txt')
 
     def test_undo(self):
@@ -551,3 +552,29 @@ class ActionTests(unittest.TestCase):
             out = out,
         )
         self.assertRaises(errors.NonMatchingGroupsError, approval)
+
+    def test_approve_last_group_does_not_raise(self):
+        out = StringIO.StringIO()
+        request = self.mock_remote.requests.by_id(
+            self.last_qam,
+        )
+        report = create_template_data(**{"SUMMARY": "PASSED",
+                                         "Test Plan Reviewer": "someone"})
+        template = models.Template(request,
+                                   tr_getter = lambda x: report)
+        approval = actions.ApproveUserAction(
+            self.mock_remote,
+            self.user_id,
+            self.last_qam,
+            self.user_id,
+            template_factory = lambda _: template,
+            out = out,
+        )
+        approval()
+        self.assertIn("Approving {req} for {user} ({group}). Testreport: {url}"
+                      .format(
+                          req = request,
+                          user = approval.reviewer,
+                          url = approval.template.url(),
+                          group = 'qam-sle',
+                      ), approval.out.getvalue())

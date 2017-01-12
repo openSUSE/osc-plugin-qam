@@ -1,0 +1,60 @@
+<request id="126080" creator="jsegitz">
+  <action type="maintenance_release">
+    <source project="SUSE:Maintenance:3919" package="squid.SUSE_SLE-12_Update"/>
+    <target project="SUSE:SLE-12:Update" package="squid.3919"/>
+    <acceptinfo rev="1" srcmd5="6df399f2a5277d8a1dde60e5a5268f77" oproject="SUSE:SLE-12:Update" opackage="squid.3507" osrcmd5="8ff28d8a65a0d449aa3657093e805d79" oxsrcmd5="8ff28d8a65a0d449aa3657093e805d79"/>
+  </action>
+  <state name="review" who="anonymous2" when="2017-01-12T11:32:49">
+    <comment>release</comment>
+  </state>
+  <review state="accepted" when="2017-01-03T08:04:24" who="maintenance-robot" by_group="qam-auto">
+    <comment>reviewers added: qam-openqa qam-sle</comment>
+    <history who="maintenance-robot" when="2017-01-03T08:05:15">
+      <description>Review got accepted</description>
+      <comment>reviewers added: qam-openqa qam-sle</comment>
+    </history>
+  </review>
+  <review state="accepted" when="2017-01-03T08:05:14" who="vpelcak" by_group="qam-openqa">
+    <comment>approving update</comment>
+    <history who="vpelcak" when="2017-01-05T15:49:03">
+      <description>Review got accepted</description>
+      <comment>approving update</comment>
+    </history>
+  </review>
+  <review state="accepted" by_group="qam-sle">
+    <comment/>
+    <history who="anonymous" when="2017-01-10T12:08:48">
+      <description>Review got accepted</description>
+      <comment>review assigend to user anonymous</comment>
+    </history>
+  </review>
+  <review state="review" when="2017-01-10T12:08:48" who="anonymous" by_user="anonymous">
+  </review>
+  <history who="anonymous2" when="2017-01-03T08:04:24">
+    <description>Request created</description>
+    <comment>requesting release</comment>
+  </history>
+  <history who="maintenance-robot" when="2017-01-03T08:05:14">
+    <description>Request got a new review request</description>
+  </history>
+  <history who="maintenance-robot" when="2017-01-03T08:05:15">
+    <description>Request got a new review request</description>
+  </history>
+  <history who="maintenance-robot" when="2017-01-03T08:05:15">
+    <description>Review got accepted</description>
+    <comment>reviewers added: qam-openqa qam-sle</comment>
+  </history>
+  <history who="vpelcak" when="2017-01-05T15:49:03">
+    <description>Review got accepted</description>
+    <comment>approving update</comment>
+  </history>
+  <history who="anonymous" when="2017-01-10T12:08:48">
+    <description>Review got accepted</description>
+    <comment>review assigend to user anonymous</comment>
+  </history>
+  <history who="anonymous" when="2017-01-10T12:08:48">
+    <description>Review got assigned</description>
+    <comment>review for group qam-sle</comment>
+  </history>
+  <description>requesting release</description>
+</request>

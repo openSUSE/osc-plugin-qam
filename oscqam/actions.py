@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import osc.conf
 
 from .errors import (NoCommentError,
+                     NoQamReviewsError,
                      NonMatchingGroupsError,
                      NonMatchingUserGroupsError,
                      NotAssignedError,
@@ -624,6 +625,8 @@ class ApproveUserAction(ApproveAction):
             msg = self.MORE_GROUPS_MSG.format(groups = groups)
             self.print(msg)
         except NonMatchingUserGroupsError:
+            pass
+        except NoQamReviewsError:
             pass
 
 
