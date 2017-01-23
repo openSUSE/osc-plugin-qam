@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.19.2
+======
+
+- Fix Assignment inference, when history events out of order.
+
 0.19.1
 ======
 
