@@ -420,6 +420,11 @@ class Assignment(object):
 
         :returns: [:class:`oscqam.models.Assignment`]
         """
+        def chunks(l, n):
+            """Yield successive n-sized chunks from l."""
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
         assignments = []
         closed_group_reviews = [review for review in request.review_list()
                                 if isinstance(review, GroupReview) and
@@ -435,7 +440,18 @@ class Assignment(object):
         )
         assignment_group_regex = re.compile("review for group (?P<group>.+)")
         previous_event = None
-        for event in request.statehistory:
+        assign_states = [state for state in request.statehistory
+                         if any(map(lambda i: i in state.comment,
+                                    ('assigend', 'review for')))]
+        ordered_states = []
+        # Reorder the events: in some cases the assignment event for a user is logged
+        # first in the history, which is not the 'logical' order of the events.
+        for e1, e2 in chunks(assign_states, 2):
+            if 'review for' in e1.comment:
+                ordered_states = ordered_states + [e2, e1]
+            else:
+                ordered_states = ordered_states + [e1, e2]
+        for event in ordered_states:
             logger.debug("Event: {event.comment}".format(event = event))
             group_match = assignment_group_regex.match(event.comment)
             if group_match:
