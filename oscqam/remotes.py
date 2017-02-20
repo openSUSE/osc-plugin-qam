@@ -10,21 +10,29 @@ except ImportError:
 import osc
 
 from .domains import Priority, UnknownPriority
+from .errors import ReportedError
 from .models import Attribute, Comment, Group, Request, User, RequestFilter
 from .parsers import BetaPriorityCsvParser
 from .utils import memoize, https
 
 
-class RemoteError(Exception):
+class RemoteError(ReportedError):
     """Indicates an error while communicating with the remote service.
 
     """
+    _msg = "Could not fetch {url} - {ret_code}: {msg}"
+
     def __init__(self, url, ret_code, msg, headers, fp):
         self.url = url
         self.ret_code = ret_code
         self.msg = msg
         self.headers = headers
         self.fp = fp
+        super(RemoteError, self).__init__(self._msg.format(
+            url=self.url,
+            ret_code=self.ret_code,
+            msg=self.msg)
+                                          )
 
 
 class RemoteFacade(object):
@@ -65,7 +73,10 @@ class RemoteFacade(object):
         if params:
             params = urllib.urlencode(params)
             url = url + "?" + params
-        remote = osc.core.http_GET(url)
+        try:
+            remote = osc.core.http_GET(url)
+        except urllib2.HTTPError as e:
+            raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
         self._check_for_error(remote)
         xml = remote.read()
         return xml
