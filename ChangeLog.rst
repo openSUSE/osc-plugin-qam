@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.19.3
+======
+
+- Fix crash when url not retrievable.
+
 0.19.2
 ======
 
