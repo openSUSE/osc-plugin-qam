@@ -11,7 +11,7 @@ import osc
 
 from .domains import Priority, UnknownPriority
 from .errors import ReportedError
-from .models import Attribute, Comment, Group, Request, User, RequestFilter
+from .models import Attribute, Comment, Group, Request, User, RequestFilter, Bug
 from .parsers import BetaPriorityCsvParser
 from .utils import memoize, https
 
@@ -46,6 +46,7 @@ class RemoteFacade(object):
         self.users = UserRemote(self)
         self.projects = ProjectRemote(self)
         self.priorities = PriorityRemote(self)
+        self.bugs = BugRemote(self)
 
     def _check_for_error(self, answer):
         ret_code = answer.getcode()
@@ -328,3 +329,19 @@ class PriorityRemote(object):
             return self.beta_priorities[request.reqid]
         else:
             return self._default_priority(request)
+
+
+class BugRemote(object):
+    """Get bug information for a request.
+
+    This loads the patchinfo-file and parses it."""
+    endpoint = "/source/{incident}/patchinfo/_patchinfo"
+
+    def __init__(self, remote):
+        self.remote = remote
+
+    def for_request(self, request):
+        incident = request.src_project
+        endpoint = self.endpoint.format(incident=incident)
+        xml = self.remote.get(endpoint)
+        return Bug.parse(self.remote, xml, 'issue')

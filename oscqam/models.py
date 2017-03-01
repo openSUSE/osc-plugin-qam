@@ -562,6 +562,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self._priority = None
         self._reviews = []
         self._attributes = {}
+        self._issues = []
 
     def active(self):
         return self.state == 'new' or self.state == 'review'
@@ -594,6 +595,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
         else:
             self._creator = "Unknown"
         return self._creator
+
+    @property
+    def issues(self):
+        """Bugs that should be fixed as part of this request"""
+        if not self._issues:
+            self._issues = self.remote.bugs.for_request(self)
+        return self._issues
 
     @property
     def groups(self):
@@ -958,6 +966,14 @@ class Template(object):
             prj = self._request.src_project,
             reqid = self._request.reqid
         )
+
+
+class Bug(XmlFactoryMixin):
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return u"{0}:{1}".format(self.tracker, self.id)
 
 
 def monkeypatch():

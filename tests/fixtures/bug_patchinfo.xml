@@ -1,0 +1,22 @@
+<patchinfo incident="3220">
+  <issue id="993453" tracker="bnc">VUL-0: CVE-2016-5424 : postgresql: privilege escalation via crafted database and role names</issue>
+  <issue id="993454" tracker="bnc">VUL-0: CVE-2016-5423: postgresql: CASE/WHEN with inlining can cause untrusted pointer dereference</issue>
+  <issue id="2016-5423" tracker="cve" />
+  <issue id="2016-5424" tracker="cve" />
+  <category>security</category>
+  <rating>important</rating>
+  <packager>faweiss</packager>
+  <name>postgresql94</name>
+  <description>This update for postgresql94 to version 9.4.9 fixes the several issues.
+
+These security issues were fixed:
+- CVE-2016-5423: CASE/WHEN with inlining can cause untrusted pointer dereference (bsc#993454).
+- CVE-2016-5424: Fix client programs' handling of special characters in database and role names (bsc#993453).
+
+For the non-security issues please refer to 
+- http://www.postgresql.org/docs/9.4/static/release-9-4-9.html
+- http://www.postgresql.org/docs/9.4/static/release-9-4-8.html
+- http://www.postgresql.org/docs/9.4/static/release-9-4-7.html
+</description>
+  <summary>Security update for postgresql94</summary>
+</patchinfo>

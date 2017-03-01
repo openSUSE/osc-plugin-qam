@@ -72,7 +72,8 @@ class ReportField(Enum):
     package_streams = (8, "Package-Streams")
     incident_priority = (9, "Incident Priority")
     comments = (10, "Comments")
-    creator =  (11, "Creator")
+    creator = (11, "Creator")
+    issues = (12, "Issues")
 
     def __init__(self, enum_id, log_key):
         self.enum_id = enum_id
@@ -100,7 +101,8 @@ class ReportFields(object):
                   ReportField.assigned_roles,
                   ReportField.package_streams,
                   ReportField.incident_priority,
-                  ReportField.creator]
+                  ReportField.creator,
+                  ReportField.issues]
 
     def fields(self, _):
         return self.all_fields

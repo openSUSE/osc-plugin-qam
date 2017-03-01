@@ -155,6 +155,8 @@ class Report(object):
             value = self.request.comments
         elif field == ReportField.creator:
             value = self.request.creator
+        elif field == ReportField.issues:
+            value = str(len(self.request.issues))
         else:
             value = entries[str(field)]
         return value
@@ -337,7 +339,8 @@ class InfoAction(ListAction):
                       ReportField.incident_priority,
                       ReportField.assigned_roles,
                       ReportField.unassigned_roles,
-                      ReportField.creator]
+                      ReportField.creator,
+                      ReportField.issues]
 
     def __init__(self, remote, user_id, request_id):
         super(InfoAction, self).__init__(remote, user_id)

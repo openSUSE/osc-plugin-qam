@@ -6,7 +6,7 @@ import osc
 from oscqam.reject_reasons import RejectReason
 from oscqam.models import (Attribute, Request, Template,
                            User, Group,
-                           Assignment, Comment)
+                           Assignment, Comment, Bug)
 from oscqam.errors import MissingSourceProjectError
 from oscqam.remotes import PriorityRemote
 from oscqam.domains import Priority, BetaPriority, UnknownPriority
@@ -36,6 +36,7 @@ class ModelTests(unittest.TestCase):
         cls.template_rh = load_fixture('template_rh.txt')
         cls.user = load_fixture('person_anonymous.xml')
         cls.group = load_fixture('group_qam-sle.xml')
+        cls.bugs = load_fixture('bug_patchinfo.xml')
 
     def create_template(self, request_data = None, template_data = None):
         if not request_data:
@@ -461,3 +462,7 @@ class ModelTests(unittest.TestCase):
             build = RejectReason.build_problem.flag
         )
         self.assertEquals(attribute.value, ['12345:abc', '23456:def', value2])
+
+    def test_parse_bugs(self):
+        bugs = Bug.parse(self.remote, self.bugs, 'issue')
+        self.assertEqual(len(bugs), 4)
