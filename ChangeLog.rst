@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.20.0
+======
+
+- Add new issues field: lists number of issues contained in the request.
+
 0.19.3
 ======
 
