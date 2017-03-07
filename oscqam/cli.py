@@ -89,17 +89,11 @@ class QamInterpreter(cmdln.Cmdln):
             else:
                 print("Invalid choice, please use 'yes' or 'no'")
 
-    @cmdln.option('-U',
-                  '--user',
-                  help = 'User to approve for.')
     @cmdln.option('-G',
                   '--group',
                   help = 'Group to approve for this request.')
     def do_approve(self, subcmd, opts, request_id):
         """${cmd_name}: Approve the request for the user.
-
-        The command either uses the user that runs the osc command or the user
-        that was passed as part of the command via the -U flag.
 
         ${cmd_usage}
         ${cmd_option_list}
