@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.20.1
+======
+
+- Report errors when accessing the IBS.
+- Removed -U flag from approve. Approval for another user is not possible.
+
 0.20.0
 ======
 
