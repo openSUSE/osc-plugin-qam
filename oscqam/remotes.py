@@ -20,7 +20,7 @@ class RemoteError(ReportedError):
     """Indicates an error while communicating with the remote service.
 
     """
-    _msg = "Could not fetch {url} - {ret_code}: {msg}"
+    _msg = "Error accessing {url} - {ret_code}: {msg}"
 
     def __init__(self, url, ret_code, msg, headers, fp):
         self.url = url

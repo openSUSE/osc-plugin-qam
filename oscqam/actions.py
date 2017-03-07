@@ -94,7 +94,8 @@ class OscAction(object):
         """
         try:
             return self.action(*args, **kwargs)
-        except RemoteError:
+        except RemoteError as e:
+            print(str(e))
             self.rollback()
 
     def action(self, *args, **kwargs):
