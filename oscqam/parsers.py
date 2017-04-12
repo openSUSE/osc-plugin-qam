@@ -74,7 +74,7 @@ class TemplateParser(object):
 
     def _read_comment(self):
         prefix = 'comment:'
-        comment = until("$Author",
+        comment = until("Products:",
                         dropwhile(lambda line: not line.startswith(prefix),
                                   self.log.splitlines()))
         return '\n'.join(comment)
