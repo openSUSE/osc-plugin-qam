@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.21.0
+======
+
+- Correctly handle new testreports that have no $Author header anymore.
+
 0.20.1
 ======
 
