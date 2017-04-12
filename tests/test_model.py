@@ -175,6 +175,7 @@ class ModelTests(unittest.TestCase):
     def test_template_key_repeats(self):
         template_data = "\n".join(['comment: a',
                                    '$Author: b',
+                                   'Products: b',
                                    'Testplatform: base=sles',
                                    'Testplatform: base=studio'])
         self.assertEqual(

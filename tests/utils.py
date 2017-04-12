@@ -17,8 +17,8 @@ def create_template_data(**data):
     data = OrderedDict(**data)
     if 'comment' not in data.keys():
         data['comment'] = ''
-    if '$Author' not in data.keys():
-        data['$Author'] = 'none $'
+    if 'Products' not in data.keys():
+        data['Products'] = 'none'
     if TemplateParser.end_marker not in data.keys():
         data[TemplateParser.end_marker] = ''
     return '\n'.join(': '.join(v) for v in

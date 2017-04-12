@@ -157,7 +157,7 @@ class ActionTests(unittest.TestCase):
                                    "comment: NONE"
                                    "\n"
                                    "\n"
-                                   "$Author: test$")
+                                   "Products: test")
         )
         action = actions.RejectAction(
             self.mock_remote, self.user_id,
