@@ -587,7 +587,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return self._comments
 
     @property
-    def creator(self):
+    def maker(self):
         for history in self.statehistory:
             if history.description == "Request created":
                 self._creator = self.remote.users.by_name(history.who)

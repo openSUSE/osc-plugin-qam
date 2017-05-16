@@ -155,7 +155,7 @@ class Report(object):
         elif field == ReportField.comments:
             value = self.request.comments
         elif field == ReportField.creator:
-            value = self.request.creator
+            value = self.request.maker
         elif field == ReportField.issues:
             value = str(len(self.request.issues))
         else:
