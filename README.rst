@@ -48,6 +48,15 @@ qam``.
    that uses ``https://api.suse.de`` or add the flag
    ``--apiurl=https://api.suse.de``.
 
+   If you do not want to set an alias, you can configure ``osc`` to
+   automatically default to the internal ibs api.
+   Update your ``.oscrc`` ``[general]`` section:
+
+   .. code:: bash
+
+      [general]
+      apiurl = https://api.suse.de
+
 Running the command without any further arguments will start an interactive
 session.
 
