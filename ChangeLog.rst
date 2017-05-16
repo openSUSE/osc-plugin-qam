@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.22.0
+======
+
+- Fix naming conflict with newer versions of osc used in tumbleweed.
+
+
 0.21.0
 ======
 
