@@ -446,6 +446,11 @@ class Assignment(object):
         ordered_states = []
         # Reorder the events: in some cases the assignment event for a user is logged
         # first in the history, which is not the 'logical' order of the events.
+        if (len(assign_states) % 2) == 1:
+            logger.debug("Inconsistent number of history-nodes in {0}".format(
+                request.reqid
+            ))
+            return assignments
         for e1, e2 in chunks(assign_states, 2):
             if 'review for' in e1.comment:
                 ordered_states = ordered_states + [e2, e1]
