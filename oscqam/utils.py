@@ -5,10 +5,6 @@ from functools import wraps
 from .backports import https26
 import logging
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 def memoize(func):
     """Memoizes a function to reduce repetitive calling costs.

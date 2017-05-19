@@ -9,11 +9,6 @@ import re
 from .domains import Rating, BetaPriority, UnknownPriority
 
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-
 def until(snippet, lines):
     """Return lines until the snippet is matched at the beginning of the line.
 
@@ -97,7 +92,7 @@ class TemplateParser(object):
                 key, value = map(str.strip, line.split(":", 1))
                 entries[key].append(value)
             except ValueError:
-                logger.debug("Could not parse line: %s", line)
+                logging.debug("Could not parse line: %s", line)
                 continue
         return entries
 

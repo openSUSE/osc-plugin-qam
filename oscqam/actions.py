@@ -26,10 +26,6 @@ from .models import (Group, GroupReview, User, Request, Template,
 from .remotes import RemoteError
 from .fields import ReportField
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 PREFIX = "[oscqam]"
 
 
@@ -241,7 +237,7 @@ class ListAction(OscAction):
             try:
                 yield promise.result()
             except TemplateNotFoundError as e:
-                logger.warning(str(e))
+                logging.warning(str(e))
 
 
 class ListOpenAction(ListAction):

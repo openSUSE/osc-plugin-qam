@@ -26,10 +26,6 @@ from .errors import (NoQamReviewsError,
 from .parsers import TemplateParser
 from .utils import https
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 def et_iter(elementtree, tag):
     """This function is used to make the iter call work in
@@ -401,7 +397,7 @@ class Assignment(object):
         users = [r for r in request.review_list_open()
                  if isinstance(r, UserReview)]
         if not len(users) == 1:
-            logger.debug(
+            logging.debug(
                 "No user for an assigned group-review:"
                 "Group: {0}, Request {1}.".format(accepted[0].reviewer,
                                                   request)
@@ -447,7 +443,7 @@ class Assignment(object):
         # Reorder the events: in some cases the assignment event for a user is logged
         # first in the history, which is not the 'logical' order of the events.
         if (len(assign_states) % 2) == 1:
-            logger.debug("Inconsistent number of history-nodes in {0}".format(
+            logging.debug("Inconsistent number of history-nodes in {0}".format(
                 request.reqid
             ))
             return assignments
@@ -457,7 +453,7 @@ class Assignment(object):
             else:
                 ordered_states = ordered_states + [e1, e2]
         for event in ordered_states:
-            logger.debug("Event: {event.comment}".format(event = event))
+            logging.debug("Event: {event.comment}".format(event = event))
             group_match = assignment_group_regex.match(event.comment)
             if group_match:
                 group = request.remote.groups.for_name(
@@ -505,7 +501,7 @@ class Assignment(object):
         assignments.update(cls.infer_by_single_group(request))
         assignments.update(cls.infer_by_comments(request))
         if not assignments:
-            logger.debug(
+            logging.debug(
                 "No assignments could be found for {0}".format(request)
             )
         return list(assignments)
@@ -640,7 +636,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 if prj:
                     return prj
                 else:
-                    logger.info("This project has no source project: %s",
+                    logging.info("This project has no source project: %s",
                                 self.reqid)
                     return ''
         return ''
@@ -790,7 +786,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 req.read(request)
                 requests.append(req)
             except osc.oscerr.APIError as e:
-                logger.error(e.msg)
+                logging.error(e.msg)
                 pass
             except osc.oscerr.WrongArgs as e:
                 # Temporary workaround, as OBS >= 2.7 can return requests with
@@ -800,7 +796,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 if not 'acceptinfo' in str(e):
                     raise
                 else:
-                    logger.error(
+                    logging.error(
                         "Server version too high for osc-client: %s" % str(e)
                     )
                     pass
@@ -985,12 +981,12 @@ def monkeypatch():
     """Monkey patch retaining of history into the review class.
     """
     def monkey_patched_init(obj, review_node):
-        # logger.debug("Monkeypatched init")
+        # logging.debug("Monkeypatched init")
         original_init(obj, review_node)
         obj.statehistory = []
         for hist_state in review_node.findall('history'):
             obj.statehistory.append(osc.core.RequestHistory(hist_state))
-    # logger.warn("Careful - your osc-version requires monkey patching.")
+    # logging.warn("Careful - your osc-version requires monkey patching.")
     original_init = osc.core.ReviewState.__init__
     osc.core.ReviewState.__init__ = monkey_patched_init
 

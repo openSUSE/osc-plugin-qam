@@ -2,6 +2,7 @@ from __future__ import print_function
 from oscqam import strict_version
 import logging
 import sys
+import os
 from osc import cmdln
 import osc.commandline
 import osc.conf
@@ -17,10 +18,6 @@ from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
 from oscqam.remotes import RemoteFacade
 from oscqam.reject_reasons import RejectReason
-
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class ConflictingOptions(ReportedError):
@@ -478,6 +475,28 @@ class QamInterpreter(cmdln.Cmdln):
         return self.INTERPRETER_QUIT
 
 
+def setup_logging():
+    level = os.environ.get("OSCQAM_LOG", "info").lower()
+    levels = {
+        "critical": logging.CRITICAL,
+        "debug": logging.DEBUG,
+        "error": logging.ERROR,
+        "fatal": logging.FATAL,
+        "info": logging.INFO,
+        "warn": logging.WARN,
+    }
+    level = levels[level]
+    basedir = os.environ.get("XDG_DATA_HOME",
+                             os.path.expanduser("~/.local/share/" ))
+    directory = os.path.expandvars("{0}oscqam/".format(basedir))
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    path = "{0}oscqam.log".format(directory)
+    logging.basicConfig(filename=path,
+                        filemode='w',
+                        level=level)
+
+
 @cmdln.option('-A',
               '--assigned',
               action = 'store_true',
@@ -517,6 +536,7 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
     """
     osc_stdout = [None]
     retval = None
+    setup_logging()
 
     def restore_orig_stdout():
         """osc is replacing the stdout with their own writer-class.
