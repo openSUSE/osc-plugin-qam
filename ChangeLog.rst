@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.22.1
+======
+
+- Make logging configurable and store log-files in $XDG_DATA_HOME/oscqam/.
+- Fix assignment inference when the expected invariants don't hold.
+
 0.22.0
 ======
 
