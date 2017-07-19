@@ -12,7 +12,6 @@ import osc
 from .domains import Priority, UnknownPriority
 from .errors import ReportedError
 from .models import Attribute, Comment, Group, Request, User, RequestFilter, Bug
-from .parsers import BetaPriorityCsvParser
 from .utils import memoize, https
 
 
@@ -297,21 +296,11 @@ class ProjectRemote(object):
 class PriorityRemote(object):
     """Get priority information for a request (if available)."""
     endpoint = "/source/{0}/_attribute/OBS:IncidentPriority"
-    beta_endpoint = "https://maintenance.suse.de/ibs/output/qa.csv"
 
-    def load_beta_priority():
-        """Attempt to load beta priority from the web service.
-
-        If this fails return an empty iterable.
-        """
-        return https(PriorityRemote.beta_endpoint)
-
-    def __init__(self, remote, beta_prio = load_beta_priority):
+    def __init__(self, remote):
         self.remote = remote
-        parser = BetaPriorityCsvParser()
-        self.beta_priorities = parser(beta_prio())
 
-    def _default_priority(self, request):
+    def _priority(self, request):
         endpoint = self.endpoint.format(request.src_project)
         try:
             xml = ET.fromstring(self.remote.get(endpoint))
@@ -325,10 +314,7 @@ class PriorityRemote(object):
                 return UnknownPriority()
 
     def for_request(self, request):
-        if request.reqid in self.beta_priorities:
-            return self.beta_priorities[request.reqid]
-        else:
-            return self._default_priority(request)
+        return self._priority(request)
 
 
 class BugRemote(object):

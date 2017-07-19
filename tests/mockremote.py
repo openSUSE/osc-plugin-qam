@@ -25,7 +25,7 @@ class MockRemote(object):
         self.users = UserRemote(self)
         self.comments = CommentRemote(self)
         self.projects = ProjectRemote(self)
-        self.priorities = PriorityRemote(self, beta_prio = lambda: {})
+        self.priorities = PriorityRemote(self)
         self.remote = 'suse-remote'
 
     def _load(self, prefix, id):
