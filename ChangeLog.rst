@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.23.0
+======
+
+- Drop β priority: no longer used - default priority now replaces it completely.
+
 0.22.1
 ======
 

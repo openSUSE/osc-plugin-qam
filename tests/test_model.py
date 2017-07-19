@@ -9,7 +9,7 @@ from oscqam.models import (Attribute, Request, Template,
                            Assignment, Comment, Bug)
 from oscqam.errors import MissingSourceProjectError
 from oscqam.remotes import PriorityRemote
-from oscqam.domains import Priority, BetaPriority, UnknownPriority
+from oscqam.domains import Priority, UnknownPriority
 from .utils import load_fixture, create_template_data
 from .mockremote import MockRemote
 
@@ -278,29 +278,6 @@ class ModelTests(unittest.TestCase):
         self.assertEqual("None", str(priority))
         priority = Priority(100)
         self.assertEqual("100", str(priority))
-
-    def test_beta_priority(self):
-        request = Request.parse(self.remote, self.req_1_xml)[0]
-        # Use a faked beta_loader to not call the web-service.
-        self.remote.priorities = PriorityRemote(
-            self.remote,
-            lambda: ["{reqid};None;None;None;None;500\n".format(
-                reqid=request.reqid
-            )])
-        self.assertEqual(request.incident_priority, BetaPriority('500'))
-
-    def test_empty_beta_priority(self):
-        request = Request.parse(self.remote, self.req_1_xml)[0]
-        # Use a faked beta_loader to not call the web-service.
-        self.remote.priorities = PriorityRemote(
-            self.remote,
-            lambda: None)
-        src_project = request.src_project
-        endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(
-            src_project
-        )
-        self.remote.register_url(endpoint, lambda: "<attributes/>")
-        self.assertEqual(request.incident_priority, UnknownPriority())
 
     def test_unassigned_roles(self):
         request = Request.parse(self.remote, self.req_unassigned)[0]
