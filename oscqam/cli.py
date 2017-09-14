@@ -88,7 +88,8 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-G',
                   '--group',
-                  help = 'Group to approve for this request.')
+                  help = 'Group to *directly* approve for this request.'
+                  'Only for groups that do not need reviews')
     def do_approve(self, subcmd, opts, request_id):
         """${cmd_name}: Approve the request for the user.
 
@@ -98,6 +99,15 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         if opts.group:
+            if self.yes_no(
+                "This can *NOT* be used to accept a specific group "
+                "you are reviewing. "
+                "It will only accept the group's review. "
+                "This can bring the update into an inconsistent state.\n"
+                "You probably only want to run 'osc qam approve'.\nAbort?",
+                default = "yes"
+            ):
+                return
             action = ApproveGroupAction(self.api, self.affected_user,
                                         self.request_id, opts.group)
         else:
