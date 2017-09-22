@@ -499,9 +499,14 @@ class UnassignAction(OscAction):
             self.request.review_reopen(user = self.user)
         return _
 
-    def unassign(self, groups, assigned_groups):
-        difference = set(assigned_groups).difference(set(groups))
+    def unassign(self, groups, user_assigned_groups):
+        all_assignments = self.request.assigned_roles()
+        difference = set(user_assigned_groups).difference(set(groups))
         for group in groups:
+            other_assignments = filter(
+                lambda a: a.group == group and a.user != self.user,
+                all_assignments
+            )
             msg = UnassignAction.UNASSIGN_MSG.format(
                 user = self.user, group = group, request = self.request
             )
@@ -509,11 +514,17 @@ class UnassignAction(OscAction):
             undo_comment = AssignAction.ASSIGN_MSG.format(
                 user = self.user, group = group, request = self.request
             )
-            self.request.review_reopen(group = group,
-                                       comment = msg)
-            self.undo_stack.append(
-                self.undo_reopen(group, undo_comment)
-            )
+            if not other_assignments:
+                logging.debug("Reopening {g} as only {u} is reviewing".format(
+                    g=group, u=self.user
+                ))
+                self.request.review_reopen(group = group,
+                                           comment = msg)
+                self.undo_stack.append(
+                    self.undo_reopen(group, undo_comment)
+                )
+            else:
+                self.print("Not reopening group - other assignments exist.")
         if not difference:
             msg = UnassignAction.ACCEPT_USER_MSG.format(
                 user = self.user, request = self.request

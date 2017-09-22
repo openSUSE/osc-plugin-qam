@@ -35,6 +35,7 @@ class ActionTests(unittest.TestCase):
         self.one_open = 'sletest'
         self.last_qam = 'approval_last_qam'
         self.inverse_assign_order = 'inverse_assign'
+        self.multireview = 'multireview'
         self.template = load_fixture('template.txt')
 
     def test_undo(self):
@@ -68,6 +69,15 @@ class ActionTests(unittest.TestCase):
                                           self.non_open, ['qam-test'])
         unassign()
         self.assertEqual(len(self.mock_remote.post_calls), 2)
+
+    def test_unassign_multi_reviewer(self):
+        out = StringIO.StringIO()
+        unassign = actions.UnassignAction(self.mock_remote, self.user_id,
+                                          self.multireview, ['qam-sle'],
+                                          out = out)
+        unassign()
+        self.assertIn("Not reopening group - other assignments exist.",
+                      unassign.out.getvalue())
 
     def test_unassign_inferred_group(self):
         unassign = actions.UnassignAction(self.mock_remote, self.user_id,
