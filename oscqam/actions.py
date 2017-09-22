@@ -500,7 +500,7 @@ class UnassignAction(OscAction):
         return _
 
     def unassign(self, groups, user_assigned_groups):
-        all_assignments = self.request.assigned_roles()
+        all_assignments = self.request.assigned_roles
         difference = set(user_assigned_groups).difference(set(groups))
         for group in groups:
             other_assignments = filter(
