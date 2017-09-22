@@ -1,5 +1,6 @@
 from __future__ import print_function
 from collections import defaultdict
+import logging
 from .utils import load_fixture
 from oscqam.remotes import (CommentRemote, RequestRemote, GroupRemote,
                             UserRemote, ProjectRemote, PriorityRemote)
@@ -56,9 +57,11 @@ class MockRemote(object):
         """
         overwrite = self.overwrite(*args, **kwargs)
         if overwrite:
+            logging.debug("MOCK::Overwrite: {0}".format(overwrite))
             return overwrite
         url = args[0]
         args = args[1:]
+        logging.debug("MOCK::URL: {0}".format(url))
         try:
             cls, identifier = url.split("/", 1)
         except ValueError:

@@ -1,3 +1,4 @@
+import logging
 import urllib
 import urllib2
 import ssl
@@ -74,6 +75,7 @@ class RemoteFacade(object):
             params = urllib.urlencode(params)
             url = url + "?" + params
         try:
+            logging.debug("Retrieving: {0}".format(url))
             remote = osc.core.http_GET(url)
         except urllib2.HTTPError as e:
             raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
@@ -84,6 +86,7 @@ class RemoteFacade(object):
     def post(self, endpoint, data = None):
         url = '/'.join([self.remote, endpoint])
         try:
+            logging.debug("Posting: {0}".format(url))
             remote = osc.core.http_POST(url, data = data)
             self._check_for_error(remote)
             xml = remote.read()
