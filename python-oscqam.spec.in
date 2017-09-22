@@ -26,11 +26,13 @@ BuildRequires: python-setuptools
 BuildRequires: python-enum34
 BuildRequires: python-PrettyTable
 BuildRequires: python-futures
+BuildRequires: python-dateutil
 BuildRequires: osc
 Requires: osc >= 0.148.0
 Requires: python-futures
 Requires: python-enum34
 Requires: python-PrettyTable
+Requires: python-dateutil
 Requires: ca-certificates-suse
 %if 0%{?suse_version} && 0%{?suse_version} <= 1110
 Requires: python-requests
