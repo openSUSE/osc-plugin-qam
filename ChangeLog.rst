@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.24.0
+======
+
+- Rework of assignment inference.
+- Document -G flag for approve to warn about (probably) incorrect usage.
+
 0.23.0
 ======
 
