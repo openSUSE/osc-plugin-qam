@@ -3,7 +3,7 @@ image: ibs:latest
 test:
   script:
     - cd /builds/qa-maintenance/qam-oscplugin
-    - zypper install --no-confirm python-M2Crypto python-pycurl python-urlgrabber python-pytest python-mock python-prettytable python-enum34 python-decorator python-futures
+    - zypper install --no-confirm python-M2Crypto python-pycurl python-urlgrabber python-pytest python-mock python-prettytable python-enum34 python-decorator python-futures python-dateutil
     - py.test tests
   tags:
     - qam
