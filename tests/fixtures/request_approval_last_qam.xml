@@ -14,13 +14,6 @@
       <comment>reviewers added: qam-openqa qam-sle</comment>
     </history>
   </review>
-  <review state="accepted" when="2017-01-03T08:05:14" who="vpelcak" by_group="qam-openqa">
-    <comment>approving update</comment>
-    <history who="vpelcak" when="2017-01-05T15:49:03">
-      <description>Review got accepted</description>
-      <comment>approving update</comment>
-    </history>
-  </review>
   <review state="accepted" by_group="qam-sle">
     <comment/>
     <history who="anonymous" when="2017-01-10T12:08:48">
@@ -44,7 +37,7 @@
     <description>Review got accepted</description>
     <comment>reviewers added: qam-openqa qam-sle</comment>
   </history>
-  <history who="vpelcak" when="2017-01-05T15:49:03">
+  <history who="anonymous" when="2017-01-05T15:49:03">
     <description>Review got accepted</description>
     <comment>approving update</comment>
   </history>
