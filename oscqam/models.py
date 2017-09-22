@@ -446,7 +446,7 @@ class Assignment(object):
                              if isinstance(g, GroupReview) and g.state == 'new'
                              and g.reviewer.is_qam_group()]
         finished_user = [u for u in request.review_list()
-                         if isinstance(u, UserReview) and g.state == 'accepted']
+                         if isinstance(u, UserReview) and u.state == 'accepted']
         assignments = set()
         for group_review in set(assigned_groups) | set(unassigned_groups):
             assignments.update(cls.infer_group(remote, request, group_review))
