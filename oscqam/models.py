@@ -4,6 +4,7 @@ everything in a consistent state.
 """
 import abc
 import contextlib
+from dateutil import parser
 import logging
 import re
 import urllib
@@ -190,9 +191,12 @@ class OBSGroupFilter(GroupFilter):
 
 
 class IBSGroupFilter(GroupFilter):
+    IGNORED_GROUPS = ['qam-auto', 'qam-openqa']
+
     """Methods that allow filtering on groups from IBS."""
     def is_qam_group(self, group):
-        return group.name.startswith('qam') and group.name != 'qam-auto'
+        return (group.name.startswith('qam') and
+                group.name not in self.IGNORED_GROUPS)
 
 
 class Group(XmlFactoryMixin, Reviewer):
@@ -359,6 +363,10 @@ class Assignment(object):
     assignments.
 
     """
+    ASSIGNED_DESC = "Review got assigned"
+    ACCEPTED_DESC = "Review got accepted"
+    REOPENED_DESC = "Review got reopened"
+
     def __init__(self, user, group):
         self.user = user
         self.group = group
@@ -370,126 +378,60 @@ class Assignment(object):
         return (self.user == other.user and
                 self.group == other.group)
 
+    def __repr__(self):
+        return str(self)
+
     def __str__(self):
         return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{1} -> {0}".format(self.user, self.group)
 
-    @staticmethod
-    def infer_by_single_group(request):
-        """Return an :class:`oscqam.models.Assignment` for the request if
-        only one group is assigned for review.
+    @classmethod
+    def infer_group(cls, remote, request, group_review):
+        def get_history(review_state):
+            """Return the history events for the given state that are needed to
+            find assignments in ascending order of occurrence (by date).
 
-        This will be interpreted as the only possible group that can be
-        reviewed by an open user-review.
-
-        :param request: Request to check for a possible assigned role.
-        :type request: :class:`oscqam.models.Request`
-
-        :returns: set(:class:`oscqam.models.Assignment`)
-
-        """
-        accepted = [r for r in request.review_list_accepted()
-                    if r.reviewer.is_qam_group()]
-        if not len(accepted) == 1:
-            return set()
-        users = [r for r in request.review_list_open()
-                 if isinstance(r, UserReview)]
-        if not len(users) == 1:
-            logging.debug(
-                "No user for an assigned group-review:"
-                "Group: {0}, Request {1}.".format(accepted[0].reviewer,
-                                                  request)
+            """
+            events = review_state.statehistory
+            relevant_events = filter(
+                lambda e: e.get_description() in [cls.ASSIGNED_DESC,
+                                                  cls.ACCEPTED_DESC,
+                                                  cls.REOPENED_DESC],
+                events
             )
-            return set()
-        group = accepted[0].reviewer
-        user = users[0].reviewer
-        return set([Assignment(user, group)])
-
-    @staticmethod
-    def infer_by_comments(request):
-        """Return assignments for the request based on comments.
-
-        :param request: Request to check for a possible assigned roles.
-        :type request: :class:`oscqam.models.Request`
-
-        :returns: [:class:`oscqam.models.Assignment`]
-        """
-        def chunks(l, n):
-            """Yield successive n-sized chunks from l."""
-            for i in range(0, len(l), n):
-                yield l[i:i + n]
-
-        assignments = []
-        closed_group_reviews = [review for review in request.review_list()
-                                if isinstance(review, GroupReview) and
-                                review.closed]
-        closed_groups = set([review.reviewer for review in
-                             closed_group_reviews])
-        open_user_reviews = [review for review in request.review_list()
-                             if isinstance(review, UserReview) and
-                             review.open]
-        open_users = set([review.reviewer for review in open_user_reviews])
-        assignment_user_regex = re.compile(
-            "review assigend to user (?P<user>.+)"
-        )
-        assignment_group_regex = re.compile("review for group (?P<group>.+)")
-        previous_event = None
-        assign_states = [state for state in request.statehistory
-                         if any(map(lambda i: i in state.comment,
-                                    ('assigend', 'review for')))]
-        ordered_states = []
-        # Reorder the events: in some cases the assignment event for a user is logged
-        # first in the history, which is not the 'logical' order of the events.
-        if (len(assign_states) % 2) == 1:
-            logging.debug("Inconsistent number of history-nodes in {0}".format(
-                request.reqid
-            ))
-            return assignments
-        for e1, e2 in chunks(assign_states, 2):
-            if 'review for' in e1.comment:
-                ordered_states = ordered_states + [e2, e1]
+            return sorted(relevant_events,
+                          key=lambda e: parser.parse(e.when))
+        group = group_review.reviewer
+        review_state = [r for r in request.reviews
+                        if r.by_group == group.name][0]
+        events = get_history(review_state)
+        assignments = set()
+        for event in events:
+            user = remote.users.by_name(event.who)
+            if event.get_description() == cls.ACCEPTED_DESC:
+                logging.debug("Assignment for: {g} -> {u}".format(g=group,
+                                                                  u=user))
+                assignments.add(Assignment(user, group))
+            elif event.get_description() == cls.REOPENED_DESC:
+                logging.debug("Unassignment for: {g} -> {u}".format(g=group,
+                                                                    u=user))
+                assignments.remove(Assignment(user, group))
             else:
-                ordered_states = ordered_states + [e1, e2]
-        for event in ordered_states:
-            logging.debug("Event: {event.comment}".format(event = event))
-            group_match = assignment_group_regex.match(event.comment)
-            if group_match:
-                group = request.remote.groups.for_name(
-                    group_match.group('group')
+                logging.debug("Unknown event: {e}".format(
+                    e=event.get_description())
                 )
-                if group in closed_groups:
-                    user_match = assignment_user_regex.match(
-                        previous_event.comment
-                    )
-                    if user_match:
-                        user = request.remote.users.by_name(
-                            user_match.group('user')
-                        )
-                        if user in open_users:
-                            assignments.append(Assignment(user, group))
-            previous_event = event
         return assignments
 
     @classmethod
-    def infer(cls, request):
+    def infer(cls, remote, request):
         """Create assignments for the given request.
 
-        This code uses heuristics to find assignments as the build service
-        does not have the concept of a review being done by a user:
-        a relation 'group review is performed by user' is inferred from
-        the request via the following two approaches:
+        First assignments will be found for all groups that are of interest.
 
-        1. If only one group-review and one user-review exist, it is
-        assumed that the user is performing the review for the group.
-
-        2. If multiple group-reviews exist the user-reviews must be inferred
-        via comments - this uses the fact that the new 'addreview' command
-        always adds a comment of the form 'review for group <group>'.
-        However if a user chooses to accept the review by hand and add a new
-        review for himself, this will not happen (e.g. by using
-        ``osc review command``).
+        Once the group assignments (to users) are found, the already finished
+        ones will be removed.
 
         :param request: Request to check for a possible assigned roles.
         :type request: :class:`oscqam.models.Request`
@@ -497,9 +439,26 @@ class Assignment(object):
         :returns: [:class:`oscqam.models.Assignment`]
 
         """
+        assigned_groups = [g for g in request.review_list()
+                           if isinstance(g, GroupReview) and g.state == 'accepted'
+                           and g.reviewer.is_qam_group()]
+        unassigned_groups = [g for g in request.review_list()
+                             if isinstance(g, GroupReview) and g.state == 'new'
+                             and g.reviewer.is_qam_group()]
+        finished_user = [u for u in request.review_list()
+                         if isinstance(u, UserReview) and g.state == 'accepted']
         assignments = set()
-        assignments.update(cls.infer_by_single_group(request))
-        assignments.update(cls.infer_by_comments(request))
+        for group_review in set(assigned_groups) | set(unassigned_groups):
+            assignments.update(cls.infer_group(remote, request, group_review))
+        for user_review in finished_user:
+            removal = filter(lambda a: a.user == user_review.reviewer, assignments)
+            if removal:
+                logging.debug(
+                    "Removing assignments {r} as they are finished".format(
+                        r=removal
+                    ))
+                for r in removal:
+                    assignments.remove(r)
         if not assignments:
             logging.debug(
                 "No assignments could be found for {0}".format(request)
@@ -577,7 +536,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     @property
     def assigned_roles(self):
         if not self._assigned_roles:
-            self._assigned_roles = Assignment.infer(self)
+            self._assigned_roles = Assignment.infer(self.remote, self)
         return self._assigned_roles
 
     @property

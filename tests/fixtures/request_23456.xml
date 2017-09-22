@@ -4,6 +4,10 @@
     <target project="SUSE:SLE-12:Update" package="update-test-trival.130"/>
   </action>
   <review state="accepted" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-test">
+    <history who="anonymous" when="2017-09-06T08:06:39">
+      <description>Review got accepted</description>
+      <comment>review for group qam-test</comment>
+    </history>
   </review>
   <review state="review" by_user="anonymous">
     <comment>Do not approve/release.</comment>

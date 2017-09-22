@@ -6,8 +6,16 @@
   <review state="review" when="2014-11-14T11:12:53" who="anonymous" by_user="anonymous">
   </review>
   <review state="accepted" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-sle">
+    <history who="anonymous" when="2014-12-16T10:54:10">
+      <description>Review got accepted</description>
+      <comment>review assigend to user anonymous</comment>
+    </history>
   </review>
   <review state="accepted" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-cloud">
+    <history who="anonymous" when="2014-12-16T10:54:10">
+      <description>Review got accepted</description>
+      <comment>review assigend to user anonymous</comment>
+    </history>
   </review>
   <state name="review" who="anonymous" when="2014-12-01T14:46:23">
     <comment>In review</comment>

@@ -221,7 +221,7 @@ class ModelTests(unittest.TestCase):
         if the comments are not used.
         """
         request = Request.parse(self.remote, self.req_4_xml)[0]
-        assignments = Assignment.infer(request)
+        assignments = Assignment.infer(self.remote, request)
         self.assertEqual(len(assignments), 1)
         assignment = assignments[0]
         self.assertEqual(assignment.user.login, 'anonymous')
@@ -229,7 +229,7 @@ class ModelTests(unittest.TestCase):
 
     def test_assignment_inference_ignores_qam_auto(self):
         request = Request.parse(self.remote, self.req_4_xml)[0]
-        assignments = Assignment.infer(request)
+        assignments = Assignment.infer(self.remote, request)
         self.assertEqual(len(assignments), 1)
         assignment = assignments[0]
         self.assertEqual(assignment.user.login, 'anonymous')

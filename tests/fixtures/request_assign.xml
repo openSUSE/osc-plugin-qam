@@ -6,6 +6,10 @@
   <review state="review" when="2014-11-14T11:12:53" who="anonymous" by_user="anonymous">
   </review>
   <review state="accepted" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-sle">
+    <history who="anonymous" when="2017-09-06T08:06:39">
+      <description>Review got accepted</description>
+      <comment>review for group qam-sle</comment>
+    </history>
   </review>
   <review state="new" when="2014-11-14T11:12:53" who="anonymous" by_group="qam-cloud">
   </review>
