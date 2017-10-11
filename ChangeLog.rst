@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.24.1
+======
+
+- Filter out non-assignable groups from Unassigned Roles.
+
 0.24.0
 ======
 
