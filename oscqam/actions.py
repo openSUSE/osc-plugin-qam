@@ -139,7 +139,8 @@ class Report(object):
         if field == ReportField.unassigned_roles:
             reviews = [review for review
                        in self.request.review_list_open()
-                       if isinstance(review, GroupReview)]
+                       if isinstance(review, GroupReview)
+                       and review.reviewer.is_qam_group()]
             value = sorted([str(r.reviewer) for r in reviews])
         elif field == ReportField.package_streams:
             value = [p for p in self.request.packages]
