@@ -1,11 +1,11 @@
 PYTHON=python2
-PYTEST=py.test-2.7
+PYTEST=pytest-2.7
 VERSION:=$(shell $(PYTHON) setup.py --version)
 DOC_HOST='qam.suse.de'
 LOCAL_DOC_DIRECTORY='Documentation/_build/html'
 REMOTE_DOC_DIRECTORY='/srv/www/qam.suse.de/projects/oscqam/$(VERSION)'
 
-.PHONY: beta, doc, deploy-doc, release
+.PHONY: doc, deploy-doc
 
 all:
 
@@ -14,14 +14,6 @@ all:
 check:
 
 	$(PYTEST) tests
-
-release: deploy-doc
-
-	bs-update -P QA:Maintenance -d . HEAD
-
-beta:
-
-	bs-update -P home:bergmannf -d . HEAD
 
 doc:
 
