@@ -24,29 +24,32 @@ http://download.suse.de/ibs/QA:/Maintenance/
 
 .. code:: bash
 
-          zypper ar -f http://download.suse.de/ibs/QA:/Maintenance/<distribution> qa_maintenance_tools
+          zypper ar -f http://download.suse.de/ibs/QA:/Maintenance/<distribution>/QA:Maintenance.repo
           zypper in python-oscqam
 
 Currently supported distributions are:
 
 - Tumbleweed
 
-- Leap 42.{1, 2}
+- Leap 42.x
 
-- SLE 12-{SP1, SP2}
+- Leap 15.x
+
+- SLE 12-SP3+
+
+- SLE 15
 
 Usage
 -----
 
-After the package is installed a new command is now available for osc: ``ibs
+After the package is installed a new command is now available for osc: ``osc
 qam``.
 
 .. note::
 
-   The plugin is currently only useful for the *internal* buildservice, so
-   whenever this document uses ``ibs qam``, you should actually use your alias
-   that uses ``https://api.suse.de`` or add the flag
-   ``--apiurl=https://api.suse.de``.
+   The plugin is currently only useful for the *internal* buildservice.
+   You should actually use your alias that uses ``https://api.suse.de``
+   or add the flag ``--apiurl=https://api.suse.de``.
 
    If you do not want to set an alias, you can configure ``osc`` to
    automatically default to the internal ibs api.
@@ -73,11 +76,11 @@ The interactive command sequence to list open requests:
 
 .. code-block:: bash
 
-          ibs qam
+          osc qam
           osc-qam> list
 
 The single command to list open requests:
 
 .. code-block:: bash
 
-          ibs qam list
+          osc qam list
