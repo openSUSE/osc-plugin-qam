@@ -1,6 +1,11 @@
 ChangeLog
 #########
 
+0.24.2
+======
+
+- Comliance with new osc 0.163.0. Merge request !6.
+
 0.24.1
 ======
 
