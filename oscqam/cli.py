@@ -66,7 +66,7 @@ class QamInterpreter(cmdln.Cmdln):
         else:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
 
-    def yes_no(self, question, default = 'no'):
+    def yes_no(self, question, default='no'):
         if default not in ('yes', 'no'):
             raise ValueError("Default must be 'yes' or 'no'")
         valid = {'y': True, 'yes': True,
@@ -81,14 +81,14 @@ class QamInterpreter(cmdln.Cmdln):
             answer = raw_input(' '.join([question, prompt])).lower()
             if not answer:
                 return valid[default]
-            elif valid.get(answer, None) != None:
+            elif valid.get(answer, None) is not None:
                 return valid[answer]
             else:
                 print("Invalid choice, please use 'yes' or 'no'")
 
     @cmdln.option('-G',
                   '--group',
-                  help = 'Group to *directly* approve for this request.'
+                  help='Group to *directly* approve for this request.'
                   'Only for groups that do not need reviews')
     def do_approve(self, subcmd, opts, request_id):
         """${cmd_name}: Approve the request for the user.
@@ -105,7 +105,7 @@ class QamInterpreter(cmdln.Cmdln):
                 "It will only accept the group's review. "
                 "This can bring the update into an inconsistent state.\n"
                 "You probably only want to run 'osc qam approve'.\nAbort?",
-                default = "yes"
+                default="yes"
             ):
                 return
             action = ApproveGroupAction(self.api, self.affected_user,
@@ -117,16 +117,16 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-U',
                   '--user',
-                  help = 'User to assign for this request.')
+                  help='User to assign for this request.')
     @cmdln.option('-G',
                   '--group',
-                  action = 'append',
-                  help = 'Groups to assign the user for.'
+                  action='append',
+                  help='Groups to assign the user for.'
                   'Pass multiple groups passing flag multiple times.')
     @cmdln.option('--skip-template',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Will not check if a template exists.')
+                  action='store_true',
+                  default=False,
+                  help='Will not check if a template exists.')
     def do_assign(self, subcmd, opts, request_id):
         """${cmd_name}: Assign the request to the user.
 
@@ -145,7 +145,7 @@ class QamInterpreter(cmdln.Cmdln):
         group = opts.group if opts.group else None
         template_required = False if opts.skip_template else True
         action = AssignAction(self.api, self.affected_user, self.request_id,
-                              group, template_required = template_required)
+                              group, template_required=template_required)
         try:
             action()
         except NotPreviousReviewerError as e:
@@ -154,7 +154,7 @@ class QamInterpreter(cmdln.Cmdln):
             if not force:
                 return
             action = AssignAction(self.api, self.affected_user, self.request_id,
-                                  group, force = force)
+                                  group, force=force)
             action()
 
     def _list_requests(self, action, tabular, keys):
@@ -174,34 +174,34 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-G',
                   '--group',
-                  action = 'append',
-                  default = [],
-                  help = 'Only requests containing open reviews for the given '
+                  action='append',
+                  default=[],
+                  help='Only requests containing open reviews for the given '
                   'groups will be output.')
     @cmdln.option('-F',
                   '--fields',
-                  action = 'append',
-                  default = [],
-                  help = 'Define the values to output in a cumulative fashion '
-                         '(pass flag multiple times).  '
+                  action='append',
+                  default=[],
+                  help='Define the values to output in a cumulative fashion '
+                  '(pass flag multiple times).  '
                          'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-U',
                   '--user',
-                  default = None,
-                  help = 'List requests assignable to the given USER '
-                         '(USER is a member of a qam-group that has an open '
-                         'review for the request).')
+                  default=None,
+                  help='List requests assignable to the given USER '
+                  '(USER is a member of a qam-group that has an open '
+                  'review for the request).')
     @cmdln.option('-T',
                   '--tabular',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Output the requests in an ASCII-table.')
+                  action='store_true',
+                  default=False,
+                  help='Output the requests in an ASCII-table.')
     @cmdln.option('-v',
                   '--verbose',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Display all available fields for a request: '
-                         + all_columns_string + '.')
+                  action='store_true',
+                  default=False,
+                  help='Display all available fields for a request: '
+                  + all_columns_string + '.')
     @cmdln.alias('list')
     def do_open(self, subcmd, opts):
         """${cmd_name}: Show a list of OBS qam-requests that are open.
@@ -225,32 +225,32 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-G',
                   '--group',
-                  action = 'append',
-                  default = [],
-                  help = 'Only requests containing assigned reviews for the  '
+                  action='append',
+                  default=[],
+                  help='Only requests containing assigned reviews for the  '
                   'given groups will be output.')
     @cmdln.option('-F',
                   '--fields',
-                  action = 'append',
-                  default = [],
-                  help = 'Define the values to output in a cumulative fashion '
-                         '(pass flag multiple times).  '
+                  action='append',
+                  default=[],
+                  help='Define the values to output in a cumulative fashion '
+                  '(pass flag multiple times).  '
                          'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-U',
                   '--user',
-                  default = None,
-                  help = 'List requests assigned to the given USER.')
+                  default=None,
+                  help='List requests assigned to the given USER.')
     @cmdln.option('-T',
                   '--tabular',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Output the requests in an ASCII-table.')
+                  action='store_true',
+                  default=False,
+                  help='Output the requests in an ASCII-table.')
     @cmdln.option('-v',
                   '--verbose',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Display all available fields for a request: '
-                         + all_columns_string + '.')
+                  action='store_true',
+                  default=False,
+                  help='Display all available fields for a request: '
+                  + all_columns_string + '.')
     def do_assigned(self, subcmd, opts):
         """${cmd_name}: Show a list of OBS qam-requests that are in review.
 
@@ -278,22 +278,22 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-F',
                   '--fields',
-                  action = 'append',
-                  default = [],
-                  help = 'Define the values to output in a cumulative fashion '
-                         '(pass flag multiple times).  '
+                  action='append',
+                  default=[],
+                  help='Define the values to output in a cumulative fashion '
+                  '(pass flag multiple times).  '
                          'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-T',
                   '--tabular',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Output the requests in an ASCII-table.')
+                  action='store_true',
+                  default=False,
+                  help='Output the requests in an ASCII-table.')
     @cmdln.option('-v',
                   '--verbose',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Display all available fields for a request: '
-                         + all_columns_string + '.')
+                  action='store_true',
+                  default=False,
+                  help='Display all available fields for a request: '
+                  + all_columns_string + '.')
     def do_my(self, subcmd, opts):
         """${cmd_name}: Show a list of OBS qam-requests assigned to you.
 
@@ -309,22 +309,22 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-F',
                   '--fields',
-                  action = 'append',
-                  default = [],
-                  help = 'Define the values to output in a cumulative fashion '
-                         '(pass flag multiple times).  '
+                  action='append',
+                  default=[],
+                  help='Define the values to output in a cumulative fashion '
+                  '(pass flag multiple times).  '
                          'Available fields: ' + all_columns_string + '.')
     @cmdln.option('-T',
                   '--tabular',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Output the requests in an ASCII-table.')
+                  action='store_true',
+                  default=False,
+                  help='Output the requests in an ASCII-table.')
     @cmdln.option('-v',
                   '--verbose',
-                  action = 'store_true',
-                  default = False,
-                  help = 'Display all available fields for a request: '
-                         + all_columns_string + '.')
+                  action='store_true',
+                  default=False,
+                  help='Display all available fields for a request: '
+                  + all_columns_string + '.')
     def do_info(self, subcmd, opts, request_id):
         """${cmd_name}: Show information for the given request.
         """
@@ -371,15 +371,15 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-U',
                   '--user',
-                  help = 'User that rejects this request.')
+                  help='User that rejects this request.')
     @cmdln.option('-M',
                   '--message',
-                  help = 'Message to use for rejection-comment.')
+                  help='Message to use for rejection-comment.')
     @cmdln.option('-R',
                   '--reason',
-                  action = 'append',
-                  help = 'Reason the request was rejected: '
-                         + all_reasons_string)
+                  action='append',
+                  help='Reason the request was rejected: '
+                  + all_reasons_string)
     def do_reject(self, subcmd, opts, request_id):
         """${cmd_name}: Reject the request for the user.
 
@@ -404,11 +404,11 @@ class QamInterpreter(cmdln.Cmdln):
 
     @cmdln.option('-U',
                   '--user',
-                  help = 'User to assign for this request.')
+                  help='User to assign for this request.')
     @cmdln.option('-G',
                   '--group',
-                  action = 'append',
-                  help = 'Groups to reassign to this request.'
+                  action='append',
+                  help='Groups to reassign to this request.'
                   'Pass multiple groups passing flag multiple times.')
     def do_unassign(self, subcmd, opts, request_id):
         """${cmd_name}: Unassign the request for the user.
@@ -497,7 +497,7 @@ def setup_logging():
     }
     level = levels[level]
     basedir = os.environ.get("XDG_DATA_HOME",
-                             os.path.expanduser("~/.local/share/" ))
+                             os.path.expanduser("~/.local/share/"))
     directory = os.path.expandvars("{0}oscqam/".format(basedir))
     if not os.path.exists(directory):
         os.mkdir(directory)
@@ -509,38 +509,38 @@ def setup_logging():
 
 @cmdln.option('-A',
               '--assigned',
-              action = 'store_true',
-              help = 'Parameter for list command.')
+              action='store_true',
+              help='Parameter for list command.')
 @cmdln.option('-F',
               '--fields',
-              action = 'append',
-              help = 'Define the fields to output for the list command in '
-                   'cumulative fashion (pass flag multiple times).')
+              action='append',
+              help='Define the fields to output for the list command in '
+              'cumulative fashion (pass flag multiple times).')
 @cmdln.option('-G',
               '--group',
-              action = 'append',
-              help = 'Define the groups to use for the command.'
+              action='append',
+              help='Define the groups to use for the command.'
               'Pass multiple groups passing flag multiple times.')
 @cmdln.option('-M',
               '--message',
-              help = 'Message to use for the command.')
+              help='Message to use for the command.')
 @cmdln.option('-R',
               '--reason',
-              action = 'append',
-              help = 'Reason a request has to be rejected.')
+              action='append',
+              help='Reason a request has to be rejected.')
 @cmdln.option('-T',
               '--tabular',
-              action = 'store_true',
-              help = 'Create tabular output for list command.')
+              action='store_true',
+              help='Create tabular output for list command.')
 @cmdln.option('-U',
               '--user',
-              help = 'User to use for the command.')
+              help='User to use for the command.')
 @cmdln.option('-v',
               '--verbose',
-              action = 'store_true',
-              help = 'Generate verbose output.')
+              action='store_true',
+              help='Generate verbose output.')
 @cmdln.option('--skip-template',
-              help = 'Will not check if a template exists.')
+              help='Will not check if a template exists.')
 def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
@@ -556,7 +556,10 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
 
         """
         osc_stdout[0] = sys.stdout
-        sys.stdout = osc_stdout[0].__dict__['writer']
+        try:
+            sys.stdout = osc_stdout[0].__dict__['writer']
+        except KeyError:
+            sys.stdout = osc_stdout[0]._writer
 
     def restore_osc_stdout():
         """When the plugin has finished running restore the osc-state.
