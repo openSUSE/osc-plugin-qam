@@ -1,9 +1,0 @@
-bsu_version_hook()
-{
-  python setup.py --version
-}
-
-# these can be overriden on the command line or in .bs-update
-bsu_bs_apiurl=https://api.suse.de/
-bsu_bs_package=python-oscqam
-bsu_specfiles=(${bsu_bs_package}.spec)
