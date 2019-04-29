@@ -452,7 +452,7 @@ class Assignment(object):
         for group_review in set(assigned_groups) | set(unassigned_groups):
             assignments.update(cls.infer_group(remote, request, group_review))
         for user_review in finished_user:
-            removal = filter(lambda a: a.user == user_review.reviewer, assignments)
+            removal = [a for a in assignments if a.user == user_review.reviewer]
             if removal:
                 logging.debug(
                     "Removing assignments {r} as they are finished".format(
