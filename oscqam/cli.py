@@ -18,7 +18,10 @@ from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
 from oscqam.remotes import RemoteFacade
 from oscqam.reject_reasons import RejectReason
+from oscqam.compat import PY3
 
+if PY3:
+    raw_input = input
 
 class ConflictingOptions(ReportedError):
     pass
@@ -362,12 +365,12 @@ class QamInterpreter(cmdln.Cmdln):
                                "(separate multiple values with ,): ")
         if user_input.lower() == 'q':
             return self.SUBQUERY_QUIT
-        numbers = map(lambda s: int(s.strip()), user_input.split(','))
+        numbers = [int(s.strip()) for s in user_input.split(',')]
         for number in numbers:
             if number not in ids:
                 print("Invalid number specified: {0}".format(number))
                 return self.query_enum(enum, id, desc)
-        return map(enum.from_id, numbers)
+        return list(map(enum.from_id, numbers))
 
     @cmdln.option('-U',
                   '--user',
@@ -392,10 +395,10 @@ class QamInterpreter(cmdln.Cmdln):
         self._set_required_params(opts)
         self.request_id = request_id
         message = opts.message if opts.message else None
-        reasons = (map(RejectReason.from_str, opts.reason) if opts.reason
+        reasons = (list(map(RejectReason.from_str, opts.reason) if opts.reason
                    else self.query_enum(RejectReason,
                                         lambda r: r.enum_id,
-                                        lambda r: r.text))
+                                        lambda r: r.text)))
         if reasons == self.SUBQUERY_QUIT:
             return
         action = RejectAction(self.api, self.affected_user, self.request_id,
@@ -545,7 +548,6 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
     """Start the QA-Maintenance specific submode of osc for request handling.
     """
     osc_stdout = [None]
-    retval = None
     setup_logging()
 
     def restore_orig_stdout():

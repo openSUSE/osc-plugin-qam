@@ -1,19 +1,20 @@
 import logging
-import urllib
-import urllib2
-import ssl
-
-try:
-    from xml.etree import cElementTree as ET
-except ImportError:
-    import cElementTree as ET
+from xml.etree import cElementTree as ET
 
 import osc
 
 from .domains import Priority, UnknownPriority
 from .errors import ReportedError
 from .models import Attribute, Comment, Group, Request, User, RequestFilter, Bug
-from .utils import memoize, https
+from .utils import memoize
+from .compat import PY3
+
+if PY3:
+    from urllib.parse import urlencode
+    from urllib.error import HTTPError
+else:
+    from urllib import urlencode
+    from urllib2 import HTTPError
 
 
 class RemoteError(ReportedError):
@@ -57,7 +58,7 @@ class RemoteFacade(object):
     def delete(self, endpoint, params = None):
         url = '/'.join([self.remote, endpoint])
         if params:
-            params = urllib.urlencode(params)
+            params = urlencode(params)
             url = url + "?" + params
         remote = osc.core.http_DELETE(url)
         self._check_for_error(remote)
@@ -72,12 +73,12 @@ class RemoteFacade(object):
         """
         url = '/'.join([self.remote, endpoint])
         if params:
-            params = urllib.urlencode(params)
+            params = urlencode(params)
             url = url + "?" + params
         try:
             logging.debug("Retrieving: {0}".format(url))
             remote = osc.core.http_GET(url)
-        except urllib2.HTTPError as e:
+        except HTTPError as e:
             raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
         self._check_for_error(remote)
         xml = remote.read()
@@ -91,7 +92,7 @@ class RemoteFacade(object):
             self._check_for_error(remote)
             xml = remote.read()
             return xml
-        except urllib2.HTTPError as e:
+        except HTTPError as e:
             raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
 
 
@@ -307,7 +308,7 @@ class PriorityRemote(object):
         endpoint = self.endpoint.format(request.src_project)
         try:
             xml = ET.fromstring(self.remote.get(endpoint))
-        except urllib2.HTTPError:
+        except HTTPError:
             return UnknownPriority()
         else:
             value = xml.find(".//value")

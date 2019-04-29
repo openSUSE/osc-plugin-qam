@@ -12,6 +12,6 @@ setup(
     'abstractions.',
     long_description=open("README.rst").read(),
     url='https://wiki.innerweb.novell.com/index.php/RD-OPS_QA/Maintenance/osc-for-qam',
-    install_requires=['osc'],
+    install_requires=['osc', 'python-dateutil', 'PrettyTable'],
     packages=['oscqam'],
 )

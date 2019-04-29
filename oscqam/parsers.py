@@ -1,12 +1,12 @@
 """Parsers to turn (external) data into a more usable formats.
 """
 from collections import defaultdict
-import csv
 from itertools import takewhile, dropwhile
 import logging
 import re
 
-from .domains import Rating, UnknownPriority
+from .compat import PY3
+from .domains import Rating
 
 
 def until(snippet, lines):
@@ -51,7 +51,7 @@ def split_srcrpms(srcrpm_line):
 
     :returns: [str]
     """
-    return map(str.strip, srcrpm_line.split(","))
+    return list(map(str.strip, srcrpm_line.split(",")))
 
 
 class TemplateParser(object):
@@ -64,7 +64,11 @@ class TemplateParser(object):
 
         :returns: {str: object}
         """
-        self.log = log
+        if PY3:
+            if isinstance(log, bytes):
+                self.log = log.decode()
+        else:
+            self.log = log
         return self._parse_headers(self._read_headers())
 
     def _read_comment(self):
@@ -89,7 +93,7 @@ class TemplateParser(object):
         lines = lines[:header_end]
         for line in lines:
             try:
-                key, value = map(str.strip, line.split(":", 1))
+                key, value = list(map(str.strip, line.split(":", 1)))
                 entries[key].append(value)
             except ValueError:
                 logging.debug("Could not parse line: %s", line)

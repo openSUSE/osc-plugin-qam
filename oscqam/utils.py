@@ -1,10 +1,14 @@
-import urllib2
+
+from .compat import PY3
 import ssl
-
 from functools import wraps
-from .backports import https26
-import logging
 
+if PY3:
+    from urllib.request import urlopen
+    from urllib.error import HTTPError
+else:
+    from urllib2 import urlopen
+    from urllib2 import HTTPError
 
 def memoize(func):
     """Memoizes a function to reduce repetitive calling costs.
@@ -12,6 +16,7 @@ def memoize(func):
     To work the decorated function must have hashable arguments.
     """
     cache = {}
+
     @wraps(func)
     def wrapped(*args, **kwargs):
         sorted_keys = sorted(kwargs.keys())
@@ -28,8 +33,6 @@ def memoize(func):
 def https(url):
     try:
         ctx = ssl.create_default_context()
-        return urllib2.urlopen(url, context=ctx)
-    except AttributeError:
-        return https26(url)
-    except urllib2.HTTPError:
+        return urlopen(url, context=ctx)
+    except HTTPError:
         return None

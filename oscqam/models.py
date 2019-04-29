@@ -3,21 +3,13 @@ everything in a consistent state.
 
 """
 import abc
-import contextlib
 from dateutil import parser
 import logging
 import re
-import urllib
-import urllib2
-try:
-    from xml.etree import cElementTree as ET
-except ImportError:
-    import cElementTree as ET
+from xml.etree import cElementTree as ET
 import osc.core
 import osc.oscerr
 
-from .compat import total_ordering
-from .domains import Priority, UnknownPriority
 from .errors import (NoQamReviewsError,
                      NonMatchingUserGroupsError,
                      MissingSourceProjectError,
@@ -26,16 +18,13 @@ from .errors import (NoQamReviewsError,
                      TemplateNotFoundError)
 from .parsers import TemplateParser
 from .utils import https
+from .compat import PY3
 
+if PY3:
+    from urllib.parse import urlencode
+else:
+    from urllib import urlencode
 
-def et_iter(elementtree, tag):
-    """This function is used to make the iter call work in
-    version < 2.7 as well.
-    """
-    if hasattr(elementtree, 'iter'):
-        return elementtree.iter(tag)
-    else:
-        return elementtree.getiterator(tag)
 
 
 class XmlFactoryMixin(object):
@@ -72,7 +61,7 @@ class XmlFactoryMixin(object):
         if not wrapper_cls:
             wrapper_cls = cls
         objects = []
-        for request in et_iter(et, tag):
+        for request in et.iter(tag):
             attribs = {}
             for attribute in request.attrib:
                 attribs[attribute] = request.attrib[attribute]
@@ -238,7 +227,10 @@ class Group(XmlFactoryMixin, Reviewer):
         return self.name == other.name
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{0}".format(self.name)
@@ -311,7 +303,10 @@ class User(XmlFactoryMixin, Reviewer):
         return isinstance(other, User) and self.login == other.login
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{0} ({1})".format(self.realname, self.email)
@@ -337,7 +332,10 @@ class Review(object):
         self.closed = self.state in self.CLOSED_STATES
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u'Review: {0} ({1})'.format(self.reviewer, self.state)
@@ -382,7 +380,10 @@ class Assignment(object):
         return str(self)
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{1} -> {0}".format(self.user, self.group)
@@ -509,7 +510,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     REVIEW_GROUP = 'BY_GROUP'
     REVIEW_OTHER = 'BY_OTHER'
     COMPLETE_REQUEST_ID_SRE = re.compile(
-        "(open)?SUSE:Maintenance:\d+:(?P<req>\d+)"
+        r"(open)?SUSE:Maintenance:\d+:(?P<req>\d+)"
     )
 
     def __init__(self, remote):
@@ -595,8 +596,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 if prj:
                     return prj
                 else:
-                    logging.info("This project has no source project: %s",
-                                self.reqid)
+                    logging.info("This project has no source project: %s", self.reqid)
                     return ''
         return ''
 
@@ -622,7 +622,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
             params['by_user'] = user.login
         if group:
             params['by_group'] = group.name
-        url_params = urllib.urlencode(params)
+        url_params = urlencode(params)
         url = "/".join([self.remote.requests.endpoint, self.reqid])
         url += "?" + url_params
         self.remote.post(url, comment)
@@ -739,7 +739,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def parse(cls, remote, xml):
         et = ET.fromstring(xml)
         requests = []
-        for request in et_iter(et, remote.requests.endpoint):
+        for request in et.iter(remote.requests.endpoint):
             try:
                 req = Request(remote)
                 req.read(request)
@@ -752,7 +752,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 # acceptinfo-elements that old osc can not handle.
                 if not (osc.core.get_osc_version() < '0.152'):
                     raise
-                if not 'acceptinfo' in str(e):
+                if 'acceptinfo' not in str(e):
                     raise
                 else:
                     logging.error(
@@ -789,7 +789,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return sum(hashes)
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{0}".format(self.reqid)
@@ -803,7 +806,10 @@ class NullComment(object):
         self.text = None
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u""
@@ -820,7 +826,10 @@ class Comment(XmlFactoryMixin):
         return super(Comment, cls).parse(remote, xml, 'comment')
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{0}: {1}".format(self.id, self.text)
@@ -930,7 +939,10 @@ class Template(object):
 
 class Bug(XmlFactoryMixin):
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{0}:{1}".format(self.tracker, self.id)
@@ -948,5 +960,6 @@ def monkeypatch():
     # logging.warn("Careful - your osc-version requires monkey patching.")
     original_init = osc.core.ReviewState.__init__
     osc.core.ReviewState.__init__ = monkey_patched_init
+
 
 monkeypatch()
