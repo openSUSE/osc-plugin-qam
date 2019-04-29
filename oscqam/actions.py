@@ -505,10 +505,10 @@ class UnassignAction(OscAction):
         all_assignments = self.request.assigned_roles
         difference = set(user_assigned_groups).difference(set(groups))
         for group in groups:
-            other_assignments = filter(
+            other_assignments = list(filter(
                 lambda a: a.group == group and a.user != self.user,
                 all_assignments
-            )
+            ))
             msg = UnassignAction.UNASSIGN_MSG.format(
                 user = self.user, group = group, request = self.request
             )
