@@ -4,7 +4,6 @@ import os
 import itertools
 import logging
 import multiprocessing
-import re
 import sys
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -21,10 +20,13 @@ from .errors import (NoCommentError,
                      ReportNotYetGeneratedError,
                      TemplateNotFoundError,
                      UninferableError)
-from .models import (Group, GroupReview, User, Request, Template,
+from .models import (GroupReview, Request, Template,
                      UserReview)
 from .remotes import RemoteError
 from .fields import ReportField
+from .compat import with_metaclass
+
+
 
 PREFIX = "[oscqam]"
 
@@ -160,13 +162,12 @@ class Report(object):
         return value
 
 
-class ListAction(OscAction):
+class ListAction(with_metaclass(abc.ABCMeta, OscAction)):
     """Base action for operation that work on a list of requests.
 
     Subclasses must overwrite the 'load_requests' method that return the list
     of requests that should be output according to the formatter and fields.
     """
-    __metaclass__ = abc.ABCMeta
     default_fields = [ReportField.review_request_id,
                       ReportField.srcrpms,
                       ReportField.rating,
@@ -395,8 +396,8 @@ class AssignAction(OscAction):
                              if request.state.name == Request.STATE_DECLINED]
         if not declined_requests:
             return
-        reviewers = [review.reviewer for review in request.review_list()
-                     for request in declined_requests
+        reviewers = [review.reviewer for review in (request.review_list()
+                     for request in declined_requests)
                      if isinstance(review, UserReview)]
         if self.user not in reviewers:
             raise NotPreviousReviewerError(reviewers)

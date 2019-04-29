@@ -15,8 +15,7 @@ class InvalidRejectError(ReportedError):
     def __init__(self, bad_fields):
         super(InvalidRejectError, self).__init__(
             self._msg.format(", ".join(map(repr, bad_fields)),
-                             ", ".join(map(lambda r: r.flag, RejectReason)))
-        )
+                             ", ".join(r.flag for r in RejectReason)))
 
 
 class RejectReason(Enum):

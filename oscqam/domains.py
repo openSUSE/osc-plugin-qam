@@ -1,7 +1,8 @@
 # -*- encoding: utf-8 -*-
 """Defines domain-objects that encapsulate state without logic.
 """
-from .compat import total_ordering
+from functools import total_ordering
+from .compat import PY3
 
 
 @total_ordering
@@ -58,7 +59,10 @@ class UnknownPriority(Priority):
         return False
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        if PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         return u"{0}".format(self.priority)

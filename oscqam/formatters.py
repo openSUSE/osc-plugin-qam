@@ -29,7 +29,7 @@ def terminal_dimensions(fd = None):
     if rows == 0 and columns == 0:
         try:
             rows, columns = (int(os.getenv(v)) for v in ['LINES', 'COLUMNS'])
-        except:
+        except Exception:
             pass
     return rows, columns
 
@@ -91,7 +91,7 @@ class Formatter(object):
             self._formatters[formatter] = formatters[formatter]
         self.default_format = str
 
-    def output(keys, reports):
+    def output(self, keys, reports):
         """Format the reports for output based on the keys.
 
         :param keys: The fields to output for each report.
