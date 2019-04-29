@@ -31,13 +31,11 @@ Currently supported distributions are:
 
 - Tumbleweed
 
-- Leap 42.x
-
 - Leap 15.x
 
-- SLE 12-SP3+
+- SLE 12-SP4+
 
-- SLE 15
+- SLE 15.x
 
 Usage
 -----

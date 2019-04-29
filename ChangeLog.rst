@@ -1,6 +1,12 @@
 ChangeLog
 #########
 
+0.30.0
+======
+
+- Move to python2/3 compactible code
+- remove python 2.6 compactibility quirks
+
 0.24.2
 ======
 
