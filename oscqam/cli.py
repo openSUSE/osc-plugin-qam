@@ -31,6 +31,13 @@ class NoCommentsError(ReportedError):
     def __init__(self):
         super(NoCommentsError, self).__init__('No comments were found.')
 
+class MissingReviewIDError(ReportedError):
+    def __init__(self):
+        super(MissingReviewIDError, self).__init__('Missing ReviewID')
+
+class MissingCommentError(ReportedError):
+    def __init__(self):
+        super(MissingCommentError, self).__init__('Missing comment')
 
 class InvalidCommentIdError(ReportedError):
     def __init__(self, id, comments):
@@ -93,14 +100,17 @@ class QamInterpreter(cmdln.Cmdln):
                   '--group',
                   help='Group to *directly* approve for this request.'
                   'Only for groups that do not need reviews')
-    def do_approve(self, subcmd, opts, request_id):
+    def do_approve(self, subcmd, opts, *args):
         """${cmd_name}: Approve the request for the user.
 
         ${cmd_usage}
         ${cmd_option_list}
         """
         self._set_required_params(opts)
-        self.request_id = request_id
+        if not args:
+            raise MissingReviewIDError
+        self.request_id = args[0]
+
         if opts.group:
             if self.yes_no(
                 "This can *NOT* be used to accept a specific group "
@@ -130,7 +140,7 @@ class QamInterpreter(cmdln.Cmdln):
                   action='store_true',
                   default=False,
                   help='Will not check if a template exists.')
-    def do_assign(self, subcmd, opts, request_id):
+    def do_assign(self, subcmd, opts, *args):
         """${cmd_name}: Assign the request to the user.
 
         The command either uses the user that runs the osc command or the user
@@ -144,7 +154,9 @@ class QamInterpreter(cmdln.Cmdln):
         ${cmd_option_list}
         """
         self._set_required_params(opts)
-        self.request_id = request_id
+        if not args:
+            raise MissingReviewIDError
+        self.request_id = args[0]
         group = opts.group if opts.group else None
         template_required = False if opts.skip_template else True
         action = AssignAction(self.api, self.affected_user, self.request_id,
@@ -328,14 +340,19 @@ class QamInterpreter(cmdln.Cmdln):
                   default=False,
                   help='Display all available fields for a request: '
                   + all_columns_string + '.')
-    def do_info(self, subcmd, opts, request_id):
+    def do_info(self, subcmd, opts, *args):
         """${cmd_name}: Show information for the given request.
         """
+        if not args:
+            raise MissingReviewIDError
+        self.request_id = args[0]
+
         if opts.verbose and opts.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
+
         self._set_required_params(opts)
         fields = ReportFields.review_fields_by_opts(opts)
-        action = InfoAction(self.api, self.affected_user, request_id)
+        action = InfoAction(self.api, self.affected_user, self.request_id)
         keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
 
@@ -383,7 +400,7 @@ class QamInterpreter(cmdln.Cmdln):
                   action='append',
                   help='Reason the request was rejected: '
                   + all_reasons_string)
-    def do_reject(self, subcmd, opts, request_id):
+    def do_reject(self, subcmd, opts, *args):
         """${cmd_name}: Reject the request for the user.
 
         The command either uses the configured user or the user passed via
@@ -393,7 +410,11 @@ class QamInterpreter(cmdln.Cmdln):
         ${cmd_option_list}
         """
         self._set_required_params(opts)
-        self.request_id = request_id
+
+        if not args:
+            raise MissingReviewIDError
+        self.request_id = args[0]
+
         message = opts.message if opts.message else None
         reasons = (list(map(RejectReason.from_str, opts.reason) if opts.reason
                    else self.query_enum(RejectReason,
@@ -413,7 +434,7 @@ class QamInterpreter(cmdln.Cmdln):
                   action='append',
                   help='Groups to reassign to this request.'
                   'Pass multiple groups passing flag multiple times.')
-    def do_unassign(self, subcmd, opts, request_id):
+    def do_unassign(self, subcmd, opts, *args):
         """${cmd_name}: Unassign the request for the user.
 
         The command either uses the configured user or the user passed via
@@ -427,13 +448,17 @@ class QamInterpreter(cmdln.Cmdln):
         ${cmd_option_list}
         """
         self._set_required_params(opts)
-        self.request_id = request_id
+
+        if not args:
+            raise MissingReviewIDError
+        self.request_id = args[0]
+
         group = opts.group if opts.group else None
         action = UnassignAction(self.api, self.affected_user, self.request_id,
                                 group)
         action()
 
-    def do_comment(self, subcmd, opts, request_id, comment):
+    def do_comment(self, subcmd, opts, *args):
         """${cmd_name}: Add a comment to a request.
 
         The command will add a comment to the given request.
@@ -442,13 +467,20 @@ class QamInterpreter(cmdln.Cmdln):
         ${cmd_option_list}
         """
         self._set_required_params(opts)
-        self.request_id = request_id
+        if not args:
+            raise MissingReviewIDError
+        if len(args) < 2:
+            raise MissingCommentError
+
+        self.request_id = args[0]
+        comment = args[1]
+
         action = CommentAction(self.api, self.affected_user, self.request_id,
                                comment)
         action()
 
     @cmdln.alias('rmcomment')
-    def do_deletecomment(self, subcmd, opts, request_id):
+    def do_deletecomment(self, subcmd, opts, *args):
         """${cmd_name}: Remove a comment for the given request.
 
         The command will list all available comments of the request to allow
@@ -457,8 +489,13 @@ class QamInterpreter(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if not args:
+            raise MissingReviewIDError
+
         self._set_required_params(opts)
-        request = self.api.requests.by_id(request_id)
+
+        request = self.api.requests.by_id(args[0])
+
         if not request.comments:
             raise NoCommentsError()
         print("CommentID: Message")
