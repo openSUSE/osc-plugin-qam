@@ -67,6 +67,8 @@ class TemplateParser(object):
         if PY3:
             if isinstance(log, bytes):
                 self.log = log.decode()
+            else:
+                self.log = log
         else:
             self.log = log
         return self._parse_headers(self._read_headers())
