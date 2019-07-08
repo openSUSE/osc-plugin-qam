@@ -672,15 +672,15 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     def _build_reject_attribute(self, reasons):
         reject_reason = self.attribute(Attribute.reject_reason)
-        reason_values = map(lambda reason: "{0}:{1}".format(self.reqid,
+        reason_values = list(map(lambda reason: "{0}:{1}".format(self.reqid,
                                                             reason.flag),
-                            reasons)
+                            reasons))
         if not reject_reason:
             reject_reason = Attribute.preset(self.remote,
                                              Attribute.reject_reason,
                                              *reason_values)
         else:
-            map(lambda r: reject_reason.value.append(r), reason_values)
+            list(map(lambda r: reject_reason.value.append(r), reason_values))
         return reject_reason
 
     def review_reopen(self, user = None, group = None, comment = None):
