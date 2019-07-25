@@ -1,0 +1,35 @@
+image: opensuse/leap:latest
+
+stages:
+  - deploy
+
+.publish_template: &publish_template
+  stage: deploy
+  before_script:
+    - zypper in --no-confirm python-xml python-packaging osc obs-service-tar_scm obs-service-recompress obs-service-set_version
+    - mv "$SUSE_CA" /etc/pki/trust/anchors/SUSE_Trust_Root.pem && update-ca-certificates
+    - mkdir -p /root/.config/osc && mv "$OSC_RC" /root/.config/osc/oscrc
+  script:
+    - cd $CI_PROJECT_DIR
+    - osc co $OSC_PROJECT python-oscqam
+    - cd $OSC_PROJECT/python-oscqam
+    - rm -f *.tar.xz
+    - osc service disabledrun
+    - osc ar
+    - osc ci -m "Automatic update to $CI_COMMIT_SHORT_SHA"
+
+publish_devel:
+  <<: *publish_template
+  variables:
+    OSC_PROJECT: QA:Maintenance:Test
+  only:
+    - master@qa-maintenance/python-oscqam
+
+publish:
+  <<: *publish_template
+  variables:
+    OSC_PROJECT: QA:Maintenance
+  only:
+    - tags@qa-maintenance/python-oscqam
+  except:
+    - branches
