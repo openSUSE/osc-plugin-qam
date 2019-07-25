@@ -105,7 +105,7 @@ class Attribute(XmlFactoryMixin):
         super(Attribute, self).__init__(remote, attributes, children)
         # We expect the value to be a sequence type even if there is only
         # one reasons specified.
-        if not isinstance(self.value, list):
+        if not isinstance(self.value, (list, tuple)):
             self.value = [self.value]
 
     @classmethod
