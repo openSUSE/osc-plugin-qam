@@ -3,28 +3,25 @@ everything in a consistent state.
 
 """
 import abc
-from dateutil import parser
 import logging
 import re
 from xml.etree import cElementTree as ET
+
+from dateutil import parser
 import osc.core
 import osc.oscerr
 
-from .errors import (NoQamReviewsError,
-                     NonMatchingUserGroupsError,
-                     MissingSourceProjectError,
-                     TestPlanReviewerNotSetError,
-                     TestResultMismatchError,
-                     TemplateNotFoundError)
+from .compat import PY3
+from .errors import (MissingSourceProjectError, NonMatchingUserGroupsError,
+                     NoQamReviewsError, TemplateNotFoundError,
+                     TestPlanReviewerNotSetError, TestResultMismatchError)
 from .parsers import TemplateParser
 from .utils import https
-from .compat import PY3
 
 if PY3:
     from urllib.parse import urlencode
 else:
     from urllib import urlencode
-
 
 
 class XmlFactoryMixin(object):
@@ -36,6 +33,7 @@ class XmlFactoryMixin(object):
     Otherwise it will parse the children into another node and set the property
     to a list of these new parsed nodes.
     """
+
     def __init__(self, remote, attributes, children):
         """Will set every element in kwargs to a property of the class.
         """
@@ -53,7 +51,7 @@ class XmlFactoryMixin(object):
             dictionary[key] = [value]
 
     @classmethod
-    def parse_et(cls, remote, et, tag, wrapper_cls = None):
+    def parse_et(cls, remote, et, tag, wrapper_cls=None):
         """Recursively parses an element-tree instance.
 
         Will iterate over the tag as root-level.
@@ -87,7 +85,7 @@ class XmlFactoryMixin(object):
                 else:
                     kwargs[key] = value
             if request.text:
-                kwargs['text'] = request.text
+                kwargs["text"] = request.text
             kwargs.update(attribs)
             objects.append(wrapper_cls(remote, attribs, kwargs))
         return objects
@@ -105,12 +103,12 @@ class Attribute(XmlFactoryMixin):
         super(Attribute, self).__init__(remote, attributes, children)
         # We expect the value to be a sequence type even if there is only
         # one reasons specified.
-        if not isinstance(self.value, list):
+        if not isinstance(self.value, (list, tuple)):
             self.value = [self.value]
 
     @classmethod
     def parse(cls, remote, xml):
-        return super(Attribute, cls).parse(remote, xml, 'attribute')
+        return super(Attribute, cls).parse(remote, xml, "attribute")
 
     @classmethod
     def preset(cls, remote, preset, *value):
@@ -119,24 +117,26 @@ class Attribute(XmlFactoryMixin):
         Default attributes are stored as class-variables on this class.
         """
         namespace, name = preset.split(":")
-        return Attribute(remote,
-                         {'namespace': namespace, 'name': name},
-                         {'value': value})
+        return Attribute(
+            remote, {"namespace": namespace, "name": name}, {"value": value}
+        )
 
     def __eq__(self, other):
         if not isinstance(other, Attribute):
             return False
-        return (self.namespace == other.namespace and
-                self.name == other.name and
-                self.value == other.value)
+        return (
+            self.namespace == other.namespace
+            and self.name == other.name
+            and self.value == other.value
+        )
 
     def xml(self):
         """Turn this attribute into XML."""
-        root = ET.Element('attribute')
-        root.set('name', self.name)
-        root.set('namespace', self.namespace)
+        root = ET.Element("attribute")
+        root.set("name", self.name)
+        root.set("namespace", self.namespace)
         for val in self.value:
-            value = ET.SubElement(root, 'value')
+            value = ET.SubElement(root, "value")
             value.text = val
         return ET.tostring(root)
 
@@ -144,6 +144,7 @@ class Attribute(XmlFactoryMixin):
 class Reviewer(object):
     """Superclass for possible reviewer-classes.
     """
+
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -158,6 +159,7 @@ class Reviewer(object):
 
 class GroupFilter(object):
     """Methods that allow filtering on groups."""
+
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -167,7 +169,7 @@ class GroupFilter(object):
     @classmethod
     def for_remote(cls, remote):
         """Return the correct Filter for the given remote."""
-        if 'opensuse' in remote.remote:
+        if "opensuse" in remote.remote:
             return OBSGroupFilter()
         else:
             return IBSGroupFilter()
@@ -175,17 +177,18 @@ class GroupFilter(object):
 
 class OBSGroupFilter(GroupFilter):
     """Methods that allow filtering on groups from OBS."""
+
     def is_qam_group(self, group):
-        return group.name.startswith('qa-opensuse.org')
+        return group.name.startswith("qa-opensuse.org")
 
 
 class IBSGroupFilter(GroupFilter):
-    IGNORED_GROUPS = ['qam-auto', 'qam-openqa']
+    IGNORED_GROUPS = ["qam-auto", "qam-openqa"]
 
     """Methods that allow filtering on groups from IBS."""
+
     def is_qam_group(self, group):
-        return (group.name.startswith('qam') and
-                group.name not in self.IGNORED_GROUPS)
+        return group.name.startswith("qam") and group.name not in self.IGNORED_GROUPS
 
 
 class Group(XmlFactoryMixin, Reviewer):
@@ -196,19 +199,19 @@ class Group(XmlFactoryMixin, Reviewer):
         super(Group, self).__init__(remote, attributes, children)
         self.remote = remote
         self.filter = GroupFilter.for_remote(remote)
-        if 'title' in children:
+        if "title" in children:
             # We set name to title to ensure equality.  This allows us to
             # prevent having to query *all* groups we need via this method,
             # which could use very many requests.
-            self.name = children['title']
+            self.name = children["title"]
 
     @classmethod
     def parse(cls, remote, xml):
-        return super(Group, cls).parse(remote, xml, 'group')
+        return super(Group, cls).parse(remote, xml, "group")
 
     @classmethod
     def parse_entry(cls, remote, xml):
-        return super(Group, cls).parse(remote, xml, 'entry')
+        return super(Group, cls).parse(remote, xml, "entry")
 
     def is_qam_group(self):
         # 'qam-auto' is already used to designate automated reviews:
@@ -230,7 +233,7 @@ class Group(XmlFactoryMixin, Reviewer):
         if PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode('utf-8')
+            return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
         return u"{0}".format(self.name)
@@ -240,6 +243,7 @@ class User(XmlFactoryMixin, Reviewer):
     """Wraps a user of the obs in an object.
 
     """
+
     def __init__(self, remote, attributes, children):
         super(User, self).__init__(remote, attributes, children)
         self.remote = remote
@@ -258,8 +262,7 @@ class User(XmlFactoryMixin, Reviewer):
     @property
     def qam_groups(self):
         """Return only the groups that are part of the qam-workflow."""
-        return [group for group in self.groups
-                if group.is_qam_group()]
+        return [group for group in self.groups if group.is_qam_group()]
 
     def reviewable_groups(self, request):
         """Return groups the user could review for the given request.
@@ -270,18 +273,22 @@ class User(XmlFactoryMixin, Reviewer):
         :returns: set(:class:`oscqam.models.Group`)
         """
         user_groups = set(self.qam_groups)
-        reviews = [review for review in request.review_list() if
-                   (isinstance(review, GroupReview) and review.open
-                    and review.reviewer.is_qam_group())]
+        reviews = [
+            review
+            for review in request.review_list()
+            if (
+                isinstance(review, GroupReview)
+                and review.open
+                and review.reviewer.is_qam_group()
+            )
+        ]
         if not reviews:
             raise NoQamReviewsError(reviews)
         review_groups = [review.reviewer for review in reviews]
         open_groups = set(review_groups)
         both = user_groups.intersection(open_groups)
         if not both:
-            raise NonMatchingUserGroupsError(self,
-                                             user_groups,
-                                             open_groups)
+            raise NonMatchingUserGroupsError(self, user_groups, open_groups)
         return both
 
     def in_review_groups(self, request):
@@ -306,7 +313,7 @@ class User(XmlFactoryMixin, Reviewer):
         if PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode('utf-8')
+            return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
         return u"{0} ({1})".format(self.realname, self.email)
@@ -320,8 +327,9 @@ class Review(object):
     """Base class for buildservice-review objects.
 
     """
-    OPEN_STATES = ('new', 'review')
-    CLOSED_STATES = ('accepted',)
+
+    OPEN_STATES = ("new", "review")
+    CLOSED_STATES = ("accepted",)
 
     def __init__(self, remote, review, reviewer):
         self._review = review
@@ -335,10 +343,10 @@ class Review(object):
         if PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode('utf-8')
+            return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
-        return u'Review: {0} ({1})'.format(self.reviewer, self.state)
+        return u"Review: {0} ({1})".format(self.reviewer, self.state)
 
 
 class GroupReview(Review):
@@ -361,6 +369,7 @@ class Assignment(object):
     assignments.
 
     """
+
     ASSIGNED_DESC = "Review got assigned"
     ACCEPTED_DESC = "Review got accepted"
     REOPENED_DESC = "Review got reopened"
@@ -373,8 +382,7 @@ class Assignment(object):
         return hash(self.user) + hash(self.group)
 
     def __eq__(self, other):
-        return (self.user == other.user and
-                self.group == other.group)
+        return self.user == other.user and self.group == other.group
 
     def __repr__(self):
         return str(self)
@@ -383,7 +391,7 @@ class Assignment(object):
         if PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode('utf-8')
+            return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
         return u"{1} -> {0}".format(self.user, self.group)
@@ -397,32 +405,26 @@ class Assignment(object):
             """
             events = review_state.statehistory
             relevant_events = filter(
-                lambda e: e.get_description() in [cls.ASSIGNED_DESC,
-                                                  cls.ACCEPTED_DESC,
-                                                  cls.REOPENED_DESC],
-                events
+                lambda e: e.get_description()
+                in [cls.ASSIGNED_DESC, cls.ACCEPTED_DESC, cls.REOPENED_DESC],
+                events,
             )
-            return sorted(relevant_events,
-                          key=lambda e: parser.parse(e.when))
+            return sorted(relevant_events, key=lambda e: parser.parse(e.when))
+
         group = group_review.reviewer
-        review_state = [r for r in request.reviews
-                        if r.by_group == group.name][0]
+        review_state = [r for r in request.reviews if r.by_group == group.name][0]
         events = get_history(review_state)
         assignments = set()
         for event in events:
             user = remote.users.by_name(event.who)
             if event.get_description() == cls.ACCEPTED_DESC:
-                logging.debug("Assignment for: {g} -> {u}".format(g=group,
-                                                                  u=user))
+                logging.debug("Assignment for: {g} -> {u}".format(g=group, u=user))
                 assignments.add(Assignment(user, group))
             elif event.get_description() == cls.REOPENED_DESC:
-                logging.debug("Unassignment for: {g} -> {u}".format(g=group,
-                                                                    u=user))
+                logging.debug("Unassignment for: {g} -> {u}".format(g=group, u=user))
                 assignments.remove(Assignment(user, group))
             else:
-                logging.debug("Unknown event: {e}".format(
-                    e=event.get_description())
-                )
+                logging.debug("Unknown event: {e}".format(e=event.get_description()))
         return assignments
 
     @classmethod
@@ -440,14 +442,25 @@ class Assignment(object):
         :returns: [:class:`oscqam.models.Assignment`]
 
         """
-        assigned_groups = [g for g in request.review_list()
-                           if isinstance(g, GroupReview) and g.state == 'accepted'
-                           and g.reviewer.is_qam_group()]
-        unassigned_groups = [g for g in request.review_list()
-                             if isinstance(g, GroupReview) and g.state == 'new'
-                             and g.reviewer.is_qam_group()]
-        finished_user = [u for u in request.review_list()
-                         if isinstance(u, UserReview) and u.state == 'accepted']
+        assigned_groups = [
+            g
+            for g in request.review_list()
+            if isinstance(g, GroupReview)
+            and g.state == "accepted"
+            and g.reviewer.is_qam_group()
+        ]
+        unassigned_groups = [
+            g
+            for g in request.review_list()
+            if isinstance(g, GroupReview)
+            and g.state == "new"
+            and g.reviewer.is_qam_group()
+        ]
+        finished_user = [
+            u
+            for u in request.review_list()
+            if isinstance(u, UserReview) and u.state == "accepted"
+        ]
         assignments = set()
         for group_review in set(assigned_groups) | set(unassigned_groups):
             assignments.update(cls.infer_group(remote, request, group_review))
@@ -455,20 +468,18 @@ class Assignment(object):
             removal = [a for a in assignments if a.user == user_review.reviewer]
             if removal:
                 logging.debug(
-                    "Removing assignments {r} as they are finished".format(
-                        r=removal
-                    ))
+                    "Removing assignments {r} as they are finished".format(r=removal)
+                )
                 for r in removal:
                     assignments.remove(r)
         if not assignments:
-            logging.debug(
-                "No assignments could be found for {0}".format(request)
-            )
+            logging.debug("No assignments could be found for {0}".format(request))
         return list(assignments)
 
 
 class RequestFilter(object):
     """Methods that allow filtering on requests."""
+
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -478,7 +489,7 @@ class RequestFilter(object):
     @classmethod
     def for_remote(cls, remote):
         """Return the correct Filter for the given remote."""
-        if 'opensuse' in remote.remote:
+        if "opensuse" in remote.remote:
             return OBSRequestFilter()
         else:
             return IBSRequestFilter()
@@ -502,16 +513,15 @@ class Request(osc.core.Request, XmlFactoryMixin):
     """Wrapper around osc request object to add logic required by the
     qam-plugin.
     """
-    STATE_NEW = 'new'
-    STATE_REVIEW = 'review'
-    STATE_DECLINED = 'declined'
+
+    STATE_NEW = "new"
+    STATE_REVIEW = "review"
+    STATE_DECLINED = "declined"
     OPEN_STATES = [STATE_NEW, STATE_REVIEW]
-    REVIEW_USER = 'BY_USER'
-    REVIEW_GROUP = 'BY_GROUP'
-    REVIEW_OTHER = 'BY_OTHER'
-    COMPLETE_REQUEST_ID_SRE = re.compile(
-        r"(open)?SUSE:Maintenance:\d+:(?P<req>\d+)"
-    )
+    REVIEW_USER = "BY_USER"
+    REVIEW_GROUP = "BY_GROUP"
+    REVIEW_OTHER = "BY_OTHER"
+    COMPLETE_REQUEST_ID_SRE = re.compile(r"(open)?SUSE:Maintenance:\d+:(?P<req>\d+)")
 
     def __init__(self, remote):
         self.remote = remote
@@ -526,7 +536,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self._issues = []
 
     def active(self):
-        return self.state == 'new' or self.state == 'review'
+        return self.state == "new" or self.state == "review"
 
     @property
     def incident_priority(self):
@@ -543,8 +553,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     @property
     def comments(self):
         if not self._comments:
-            self._comments = (self.remote.comments.for_request(self) or
-                              [Comment.none])
+            self._comments = self.remote.comments.for_request(self) or [Comment.none]
         return self._comments
 
     @property
@@ -568,8 +577,11 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def groups(self):
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
-        return [review.reviewer for review in self.review_list()
-                if isinstance(review, GroupReview)]
+        return [
+            review.reviewer
+            for review in self.review_list()
+            if isinstance(review, GroupReview)
+        ]
 
     @property
     def packages(self):
@@ -591,14 +603,14 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
         """
         for action in self.actions:
-            if hasattr(action, 'src_project'):
+            if hasattr(action, "src_project"):
                 prj = action.src_project
                 if prj:
                     return prj
                 else:
                     logging.info("This project has no source project: %s", self.reqid)
-                    return ''
-        return ''
+                    return ""
+        return ""
 
     def attribute(self, attribute):
         """Load the specified attribute for this request.
@@ -607,47 +619,42 @@ class Request(osc.core.Request, XmlFactoryMixin):
         loaded from the corresponding source-project.
         """
         if attribute not in self._attributes:
-            attributes = self.remote.projects.get_attribute(
-                self.src_project, attribute
-            )
+            attributes = self.remote.projects.get_attribute(self.src_project, attribute)
             if len(attributes) == 1:
                 attributes = attributes[0]
             self._attributes[attribute] = attributes
         return self._attributes[attribute]
 
-    def review_action(self, params, user = None, group = None, comment = None):
+    def review_action(self, params, user=None, group=None, comment=None):
         if not user and not group:
             raise AttributeError("group or user required for this action.")
         if user:
-            params['by_user'] = user.login
+            params["by_user"] = user.login
         if group:
-            params['by_group'] = group.name
+            params["by_group"] = group.name
         url_params = urlencode(params)
         url = "/".join([self.remote.requests.endpoint, self.reqid])
         url += "?" + url_params
         self.remote.post(url, comment)
 
-    def review_assign(self, group, reviewer, comment = None):
-        params = {'cmd': 'assignreview',
-                  'reviewer': reviewer.login}
-        self.review_action(params, group = group, comment = comment)
+    def review_assign(self, group, reviewer, comment=None):
+        params = {"cmd": "assignreview", "reviewer": reviewer.login}
+        self.review_action(params, group=group, comment=comment)
 
-    def review_accept(self, user = None, group = None, comment = None):
+    def review_accept(self, user=None, group=None, comment=None):
         comment = self._format_review_comment(comment)
-        params = {'cmd': 'changereviewstate',
-                  'newstate': 'accepted'}
+        params = {"cmd": "changereviewstate", "newstate": "accepted"}
         self.review_action(params, user, group, comment)
 
-    def review_add(self, user = None, group = None, comment = None):
+    def review_add(self, user=None, group=None, comment=None):
         """Will add a new reviewrequest for the given user or group.
 
         """
         comment = self._format_review_comment(comment)
-        params = {'cmd': 'addreview'}
+        params = {"cmd": "addreview"}
         self.review_action(params, user, group, comment)
 
-    def review_decline(self, user = None, group = None, comment = None,
-                       reasons = None):
+    def review_decline(self, user=None, group=None, comment=None, reasons=None):
         """Will decline the reviewrequest for the given user or group.
 
         :param user: The user declining the request.
@@ -666,35 +673,34 @@ class Request(osc.core.Request, XmlFactoryMixin):
             reason = self._build_reject_attribute(reasons)
             self.remote.projects.set_attribute(self.src_project, reason)
         comment = self._format_review_comment(comment)
-        params = {'cmd': 'changereviewstate',
-                  'newstate': 'declined'}
+        params = {"cmd": "changereviewstate", "newstate": "declined"}
         self.review_action(params, user, group, comment)
 
     def _build_reject_attribute(self, reasons):
         reject_reason = self.attribute(Attribute.reject_reason)
-        reason_values = list(map(lambda reason: "{0}:{1}".format(self.reqid,
-                                                            reason.flag),
-                            reasons))
+        reason_values = list(
+            map(lambda reason: "{0}:{1}".format(self.reqid, reason.flag), reasons)
+        )
         if not reject_reason:
-            reject_reason = Attribute.preset(self.remote,
-                                             Attribute.reject_reason,
-                                             *reason_values)
+            reject_reason = Attribute.preset(
+                self.remote, Attribute.reject_reason, *reason_values
+            )
         else:
-            list(map(lambda r: reject_reason.value.append(r), reason_values))
+            for r in reason_values:
+                reject_reason.value.append(r)
         return reject_reason
 
-    def review_reopen(self, user = None, group = None, comment = None):
+    def review_reopen(self, user=None, group=None, comment=None):
         """Will reopen a reviewrequest for the given user or group.
 
         """
-        params = {'cmd': 'changereviewstate',
-                  'newstate': 'new'}
+        params = {"cmd": "changereviewstate", "newstate": "new"}
         self.review_action(params, user, group, comment)
 
     def _format_review_comment(self, comment):
         if not comment:
             return None
-        return "[oscqam] {comment}".format(comment = comment)
+        return "[oscqam] {comment}".format(comment=comment)
 
     def review_list(self):
         """Returns all reviews as a list.
@@ -710,17 +716,15 @@ class Request(osc.core.Request, XmlFactoryMixin):
     def review_list_open(self):
         """Return only open reviews.
         """
-        return [r for r in self.review_list() if r.state in
-                Request.OPEN_STATES]
+        return [r for r in self.review_list() if r.state in Request.OPEN_STATES]
 
     def review_list_accepted(self):
-        return [r for r in self.review_list()
-                if r.state.lower() == 'accepted']
+        return [r for r in self.review_list() if r.state.lower() == "accepted"]
 
     def add_comment(self, comment):
         """Adds a comment to this request.
         """
-        endpoint = '/comments/request/{id}'.format(id = self.reqid)
+        endpoint = "/comments/request/{id}".format(id=self.reqid)
         self.remote.post(endpoint, comment)
 
     def get_template(self, template_factory):
@@ -750,14 +754,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
             except osc.oscerr.WrongArgs as e:
                 # Temporary workaround, as OBS >= 2.7 can return requests with
                 # acceptinfo-elements that old osc can not handle.
-                if not (osc.core.get_osc_version() < '0.152'):
+                if not (osc.core.get_osc_version() < "0.152"):
                     raise
-                if 'acceptinfo' not in str(e):
+                if "acceptinfo" not in str(e):
                     raise
                 else:
-                    logging.error(
-                        "Server version too high for osc-client: %s" % str(e)
-                    )
+                    logging.error("Server version too high for osc-client: %s" % str(e))
                     pass
         return requests
 
@@ -772,14 +774,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
         """
         reqid = cls.COMPLETE_REQUEST_ID_SRE.match(request_id)
         if reqid:
-            return reqid.group('req')
+            return reqid.group("req")
         return request_id
 
     def __eq__(self, other):
         project = self.actions[0].src_project
         other_project = other.actions[0].src_project
-        return (self.reqid == other.reqid and
-                project == other_project)
+        return self.reqid == other.reqid and project == other_project
 
     def __hash__(self):
         hash_parts = [self.reqid]
@@ -792,7 +793,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode('utf-8')
+            return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
         return u"{0}".format(self.reqid)
@@ -801,6 +802,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
 class NullComment(object):
     """Null-Object for comments.
     """
+
     def __init__(self):
         self.id = None
         self.text = None
@@ -809,7 +811,7 @@ class NullComment(object):
         if PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode('utf-8')
+            return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
         return u""
@@ -823,13 +825,13 @@ class Comment(XmlFactoryMixin):
 
     @classmethod
     def parse(cls, remote, xml):
-        return super(Comment, cls).parse(remote, xml, 'comment')
+        return super(Comment, cls).parse(remote, xml, "comment")
 
     def __str__(self):
         if PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode('utf-8')
+            return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
         return u"{0}: {1}".format(self.id, self.text)
@@ -841,6 +843,7 @@ class Template(object):
 
     ``https://qam.suse.de/testreports/``
     """
+
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
     STATUS_UNKNOWN = 2
@@ -861,8 +864,7 @@ class Template(object):
             raise TemplateNotFoundError(log_path)
         return report.read()
 
-    def __init__(self, request, tr_getter = get_testreport_web,
-                 parser = TemplateParser()):
+    def __init__(self, request, tr_getter=get_testreport_web, parser=TemplateParser()):
         """Create a template from the given request.
 
         :param request: The request the template is associated with.
@@ -890,10 +892,7 @@ class Template(object):
 
         """
         if self.status != Template.STATUS_FAILURE:
-            raise TestResultMismatchError(
-                'FAILED',
-                self._log_path
-            )
+            raise TestResultMismatchError("FAILED", self._log_path)
 
     def passed(self):
         """Assert that this template is from a successful test.
@@ -902,10 +901,7 @@ class Template(object):
             not set to PASSED.
         """
         if self.status != Template.STATUS_SUCCESS:
-            raise TestResultMismatchError(
-                'PASSED',
-                self._log_path
-            )
+            raise TestResultMismatchError("PASSED", self._log_path)
 
     def testplanreviewer(self):
         """Assert that the Test Plan Reviewer for the template is set.
@@ -913,8 +909,8 @@ class Template(object):
         :raises: :class:`oscqam.models.TestPlanReviewerNotSetError` if reviewer
             is not set or empty.
         """
-        reviewer = self.log_entries.get('Test Plan Reviewer', '')
-        reviewer = self.log_entries.get('Test Plan Reviewers', reviewer)
+        reviewer = self.log_entries.get("Test Plan Reviewer", "")
+        reviewer = self.log_entries.get("Test Plan Reviewers", reviewer)
         reviewer = reviewer.strip()
         if reviewer:
             return reviewer
@@ -922,7 +918,7 @@ class Template(object):
 
     @property
     def status(self):
-        summary = self.log_entries['SUMMARY']
+        summary = self.log_entries["SUMMARY"]
         if summary.upper() == "PASSED":
             return Template.STATUS_SUCCESS
         elif summary.upper() == "FAILED":
@@ -931,9 +927,7 @@ class Template(object):
 
     def url(self):
         return "{base}{prj}:{reqid}/log".format(
-            base = self.base_url,
-            prj = self._request.src_project,
-            reqid = self._request.reqid
+            base=self.base_url, prj=self._request.src_project, reqid=self._request.reqid
         )
 
 
@@ -942,7 +936,7 @@ class Bug(XmlFactoryMixin):
         if PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode('utf-8')
+            return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
         return u"{0}:{1}".format(self.tracker, self.id)
@@ -951,12 +945,14 @@ class Bug(XmlFactoryMixin):
 def monkeypatch():
     """Monkey patch retaining of history into the review class.
     """
+
     def monkey_patched_init(obj, review_node):
         # logging.debug("Monkeypatched init")
         original_init(obj, review_node)
         obj.statehistory = []
-        for hist_state in review_node.findall('history'):
+        for hist_state in review_node.findall("history"):
             obj.statehistory.append(osc.core.RequestHistory(hist_state))
+
     # logging.warn("Careful - your osc-version requires monkey patching.")
     original_init = osc.core.ReviewState.__init__
     osc.core.ReviewState.__init__ = monkey_patched_init
