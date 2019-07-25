@@ -1,5 +1,8 @@
 image: opensuse/leap:latest
 
+variables:
+  OSC_PACKAGE: python-oscqam
+
 stages:
   - deploy
 
@@ -11,8 +14,8 @@ stages:
     - mkdir -p /root/.config/osc && mv "$OSC_RC" /root/.config/osc/oscrc
   script:
     - cd $CI_PROJECT_DIR
-    - osc co $OSC_PROJECT python-oscqam
-    - cd $OSC_PROJECT/python-oscqam
+    - osc co $OSC_PROJECT $OSC_PACKAGE
+    - cd $OSC_PROJECT/$OSC_PACKAGE
     - rm -f *.tar.xz
     - osc service disabledrun
     - osc ar
@@ -23,13 +26,13 @@ publish_devel:
   variables:
     OSC_PROJECT: QA:Maintenance:Test
   only:
-    - master@qa-maintenance/python-oscqam
+    - master@qa-maintenance/qam-oscplugin
 
 publish:
   <<: *publish_template
   variables:
     OSC_PROJECT: QA:Maintenance
   only:
-    - tags@qa-maintenance/python-oscqam
+    - tags@qa-maintenance/qam-oscplugin
   except:
     - branches
