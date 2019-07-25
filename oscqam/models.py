@@ -680,7 +680,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
                                              Attribute.reject_reason,
                                              *reason_values)
         else:
-            list(map(lambda r: reject_reason.value.append(r), reason_values))
+            for r in reason_values:
+                reject_reason.value.append(r)
         return reject_reason
 
     def review_reopen(self, user = None, group = None, comment = None):
