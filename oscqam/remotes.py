@@ -7,14 +7,9 @@ from .domains import Priority, UnknownPriority
 from .errors import ReportedError
 from .models import Attribute, Comment, Group, Request, User, RequestFilter, Bug
 from .utils import memoize
-from .compat import PY3
 
-if PY3:
-    from urllib.parse import urlencode
-    from urllib.error import HTTPError
-else:
-    from urllib import urlencode
-    from urllib2 import HTTPError
+from urllib.parse import urlencode
+from urllib.error import HTTPError
 
 
 class RemoteError(ReportedError):
@@ -29,14 +24,14 @@ class RemoteError(ReportedError):
         self.msg = msg
         self.headers = headers
         self.fp = fp
-        super(RemoteError, self).__init__(self._msg.format(
+        super().__init__(self._msg.format(
             url=self.url,
             ret_code=self.ret_code,
             msg=self.msg)
                                           )
 
 
-class RemoteFacade(object):
+class RemoteFacade:
     def __init__(self, remote):
         """Initialize a new RemoteOscRemote that points to the given remote.
         """
@@ -76,7 +71,7 @@ class RemoteFacade(object):
             params = urlencode(params)
             url = url + "?" + params
         try:
-            logging.debug("Retrieving: {0}".format(url))
+            logging.debug(f"Retrieving: {url}")
             remote = osc.core.http_GET(url)
         except HTTPError as e:
             raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
@@ -87,7 +82,7 @@ class RemoteFacade(object):
     def post(self, endpoint, data = None):
         url = '/'.join([self.remote, endpoint])
         try:
-            logging.debug("Posting: {0}".format(url))
+            logging.debug(f"Posting: {url}")
             remote = osc.core.http_POST(url, data = data)
             self._check_for_error(remote)
             xml = remote.read()
@@ -96,7 +91,7 @@ class RemoteFacade(object):
             raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
 
 
-class RequestRemote(object):
+class RequestRemote():
     """Facade for retrieving Request objects from the buildservice API.
     """
     def __init__(self, remote):
@@ -198,7 +193,7 @@ class RequestRemote(object):
         return req[0]
 
 
-class GroupRemote(object):
+class GroupRemote:
     def __init__(self, remote):
         self.remote = remote
         self.endpoint = 'group'
@@ -236,7 +231,7 @@ class GroupRemote(object):
         return groups
 
 
-class UserRemote(object):
+class UserRemote:
     def __init__(self, remote):
         self.remote = remote
         self.endpoint = 'person'
@@ -250,7 +245,7 @@ class UserRemote(object):
         raise AttributeError("User not found.")
 
 
-class CommentRemote(object):
+class CommentRemote:
     endpoint = 'comments'
     delete_endpoint = 'comment'
 
@@ -267,7 +262,7 @@ class CommentRemote(object):
         self.remote.delete(endpoint)
 
 
-class ProjectRemote(object):
+class ProjectRemote:
     create_body = """<attributes>
     {attribute}
     </attributes>
@@ -297,7 +292,7 @@ class ProjectRemote(object):
                          self.create_body.format(attribute = attribute.xml()))
 
 
-class PriorityRemote(object):
+class PriorityRemote:
     """Get priority information for a request (if available)."""
     endpoint = "/source/{0}/_attribute/OBS:IncidentPriority"
 
@@ -321,7 +316,7 @@ class PriorityRemote(object):
         return self._priority(request)
 
 
-class BugRemote(object):
+class BugRemote:
     """Get bug information for a request.
 
     This loads the patchinfo-file and parses it."""

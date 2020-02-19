@@ -11,7 +11,7 @@ setup(
     'maintenance department when using the new request / review osc ' +
     'abstractions.',
     long_description=open("README.rst").read(),
-    url='https://wiki.innerweb.novell.com/index.php/RD-OPS_QA/Maintenance/osc-for-qam',
+    url='https://gitlab.suse.de/qa-maintenance/qam-oscplugin',
     install_requires=['osc', 'python-dateutil', 'PrettyTable'],
     packages=['oscqam'],
 )

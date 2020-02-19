@@ -1,4 +1,3 @@
-from __future__ import print_function
 from oscqam import strict_version
 import logging
 import sys
@@ -18,10 +17,7 @@ from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
 from oscqam.remotes import RemoteFacade
 from oscqam.reject_reasons import RejectReason
-from oscqam.compat import PY3
 
-if PY3:
-    raw_input = input
 
 class ConflictingOptions(ReportedError):
     pass
@@ -63,8 +59,8 @@ class QamInterpreter(cmdln.Cmdln):
         self.parent_cmdln = parent_cmdln
 
     name = 'osc qam'
-    all_columns_string = ", ".join([str(f) for f in ReportFields.all_fields])
-    all_reasons_string = ", ".join([r.flag for r in RejectReason])
+    all_columns_string = ", ".join(str(f) for f in ReportFields.all_fields)
+    all_reasons_string = ", ".join(r.flag for r in RejectReason)
 
     def _set_required_params(self, opts):
         self.parent_cmdln.postoptparse()
@@ -88,7 +84,7 @@ class QamInterpreter(cmdln.Cmdln):
             default = 'n'
             prompt = '[y/N]'
         while True:
-            answer = raw_input(' '.join([question, prompt])).lower()
+            answer = input(' '.join([question, prompt])).lower()
             if not answer:
                 return valid[default]
             elif valid.get(answer, None) is not None:
@@ -356,7 +352,7 @@ class QamInterpreter(cmdln.Cmdln):
         keys = fields.fields(action)
         self._list_requests(action, opts.tabular, keys)
 
-    def query_enum(self, enum, id, desc):
+    def query_enum(self, enum, tid, desc):
         """Query the user to specify one specific option from an enum.
 
         The enum needs a method 'from_id' that returns the enum for
@@ -374,11 +370,11 @@ class QamInterpreter(cmdln.Cmdln):
         :returns: enum selected by the user.
 
         """
-        ids = [id(member) for member in enum]
+        ids = [tid(member) for member in enum]
         for member in enum:
             print("{0}. {1}".format(id(member), desc(member)))
         print("q. Quit")
-        user_input = raw_input("Please specify the options "
+        user_input = input("Please specify the options "
                                "(separate multiple values with ,): ")
         if user_input.lower() == 'q':
             return self.SUBQUERY_QUIT
@@ -502,7 +498,7 @@ class QamInterpreter(cmdln.Cmdln):
         print("------------------")
         for comment in request.comments:
             print("{0}: {1}".format(comment.id, comment.text))
-        comment_id = raw_input("Comment-Id to remove: ")
+        comment_id = input("Comment-Id to remove: ")
         if comment_id not in [c.id for c in request.comments]:
             raise InvalidCommentIdError(comment_id, request.comments)
         action = DeleteCommentAction(self.api, self.affected_user, comment_id)

@@ -5,26 +5,26 @@ everything in a consistent state.
 import abc
 import logging
 import re
+from urllib.parse import urlencode
 from xml.etree import cElementTree as ET
 
 from dateutil import parser
 import osc.core
 import osc.oscerr
 
-from .compat import PY3
-from .errors import (MissingSourceProjectError, NonMatchingUserGroupsError,
-                     NoQamReviewsError, TemplateNotFoundError,
-                     TestPlanReviewerNotSetError, TestResultMismatchError)
+from .errors import (
+    MissingSourceProjectError,
+    NonMatchingUserGroupsError,
+    NoQamReviewsError,
+    TemplateNotFoundError,
+    TestPlanReviewerNotSetError,
+    TestResultMismatchError,
+)
 from .parsers import TemplateParser
 from .utils import https
 
-if PY3:
-    from urllib.parse import urlencode
-else:
-    from urllib import urlencode
 
-
-class XmlFactoryMixin(object):
+class XmlFactoryMixin:
     """Can generate an object from xml by recursively parsing the structure.
 
     It will set properties to the text-property of a node if there are no
@@ -141,11 +141,9 @@ class Attribute(XmlFactoryMixin):
         return ET.tostring(root)
 
 
-class Reviewer(object):
+class Reviewer(metaclass=abc.ABCMeta):
     """Superclass for possible reviewer-classes.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def is_qam_group(self):
@@ -157,10 +155,8 @@ class Reviewer(object):
         pass
 
 
-class GroupFilter(object):
+class GroupFilter(metaclass=abc.ABCMeta):
     """Methods that allow filtering on groups."""
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def is_qam_group(self):
@@ -230,10 +226,7 @@ class Group(XmlFactoryMixin, Reviewer):
         return self.name == other.name
 
     def __str__(self):
-        if PY3:
-            return self.__unicode__()
-        else:
-            return unicode(self).encode("utf-8")  # noqa: E0602
+        return self.__unicode__()
 
     def __unicode__(self):
         return u"{0}".format(self.name)
@@ -245,7 +238,7 @@ class User(XmlFactoryMixin, Reviewer):
     """
 
     def __init__(self, remote, attributes, children):
-        super(User, self).__init__(remote, attributes, children)
+        super().__init__(remote, attributes, children)
         self.remote = remote
         self._groups = None
 
@@ -310,10 +303,7 @@ class User(XmlFactoryMixin, Reviewer):
         return isinstance(other, User) and self.login == other.login
 
     def __str__(self):
-        if PY3:
-            return self.__unicode__()
-        else:
-            return unicode(self).encode("utf-8")  # noqa: E0602
+        return self.__unicode__()
 
     def __unicode__(self):
         return u"{0} ({1})".format(self.realname, self.email)
@@ -323,7 +313,7 @@ class User(XmlFactoryMixin, Reviewer):
         return super(User, cls).parse(remote, xml, remote.users.endpoint)
 
 
-class Review(object):
+class Review:
     """Base class for buildservice-review objects.
 
     """
@@ -340,28 +330,25 @@ class Review(object):
         self.closed = self.state in self.CLOSED_STATES
 
     def __str__(self):
-        if PY3:
-            return self.__unicode__()
-        else:
-            return unicode(self).encode("utf-8")  # noqa: E0602
+        return self.__unicode__()
 
     def __unicode__(self):
-        return u"Review: {0} ({1})".format(self.reviewer, self.state)
+        return "Review: {0} ({1})".format(self.reviewer, self.state)
 
 
 class GroupReview(Review):
     def __init__(self, remote, review):
         reviewer = remote.groups.for_name(review.by_group)
-        super(GroupReview, self).__init__(remote, review, reviewer)
+        super().__init__(remote, review, reviewer)
 
 
 class UserReview(Review):
     def __init__(self, remote, review):
         reviewer = remote.users.by_name(review.by_user)
-        super(UserReview, self).__init__(remote, review, reviewer)
+        super().__init__(remote, review, reviewer)
 
 
-class Assignment(object):
+class Assignment:
     """Associates a user with a group in the relation
     '<user> performs review for <group>'.
 
@@ -388,13 +375,10 @@ class Assignment(object):
         return str(self)
 
     def __str__(self):
-        if PY3:
-            return self.__unicode__()
-        else:
-            return unicode(self).encode("utf-8")  # noqa: E0602
+        return self.__unicode__()
 
     def __unicode__(self):
-        return u"{1} -> {0}".format(self.user, self.group)
+        return "{1} -> {0}".format(self.user, self.group)
 
     @classmethod
     def infer_group(cls, remote, request, group_review):
@@ -477,10 +461,8 @@ class Assignment(object):
         return list(assignments)
 
 
-class RequestFilter(object):
+class RequestFilter(metaclass=abc.ABCMeta):
     """Methods that allow filtering on requests."""
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def maintenance_requests(self, requests):
@@ -525,7 +507,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     def __init__(self, remote):
         self.remote = remote
-        super(Request, self).__init__()
+        super().__init__()
         self._comments = None
         self._groups = None
         self._packages = None
@@ -790,16 +772,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return sum(hashes)
 
     def __str__(self):
-        if PY3:
-            return self.__unicode__()
-        else:
-            return unicode(self).encode("utf-8")  # noqa: E0602
+        return self.__unicode__()
 
     def __unicode__(self):
         return u"{0}".format(self.reqid)
 
 
-class NullComment(object):
+class NullComment:
     """Null-Object for comments.
     """
 
@@ -828,16 +807,13 @@ class Comment(XmlFactoryMixin):
         return super(Comment, cls).parse(remote, xml, "comment")
 
     def __str__(self):
-        if PY3:
-            return self.__unicode__()
-        else:
-            return unicode(self).encode("utf-8")  # noqa: E0602
+        return self.__unicode__()
 
     def __unicode__(self):
         return u"{0}: {1}".format(self.id, self.text)
 
 
-class Template(object):
+class Template:
     """Facade to web-based templates.
     The templates can be found in:
 
@@ -933,10 +909,7 @@ class Template(object):
 
 class Bug(XmlFactoryMixin):
     def __str__(self):
-        if PY3:
-            return self.__unicode__()
-        else:
-            return unicode(self).encode("utf-8")  # noqa: E0602
+        return self.__unicode__()
 
     def __unicode__(self):
         return u"{0}:{1}".format(self.tracker, self.id)
