@@ -26,12 +26,13 @@ publish_devel:
   variables:
     OSC_PROJECT: QA:Maintenance:Test
   only:
-    - master@qa-maintenance/osc-plugin-qam
+    - master@qa-maintenance/qam-oscplugin
+
 publish:
   <<: *publish_template
   variables:
     OSC_PROJECT: QA:Maintenance
   only:
-    - tags@qa-maintenance/osc-plugin-qam
+    - tags@qa-maintenance/qam-oscplugin
   except:
     - branches
