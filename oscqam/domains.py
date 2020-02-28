@@ -1,28 +1,20 @@
-# -*- encoding: utf-8 -*-
 """Defines domain-objects that encapsulate state without logic.
 """
 from functools import total_ordering
-from .compat import PY3
 
 
 @total_ordering
-class Rating(object):
+class Rating:
     """Store a template's rating.
     """
-    mapping = {
-        'critical': 0,
-        'important': 1,
-        'moderate': 2,
-        'low': 3,
-        '': 4
-    }
+
+    mapping = {"critical": 0, "important": 1, "moderate": 2, "low": 3, "": 4}
 
     def __init__(self, rating):
         self.rating = rating
 
     def __lt__(self, other):
-        return (self.mapping.get(self.rating, 10) <
-                self.mapping.get(other.rating, 10))
+        return self.mapping.get(self.rating, 10) < self.mapping.get(other.rating, 10)
 
     def __eq__(self, other):
         return self.rating == other.rating
@@ -32,9 +24,10 @@ class Rating(object):
 
 
 @total_ordering
-class Priority(object):
+class Priority:
     """Store the priority of this request's associated incident.
     """
+
     def __init__(self, prio):
         self.priority = int(prio)
 
@@ -42,7 +35,7 @@ class Priority(object):
         return self.priority == other.priority
 
     def __lt__(self, other):
-        return (self.priority > other.priority)
+        return self.priority > other.priority
 
     def __str__(self):
         return "{0}".format(self.priority)
@@ -59,10 +52,7 @@ class UnknownPriority(Priority):
         return False
 
     def __str__(self):
-        if PY3:
-            return self.__unicode__()
-        else:
-            return unicode(self).encode('utf-8')
+        return self.__unicode__()
 
     def __unicode__(self):
         return u"{0}".format(self.priority)

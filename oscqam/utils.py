@@ -1,15 +1,11 @@
 
-from .compat import PY3
 import ssl
 from functools import wraps
+from urllib.error import HTTPError
+from urllib.request import urlopen
 
-if PY3:
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
-else:
-    from urllib2 import urlopen
-    from urllib2 import HTTPError
 
+# TODO: LRU cache ?
 def memoize(func):
     """Memoizes a function to reduce repetitive calling costs.
 
@@ -21,7 +17,7 @@ def memoize(func):
     def wrapped(*args, **kwargs):
         sorted_keys = sorted(kwargs.keys())
         arguments = (frozenset(args),
-                     frozenset([(k, kwargs[k]) for k in sorted_keys]))
+                     frozenset((k, kwargs[k]) for k in sorted_keys))
         if arguments in cache:
             return cache[arguments]
         result = func(*args, **kwargs)

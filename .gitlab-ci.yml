@@ -1,7 +1,7 @@
 image: opensuse/leap:latest
 
 variables:
-  OSC_PACKAGE: python-oscqam
+  OSC_PACKAGE: osc-plugin-qam 
 
 stages:
   - deploy

@@ -5,7 +5,6 @@ from itertools import takewhile, dropwhile
 import logging
 import re
 
-from .compat import PY3
 from .domains import Rating
 
 
@@ -64,11 +63,8 @@ class TemplateParser(object):
 
         :returns: {str: object}
         """
-        if PY3:
-            if isinstance(log, bytes):
-                self.log = log.decode()
-            else:
-                self.log = log
+        if isinstance(log, bytes):
+            self.log = log.decode()
         else:
             self.log = log
         return self._parse_headers(self._read_headers())

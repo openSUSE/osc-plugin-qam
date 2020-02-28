@@ -1,46 +1,28 @@
-from __future__ import print_function
 import abc
-import os
 import itertools
 import logging
-import multiprocessing
+import os
 import sys
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import osc.conf
 
-from .errors import (NoCommentError,
-                     NoQamReviewsError,
-                     NonMatchingGroupsError,
-                     NonMatchingUserGroupsError,
-                     NotAssignedError,
-                     NotPreviousReviewerError,
-                     NoReviewError,
-                     ReportedError,
-                     ReportNotYetGeneratedError,
-                     TemplateNotFoundError,
-                     UninferableError)
-from .models import (GroupReview, Request, Template,
-                     UserReview)
-from .remotes import RemoteError
+from .errors import (
+    NoCommentError,
+    NonMatchingGroupsError,
+    NonMatchingUserGroupsError,
+    NoQamReviewsError,
+    NoReviewError,
+    NotAssignedError,
+    NotPreviousReviewerError,
+    ReportedError,
+    ReportNotYetGeneratedError,
+    TemplateNotFoundError,
+    UninferableError,
+)
 from .fields import ReportField
-from .compat import with_metaclass
-
-
+from .models import GroupReview, Request, Template, UserReview
+from .remotes import RemoteError
 
 PREFIX = "[oscqam]"
-
-
-def get_number_of_threads():
-    """Return the number of threads to use when retrieving templates in parallel.
-
-    Will either use a configured value in 'oscqam_max_threads' from ~/.oscrc
-    or default to the number of CPUs.
-
-    """
-    osc.conf.get_config()
-    return osc.conf.config.get('oscqam_max_threads',
-                               multiprocessing.cpu_count())
 
 
 def multi_level_sort(xs, criteria):
@@ -58,18 +40,18 @@ def multi_level_sort(xs, criteria):
     if not criteria:
         return xs
     extractor = criteria[-1]
-    xss = sorted(xs, key = extractor)
+    xss = sorted(xs, key=extractor)
     grouped = itertools.groupby(xss, extractor)
-    subsorts = [multi_level_sort(list(value), criteria[:-1]) for _, value in
-                grouped]
+    subsorts = (multi_level_sort(list(value), criteria[:-1]) for _, value in grouped)
     return [s for sub in subsorts for s in sub]
 
 
-class OscAction(object):
+class OscAction:
     """Base class for actions that need to interface with the open build service.
 
     """
-    def __init__(self, remote, user, out = sys.stdout):
+
+    def __init__(self, remote, user, out=sys.stdout):
         """
         :param remote: Remote endpoint to the buildservice.
         :type remote: :class:`oscqam.models.RemoteFacade`
@@ -103,7 +85,7 @@ class OscAction(object):
         for action in self.undo_stack:
             action()
 
-    def print(self, msg, end = os.linesep):
+    def print(self, msg, end=os.linesep):
         """Mimick the print-statements behaviour on the out-stream:
 
         Print the given message and add a newline.
@@ -115,7 +97,7 @@ class OscAction(object):
         self.out.flush()
 
 
-class Report(object):
+class Report:
     """Composes request with the matching template.
 
     Provides a method to output a list of keys from requests/templates and
@@ -139,11 +121,12 @@ class Report(object):
         """
         entries = self.template.log_entries
         if field == ReportField.unassigned_roles:
-            reviews = [review for review
-                       in self.request.review_list_open()
-                       if isinstance(review, GroupReview)
-                       and review.reviewer.is_qam_group()]
-            value = sorted([str(r.reviewer) for r in reviews])
+            reviews = [
+                review
+                for review in self.request.review_list_open()
+                if isinstance(review, GroupReview) and review.reviewer.is_qam_group()
+            ]
+            value = sorted(str(r.reviewer) for r in reviews)
         elif field == ReportField.package_streams:
             value = [p for p in self.request.packages]
         elif field == ReportField.assigned_roles:
@@ -162,17 +145,20 @@ class Report(object):
         return value
 
 
-class ListAction(with_metaclass(abc.ABCMeta, OscAction)):
+class ListAction(OscAction, metaclass=abc.ABCMeta):
     """Base action for operation that work on a list of requests.
 
     Subclasses must overwrite the 'load_requests' method that return the list
     of requests that should be output according to the formatter and fields.
     """
-    default_fields = [ReportField.review_request_id,
-                      ReportField.srcrpms,
-                      ReportField.rating,
-                      ReportField.products,
-                      ReportField.incident_priority]
+
+    default_fields = [
+        ReportField.review_request_id,
+        ReportField.srcrpms,
+        ReportField.rating,
+        ReportField.products,
+        ReportField.incident_priority,
+    ]
 
     def group_sort_reports(self):
         """Sort reports according to rating and request id.
@@ -182,13 +168,15 @@ class ListAction(with_metaclass(abc.ABCMeta, OscAction)):
         reports = filter(None, self.reports)
         self.reports = multi_level_sort(
             reports,
-            [lambda l: l.request.reqid,
-             lambda l: l.template.log_entries["Rating"],
-             lambda l: l.request.incident_priority]
+            [
+                lambda l: l.request.reqid,
+                lambda l: l.template.log_entries["Rating"],
+                lambda l: l.request.incident_priority,
+            ],
         )
 
-    def __init__(self, remote, user, template_factory = Template):
-        super(ListAction, self).__init__(remote, user)
+    def __init__(self, remote, user, template_factory=Template):
+        super().__init__(remote, user)
         self.template_factory = template_factory
 
     def action(self):
@@ -232,9 +220,10 @@ class ListAction(with_metaclass(abc.ABCMeta, OscAction)):
 
         :returns: :class:`oscqam.actions.Report`-generator
         """
-        with ThreadPoolExecutor(max_workers = get_number_of_threads()) as executor:
-            results = [executor.submit(Report, r, self.template_factory)
-                       for r in requests]
+        with ThreadPoolExecutor() as executor:
+            results = [
+                executor.submit(Report, r, self.template_factory) for r in requests
+            ]
         for promise in as_completed(results):
             try:
                 yield promise.result()
@@ -252,21 +241,23 @@ class ListOpenAction(ListAction):
                     return True
             return False
 
+        def filters(req):
+            return req.active() and assigned(req)
+
         user_requests = set(self.remote.requests.for_user(self.user))
-        filters = lambda req: req.active() and assigned(req)
         user_requests = set(filter(filters, user_requests))
         qam_groups = self.user.qam_groups
         if not qam_groups:
-            raise ReportedError("You are not part of a qam group. "
-                                "Can not list requests.")
+            raise ReportedError(
+                "You are not part of a qam group. " "Can not list requests."
+            )
         group_requests = set(self.remote.requests.open_for_groups(qam_groups))
         return self.merge_requests(user_requests, group_requests)
 
 
 class ListGroupAction(ListAction):
-    def __init__(self, remote, user, groups, template_factory = Template):
-        super(ListGroupAction, self).__init__(remote, user,
-                                              template_factory)
+    def __init__(self, remote, user, groups, template_factory=Template):
+        super().__init__(remote, user, template_factory)
         if not groups:
             raise AttributeError("Can not list groups without any groups.")
         self.groups = [self.remote.groups.for_name(group) for group in groups]
@@ -278,31 +269,35 @@ class ListGroupAction(ListAction):
 class ListAssignedAction(ListAction):
     """Action to list assigned requests.
     """
-    default_fields = [ReportField.review_request_id,
-                      ReportField.srcrpms,
-                      ReportField.rating,
-                      ReportField.products,
-                      ReportField.incident_priority,
-                      ReportField.assigned_roles,
-                      ReportField.creator]
+
+    default_fields = [
+        ReportField.review_request_id,
+        ReportField.srcrpms,
+        ReportField.rating,
+        ReportField.products,
+        ReportField.incident_priority,
+        ReportField.assigned_roles,
+        ReportField.creator,
+    ]
 
     def in_review_by_user(self, reviews):
         for review in reviews:
-            if (review.reviewer == self.user and review.open):
+            if review.reviewer == self.user and review.open:
                 return True
         return False
 
     def load_requests(self):
-        qam_groups = [group for group in self.remote.groups.all()
-                      if group.is_qam_group()]
-        return set([request for request in
-                    self.remote.requests.review_for_groups(qam_groups)])
+        qam_groups = [
+            group for group in self.remote.groups.all() if group.is_qam_group()
+        ]
+        return set(
+            [request for request in self.remote.requests.review_for_groups(qam_groups)]
+        )
 
 
 class ListAssignedGroupAction(ListAssignedAction):
-    def __init__(self, remote, user, groups, template_factory = Template):
-        super(ListAssignedGroupAction, self).__init__(remote, user,
-                                                      template_factory)
+    def __init__(self, remote, user, groups, template_factory=Template):
+        super().__init__(remote, user, template_factory)
         if not groups:
             raise AttributeError("Can not list groups without any groups.")
         self.groups = [self.remote.groups.for_name(group) for group in groups]
@@ -314,35 +309,44 @@ class ListAssignedGroupAction(ListAssignedAction):
         return False
 
     def load_requests(self):
-        group_requests = set(self.remote.requests.review_for_groups(
-            self.groups
-        ))
-        return set([request for request in group_requests
-                    if self.in_review(request.review_list())])
+        group_requests = set(self.remote.requests.review_for_groups(self.groups))
+        return set(
+            [
+                request
+                for request in group_requests
+                if self.in_review(request.review_list())
+            ]
+        )
 
 
 class ListAssignedUserAction(ListAssignedAction):
     """Action to list requests that are assigned to the user.
     """
+
     def load_requests(self):
         user_requests = set(self.remote.requests.for_user(self.user))
-        return set([request for request in user_requests
-                    if self.in_review_by_user(request.review_list())])
+        return set(
+            request
+            for request in user_requests
+            if self.in_review_by_user(request.review_list())
+        )
 
 
 class InfoAction(ListAction):
-    default_fields = [ReportField.review_request_id,
-                      ReportField.srcrpms,
-                      ReportField.rating,
-                      ReportField.products,
-                      ReportField.incident_priority,
-                      ReportField.assigned_roles,
-                      ReportField.unassigned_roles,
-                      ReportField.creator,
-                      ReportField.issues]
+    default_fields = [
+        ReportField.review_request_id,
+        ReportField.srcrpms,
+        ReportField.rating,
+        ReportField.products,
+        ReportField.incident_priority,
+        ReportField.assigned_roles,
+        ReportField.unassigned_roles,
+        ReportField.creator,
+        ReportField.issues,
+    ]
 
     def __init__(self, remote, user_id, request_id):
-        super(InfoAction, self).__init__(remote, user_id)
+        super().__init__(remote, user_id)
         self.request = remote.requests.by_id(request_id)
 
     def load_requests(self):
@@ -352,13 +356,23 @@ class InfoAction(ListAction):
 class AssignAction(OscAction):
     ASSIGN_MSG = "Assigning {user} to {group} for {request}."
     AUTO_INFER_MSG = "Found a possible group: {group}."
-    MULTIPLE_GROUPS_MSG = ("User could review more than one group: {groups}. "
-                           "Specify the group to review using the -G flag.")
+    MULTIPLE_GROUPS_MSG = (
+        "User could review more than one group: {groups}. "
+        "Specify the group to review using the -G flag."
+    )
 
-    def __init__(self, remote, user, request_id, groups = None,
-                 template_factory = Template, force = False,
-                 template_required = True, **kwargs):
-        super(AssignAction, self).__init__(remote, user, **kwargs)
+    def __init__(
+        self,
+        remote,
+        user,
+        request_id,
+        groups=None,
+        template_factory=Template,
+        force=False,
+        template_required=True,
+        **kwargs
+    ):
+        super().__init__(remote, user, **kwargs)
         self.request = remote.requests.by_id(request_id)
         if groups:
             self.groups = [remote.groups.for_name(group) for group in groups]
@@ -387,18 +401,21 @@ class AssignAction(OscAction):
         If the user trying to assign himself is not one of the previous
         reviewers a warning is issued.
         """
-        related_requests = self.remote.requests.for_incident(
-            self.request.src_project
-        )
+        related_requests = self.remote.requests.for_incident(self.request.src_project)
         if not related_requests:
             return
-        declined_requests = [request for request in related_requests
-                             if request.state.name == Request.STATE_DECLINED]
+        declined_requests = [
+            request
+            for request in related_requests
+            if request.state.name == Request.STATE_DECLINED
+        ]
         if not declined_requests:
             return
-        reviewers = [review.reviewer for review in (request.review_list()
-                     for request in declined_requests)
-                     if isinstance(review, UserReview)]
+        reviewers = [
+            review.reviewer
+            for review in (request.review_list() for request in declined_requests)
+            if isinstance(review, UserReview)
+        ]
         if self.user not in reviewers:
             raise NotPreviousReviewerError(reviewers)
 
@@ -425,23 +442,19 @@ class AssignAction(OscAction):
         groups = self.user.reviewable_groups(self.request)
         if len(groups) > 1:
             raise UninferableError(
-                AssignAction.MULTIPLE_GROUPS_MSG.format(
-                    groups = [str(g) for g in groups]
-                )
+                AssignAction.MULTIPLE_GROUPS_MSG.format(groups=[str(g) for g in groups])
             )
         group = groups.pop()
-        self.print(AssignAction.AUTO_INFER_MSG.format(group = group))
+        self.print(AssignAction.AUTO_INFER_MSG.format(group=group))
         return [group]
 
     def assign(self, groups):
         self.validate()
         for group in groups:
             msg = AssignAction.ASSIGN_MSG.format(
-                user = self.user, group = group, request = self.request
+                user=self.user, group=group, request=self.request
             )
-            self.request.review_assign(reviewer = self.user,
-                                       group = group,
-                                       comment = msg)
+            self.request.review_assign(reviewer=self.user, group=group, comment=msg)
             self.print(msg)
 
 
@@ -449,11 +462,12 @@ class UnassignAction(OscAction):
     """Will unassign the user from the review and reopen the request for
     the group the user assign himself for.
     """
+
     UNASSIGN_MSG = "Unassigning {user} from {request} for group {group}."
     ACCEPT_USER_MSG = "Will close review for {user}"
 
-    def __init__(self, remote, user, request_id, groups = None, **kwargs):
-        super(UnassignAction, self).__init__(remote, user, **kwargs)
+    def __init__(self, remote, user, request_id, groups=None, **kwargs):
+        super().__init__(remote, user, **kwargs)
         self.request = remote.requests.by_id(request_id)
         if groups:
             self._groups = [remote.groups.for_name(group) for group in groups]
@@ -486,61 +500,57 @@ class UnassignAction(OscAction):
 
     def undo_reopen(self, group, comment):
         def _():
-            self.print("UNDO: Undoing reopening of group {group}".format(
-                group = group
-            ))
-            self.request.review_accept(group = group,
-                                       comment = comment)
+            self.print("UNDO: Undoing reopening of group {group}".format(group=group))
+            self.request.review_accept(group=group, comment=comment)
+
         return _
 
     def undo_accept(self, user):
         def _():
-            self.print("UNDO: Undoing accepting user {user}".format(
-                user = user
-            ))
-            self.request.review_reopen(user = self.user)
+            self.print("UNDO: Undoing accepting user {user}".format(user=user))
+            self.request.review_reopen(user=self.user)
+
         return _
 
     def unassign(self, groups, user_assigned_groups):
         all_assignments = self.request.assigned_roles
         difference = set(user_assigned_groups).difference(set(groups))
         for group in groups:
-            other_assignments = [a for a in all_assignments if (a.group == group and a.user != self.user)]
+            other_assignments = [
+                a for a in all_assignments if (a.group == group and a.user != self.user)
+            ]
             msg = UnassignAction.UNASSIGN_MSG.format(
-                user = self.user, group = group, request = self.request
+                user=self.user, group=group, request=self.request
             )
             self.print(msg)
             undo_comment = AssignAction.ASSIGN_MSG.format(
-                user = self.user, group = group, request = self.request
+                user=self.user, group=group, request=self.request
             )
             if not other_assignments:
-                logging.debug("Reopening {g} as only {u} is reviewing".format(
-                    g=group, u=self.user
-                ))
-                self.request.review_reopen(group = group,
-                                           comment = msg)
-                self.undo_stack.append(
-                    self.undo_reopen(group, undo_comment)
+                logging.debug(
+                    "Reopening {g} as only {u} is reviewing".format(
+                        g=group, u=self.user
+                    )
                 )
+                self.request.review_reopen(group=group, comment=msg)
+                self.undo_stack.append(self.undo_reopen(group, undo_comment))
             else:
                 self.print("Not reopening group - other assignments exist.")
         if not difference:
             msg = UnassignAction.ACCEPT_USER_MSG.format(
-                user = self.user, request = self.request
+                user=self.user, request=self.request
             )
             comment = UnassignAction.UNASSIGN_MSG.format(
-                user = self.user,
-                request = self.request,
-                group = ', '.join(sorted([str(g) for g in groups]))
+                user=self.user,
+                request=self.request,
+                group=", ".join(sorted([str(g) for g in groups])),
             )
             self.print(msg)
-            self.request.review_accept(user = self.user, comment = comment)
-            self.undo_stack.append(
-                self.undo_accept(self.user)
-            )
+            self.request.review_accept(user=self.user, comment=comment)
+            self.undo_stack.append(self.undo_accept(self.user))
 
 
-class ApproveAction(OscAction):
+class ApproveAction(OscAction, metaclass=abc.ABCMeta):
     """Template class for Approval actions.
 
     Subclasses need to overwrite:
@@ -548,10 +558,15 @@ class ApproveAction(OscAction):
     - get_reviewer: whose review is done.
     """
 
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self, remote, user, request_id, reviewer,
-                 template_factory = Template, out = sys.stdout):
+    def __init__(
+        self,
+        remote,
+        user,
+        request_id,
+        reviewer,
+        template_factory=Template,
+        out=sys.stdout,
+    ):
         """Approve a review for either a User or a Group.
 
         :param remote: Remote interface for build service calls.
@@ -572,7 +587,7 @@ class ApproveAction(OscAction):
         :param out: File like object to write output messages to.
         :type out:
         """
-        super(ApproveAction, self).__init__(remote, user, out)
+        super().__init__(remote, user, out)
         self.request = remote.requests.by_id(request_id)
         self.template = self.request.get_template(template_factory)
         self.reviewer = self.get_reviewer(reviewer)
@@ -587,10 +602,9 @@ class ApproveUserAction(ApproveAction):
     """Approve a review for a user.
 
     """
-    APPROVE_MSG = ("Approving {request} for {user} ({groups}). "
-                   "Testreport: {url}")
-    MORE_GROUPS_MSG = ("The following groups could also be reviewed by you: "
-                       "{groups}")
+
+    APPROVE_MSG = "Approving {request} for {user} ({groups}). " "Testreport: {url}"
+    MORE_GROUPS_MSG = "The following groups could also be reviewed by you: " "{groups}"
 
     def get_reviewer(self, reviewer):
         return self.remote.users.by_name(reviewer)
@@ -623,16 +637,14 @@ class ApproveUserAction(ApproveAction):
         self.validate()
         url = self.template.url()
         groups = ", ".join([str(g) for g in self.user.in_review_groups(self.request)])
-        msg = self.APPROVE_MSG.format(user = self.reviewer,
-                                      groups = groups,
-                                      request = self.request,
-                                      url = url)
+        msg = self.APPROVE_MSG.format(
+            user=self.reviewer, groups=groups, request=self.request, url=url
+        )
         self.print(msg)
-        self.request.review_accept(user = self.reviewer,
-                                   comment = msg)
+        self.request.review_accept(user=self.reviewer, comment=msg)
         try:
-            groups = ', '.join([str(g) for g in self.additional_reviews()])
-            msg = self.MORE_GROUPS_MSG.format(groups = groups)
+            groups = ", ".join(str(g) for g in self.additional_reviews())
+            msg = self.MORE_GROUPS_MSG.format(groups=groups)
             self.print(msg)
         except NonMatchingUserGroupsError:
             pass
@@ -652,11 +664,9 @@ class ApproveGroupAction(ApproveAction):
 
     def action(self):
         self.validate()
-        msg = self.APPROVE_MSG.format(request = self.request,
-                                      group = self.reviewer)
+        msg = self.APPROVE_MSG.format(request=self.request, group=self.reviewer)
         self.print(msg)
-        self.request.review_accept(group = self.reviewer,
-                                   comment = msg)
+        self.request.review_accept(group=self.reviewer, comment=msg)
 
 
 class RejectAction(OscAction):
@@ -666,11 +676,11 @@ class RejectAction(OscAction):
     for and will reject that group if possible.
 
     """
+
     DECLINE_MSG = "Declining request {request} for {user}. See Testreport: {url}"
 
-    def __init__(self, remote, user, request_id, reason, message = None,
-                 out = sys.stdout):
-        super(RejectAction, self).__init__(remote, user, out = out)
+    def __init__(self, remote, user, request_id, reason, message=None, out=sys.stdout):
+        super(RejectAction, self).__init__(remote, user, out=out)
         self.request = remote.requests.by_id(request_id)
         self._template = None
         self.reason = reason
@@ -691,28 +701,28 @@ class RejectAction(OscAction):
 
         """
         self.template.failed()
-        if not self.template.log_entries['comment']:
+        if not self.template.log_entries["comment"]:
             raise NoCommentError()
 
     def action(self):
         self.validate()
-        comment = self.template.log_entries['comment']
+        # TODO: debug what 'comment' here do
+        comment = self.template.log_entries["comment"]
         if self.message:
             comment = self.message
         url = self.template.url()
-        msg = RejectAction.DECLINE_MSG.format(user = self.user,
-                                              request = self.request,
-                                              url = url)
+        msg = RejectAction.DECLINE_MSG.format(
+            user=self.user, request=self.request, url=url
+        )
         self.print(msg)
-        self.request.review_decline(user = self.user,
-                                    comment = msg,
-                                    reasons = self.reason)
+        self.request.review_decline(user=self.user, comment=msg, reasons=self.reason)
 
 
 class CommentAction(OscAction):
     """Add a comment to a request.
 
     """
+
     def __init__(self, remote, user, request_id, comment):
         super(CommentAction, self).__init__(remote, user)
         self.comment = comment
@@ -725,6 +735,7 @@ class CommentAction(OscAction):
 class DeleteCommentAction(OscAction):
     """Delete a comment.
     """
+
     def __init__(self, remote, user, comment_id):
         super(DeleteCommentAction, self).__init__(remote, user)
         self.comment_id = comment_id
