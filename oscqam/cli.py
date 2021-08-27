@@ -536,7 +536,7 @@ def setup_logging():
                              os.path.expanduser("~/.local/share/"))
     directory = os.path.expandvars("{0}oscqam/".format(basedir))
     if not os.path.exists(directory):
-        os.mkdir(directory)
+        os.makedirs(directory)
     path = "{0}oscqam.log".format(directory)
     logging.basicConfig(filename=path,
                         filemode='w',
