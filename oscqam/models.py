@@ -823,7 +823,10 @@ class Template:
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
     STATUS_UNKNOWN = 2
+    # Machine readable reports
     base_url = "https://qam2.suse.de/testreports/"
+    # Human readable reports
+    fancy_url = "https://qam2.suse.de/reports/"
 
     def get_testreport_web(log_path):
         """Load the template belonging to the request from
@@ -902,8 +905,17 @@ class Template:
         return Template.STATUS_UNKNOWN
 
     def url(self):
+        """Return URL to machine readable version of the report.
+        """
         return "{base}{prj}:{reqid}/log".format(
             base=self.base_url, prj=self._request.src_project, reqid=self._request.reqid
+        )
+
+    def fancy_url(self):
+        """Return URL to human readable version of the report.
+        """
+        return "{base}{prj}:{reqid}/log".format(
+            base=self.fancy_url, prj=self._request.src_project, reqid=self._request.reqid
         )
 
 

@@ -635,7 +635,7 @@ class ApproveUserAction(ApproveAction):
 
     def action(self):
         self.validate()
-        url = self.template.url()
+        url = self.template.fancy_url()
         groups = ", ".join([str(g) for g in self.user.in_review_groups(self.request)])
         msg = self.APPROVE_MSG.format(
             user=self.reviewer, groups=groups, request=self.request, url=url
@@ -710,7 +710,7 @@ class RejectAction(OscAction):
         comment = self.template.log_entries["comment"]
         if self.message:
             comment = self.message
-        url = self.template.url()
+        url = self.template.fancy_url()
         msg = RejectAction.DECLINE_MSG.format(
             user=self.user, request=self.request, url=url
         )
