@@ -823,7 +823,7 @@ class Template:
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
     STATUS_UNKNOWN = 2
-    base_url = "https://qam.suse.de/testreports/"
+    base_url = "https://qam2.suse.de/testreports/"
 
     def get_testreport_web(log_path):
         """Load the template belonging to the request from
