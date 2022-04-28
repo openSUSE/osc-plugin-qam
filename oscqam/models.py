@@ -826,7 +826,7 @@ class Template:
     # Machine readable reports
     base_url = "https://qam2.suse.de/testreports/"
     # Human readable reports
-    fancy_url = "https://qam2.suse.de/reports/"
+    fancy_base_url = "https://qam2.suse.de/reports/"
 
     def get_testreport_web(log_path):
         """Load the template belonging to the request from
@@ -915,7 +915,7 @@ class Template:
         """Return URL to human readable version of the report.
         """
         return "{base}{prj}:{reqid}/log".format(
-            base=self.fancy_url, prj=self._request.src_project, reqid=self._request.reqid
+            base=self.fancy_base_url, prj=self._request.src_project, reqid=self._request.reqid
         )
 
 
