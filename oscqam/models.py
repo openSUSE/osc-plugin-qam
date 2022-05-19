@@ -623,6 +623,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
         params = {"cmd": "assignreview", "reviewer": reviewer.login}
         self.review_action(params, group=group, comment=comment)
 
+    def review_unassign(self, group, reviewer, comment=None):
+        """Will undo the assignment by the group
+        """
+        params = {"cmd": "assignreview", "revert": 1, "reviewer": reviewer.login}
+        self.review_action(params, group=group, comment=comment)
+
     def review_accept(self, user=None, group=None, comment=None):
         comment = self._format_review_comment(comment)
         params = {"cmd": "changereviewstate", "newstate": "accepted"}
