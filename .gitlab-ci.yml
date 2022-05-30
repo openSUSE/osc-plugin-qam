@@ -1,38 +1,25 @@
-image: opensuse/leap:latest
+include:
+  - project: qa-maintenance/qamops
+    file: /gitlab/templates.yml
 
 variables:
-  OSC_PACKAGE: osc-plugin-qam 
+  OSC_PACKAGE: osc-plugin-qam
 
-stages:
-  - deploy
-
-.publish_template: &publish_template
-  stage: deploy
-  before_script:
-    - zypper in --no-confirm python-xml python-packaging osc obs-service-tar_scm obs-service-recompress obs-service-set_version
-    - mv "$SUSE_CA" /etc/pki/trust/anchors/SUSE_Trust_Root.pem && update-ca-certificates
-    - mkdir -p /root/.config/osc && mv "$OSC_RC" /root/.config/osc/oscrc
-  script:
-    - cd $CI_PROJECT_DIR
-    - osc co $OSC_PROJECT $OSC_PACKAGE
-    - cd $OSC_PROJECT/$OSC_PACKAGE
-    - rm -f *.tar.xz
-    - osc service disabledrun
-    - osc ar
-    - osc ci -m "Automatic update to $CI_COMMIT_SHORT_SHA"
+#test:
+#  stage: test
+#  script:
+#    - python3 -m pytest -v
 
 publish_devel:
-  <<: *publish_template
+  extends: .obs:autoupdate
   variables:
     OSC_PROJECT: QA:Maintenance:Test
-  only:
-    - master@qa-maintenance/qam-oscplugin
+  rules:
+    - if: $CI_PROJECT_NAMESPACE == "qa-maintenance" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 publish:
-  <<: *publish_template
+  extends: .obs:autoupdate
   variables:
     OSC_PROJECT: QA:Maintenance
-  only:
-    - tags@qa-maintenance/qam-oscplugin
-  except:
-    - branches
+  rules:
+    - if: $CI_PROJECT_NAMESPACE == "qa-maintenance" && $CI_COMMIT_TAG
