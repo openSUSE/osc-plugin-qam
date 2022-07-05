@@ -1,12 +1,19 @@
-from __future__ import print_function
 from collections import defaultdict
 import logging
+
+from oscqam.remotes import (
+    CommentRemote,
+    GroupRemote,
+    PriorityRemote,
+    ProjectRemote,
+    RequestRemote,
+    UserRemote,
+)
+
 from .utils import load_fixture
-from oscqam.remotes import (CommentRemote, RequestRemote, GroupRemote,
-                            UserRemote, ProjectRemote, PriorityRemote)
 
 
-class MockRemote(object):
+class MockRemote:
     """Replacement for L{oscqam.models.Remote} that maps HTTP requests to
     file-paths.
 
@@ -17,6 +24,7 @@ class MockRemote(object):
     Files should be named accordingly: {object_type}_{identifier}.xml
 
     """
+
     def __init__(self):
         self.delete_calls = []
         self.post_calls = []
@@ -27,10 +35,10 @@ class MockRemote(object):
         self.comments = CommentRemote(self)
         self.projects = ProjectRemote(self)
         self.priorities = PriorityRemote(self)
-        self.remote = 'suse-remote'
+        self.remote = "suse-remote"
 
-    def _load(self, prefix, id):
-        name = "%s_%s.xml" % (prefix, id)
+    def _load(self, prefix, ids):
+        name = f"{prefix}_{ids}.xml"
         return load_fixture(name)
 
     def _encode_args(self, *args):
@@ -65,9 +73,9 @@ class MockRemote(object):
         try:
             cls, identifier = url.split("/", 1)
         except ValueError:
-            if url == 'group':
-                cls = 'group'
-                identifier = args[0]['login']
+            if url == "group":
+                cls = "group"
+                identifier = args[0]["login"]
             else:
                 raise
         return self._load(cls, identifier)
