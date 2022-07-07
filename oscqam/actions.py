@@ -47,9 +47,7 @@ def multi_level_sort(xs, criteria):
 
 
 class OscAction:
-    """Base class for actions that need to interface with the open build service.
-
-    """
+    """Base class for actions that need to interface with the open build service."""
 
     def __init__(self, remote, user, out=sys.stdout):
         """
@@ -180,9 +178,7 @@ class ListAction(OscAction, metaclass=abc.ABCMeta):
         self.template_factory = template_factory
 
     def action(self):
-        """Return all reviews that match the parameters of the RequestAction.
-
-        """
+        """Return all reviews that match the parameters of the RequestAction."""
         self.reports = self._load_listdata(self.load_requests())
         self.group_sort_reports()
         return self.reports
@@ -267,8 +263,7 @@ class ListGroupAction(ListAction):
 
 
 class ListAssignedAction(ListAction):
-    """Action to list assigned requests.
-    """
+    """Action to list assigned requests."""
 
     default_fields = [
         ReportField.review_request_id,
@@ -320,8 +315,7 @@ class ListAssignedGroupAction(ListAssignedAction):
 
 
 class ListAssignedUserAction(ListAssignedAction):
-    """Action to list requests that are assigned to the user.
-    """
+    """Action to list requests that are assigned to the user."""
 
     def load_requests(self):
         user_requests = set(self.remote.requests.for_user(self.user))
@@ -519,9 +513,7 @@ class UnassignAction(OscAction):
             )
             self.print(msg)
             logging.debug(
-                "Reverting assignment from {u} back to {g}".format(
-                    g=group, u=self.user
-                )
+                "Reverting assignment from {u} back to {g}".format(g=group, u=self.user)
             )
             self.request.review_unassign(reviewer=self.user, group=group, comment=msg)
 
@@ -575,9 +567,7 @@ class ApproveAction(OscAction, metaclass=abc.ABCMeta):
 
 
 class ApproveUserAction(ApproveAction):
-    """Approve a review for a user.
-
-    """
+    """Approve a review for a user."""
 
     APPROVE_MSG = "Approving {request} for {user} ({groups}). " "Testreport: {url}"
     MORE_GROUPS_MSG = "The following groups could also be reviewed by you: " "{groups}"
@@ -695,9 +685,7 @@ class RejectAction(OscAction):
 
 
 class CommentAction(OscAction):
-    """Add a comment to a request.
-
-    """
+    """Add a comment to a request."""
 
     def __init__(self, remote, user, request_id, comment):
         super(CommentAction, self).__init__(remote, user)
@@ -709,8 +697,7 @@ class CommentAction(OscAction):
 
 
 class DeleteCommentAction(OscAction):
-    """Delete a comment.
-    """
+    """Delete a comment."""
 
     def __init__(self, remote, user, comment_id):
         super(DeleteCommentAction, self).__init__(remote, user)

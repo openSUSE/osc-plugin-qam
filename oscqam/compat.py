@@ -1,8 +1,8 @@
-
 import sys
 
 PY3 = sys.version_info[0] == 3
 PY2 = sys.version_info[0] == 2
+
 
 def with_metaclass(meta, *bases):
     """
@@ -23,12 +23,14 @@ def with_metaclass(meta, *bases):
     This has the advantage over six.with_metaclass of not introducing
     dummy classes into the final MRO.
     """
+
     class metaclass(meta):
         __call__ = type.__call__
         __init__ = type.__init__
+
         def __new__(cls, name, this_bases, d):
             if this_bases is None:
                 return type.__new__(cls, name, (), d)
             return meta(name, bases, d)
-    return metaclass('temporary_class', None, {})
 
+    return metaclass("temporary_class", None, {})

@@ -25,42 +25,46 @@ def levenshtein(first, second):
     for row in range(rows):
         for col in range(cols):
             if first[row] == second[col]:
-                matrix[row][col] = matrix[row-1][col-1]
+                matrix[row][col] = matrix[row - 1][col - 1]
             else:
-                matrix[row][col] = min(matrix[row-1][col] + 1,
-                                       matrix[row][col-1] + 1,
-                                       matrix[row-1][col-1] + 1)
+                matrix[row][col] = min(
+                    matrix[row - 1][col] + 1,
+                    matrix[row][col - 1] + 1,
+                    matrix[row - 1][col - 1] + 1,
+                )
     return matrix[rows - 1][cols - 1]
 
 
 class InvalidFieldsError(ReportedError):
-    """Raise when the user wants to output non-existent fields.
-    """
-    _msg = ("Unknown fields: {0}. "
-            "Did you mean: {1}. "
-            "(Available fields: {2})")
+    """Raise when the user wants to output non-existent fields."""
+
+    _msg = "Unknown fields: {0}. " "Did you mean: {1}. " "(Available fields: {2})"
 
     def _get_suggestions(self, bad_fields):
         suggestions = set()
         for bad_field in bad_fields:
-            distances = [(str(field), levenshtein(str(field), bad_field))
-                         for field in ReportField]
-            nearest = min(distances, key = lambda d: d[1])
+            distances = [
+                (str(field), levenshtein(str(field), bad_field))
+                for field in ReportField
+            ]
+            nearest = min(distances, key=lambda d: d[1])
             suggestions.add(nearest[0])
         return suggestions
 
     def __init__(self, bad_fields):
         suggestions = self._get_suggestions(bad_fields)
         super(InvalidFieldsError, self).__init__(
-            self._msg.format(", ".join(map(repr, bad_fields)),
-                             ", ".join(suggestions),
-                             ", ".join(map(str, ReportField)))
+            self._msg.format(
+                ", ".join(map(repr, bad_fields)),
+                ", ".join(suggestions),
+                ", ".join(map(str, ReportField)),
+            )
         )
 
 
 class ReportField(Enum):
-    """All possible fields that can be displayed for a review.
-    """
+    """All possible fields that can be displayed for a review."""
+
     review_request_id = (0, "ReviewRequestID")
     products = (1, "Products")
     srcrpms = (2, "SRCRPMs")
@@ -91,18 +95,20 @@ class ReportField(Enum):
 
 
 class ReportFields(object):
-    all_fields = [ReportField.review_request_id,
-                  ReportField.products,
-                  ReportField.srcrpms,
-                  ReportField.bugs,
-                  ReportField.category,
-                  ReportField.rating,
-                  ReportField.unassigned_roles,
-                  ReportField.assigned_roles,
-                  ReportField.package_streams,
-                  ReportField.incident_priority,
-                  ReportField.creator,
-                  ReportField.issues]
+    all_fields = [
+        ReportField.review_request_id,
+        ReportField.products,
+        ReportField.srcrpms,
+        ReportField.bugs,
+        ReportField.category,
+        ReportField.rating,
+        ReportField.unassigned_roles,
+        ReportField.assigned_roles,
+        ReportField.package_streams,
+        ReportField.incident_priority,
+        ReportField.creator,
+        ReportField.issues,
+    ]
 
     def fields(self, _):
         return self.all_fields

@@ -54,9 +54,9 @@ def split_srcrpms(srcrpm_line):
 
 
 class TemplateParser(object):
-    """Parses a template-logs header-fields.
-    """
-    end_marker = '#############################'
+    """Parses a template-logs header-fields."""
+
+    end_marker = "#############################"
 
     def __call__(self, log):
         """Return dictionary of headers from the log-file and values.
@@ -70,11 +70,12 @@ class TemplateParser(object):
         return self._parse_headers(self._read_headers())
 
     def _read_comment(self):
-        prefix = 'comment:'
-        comment = until("Products:",
-                        dropwhile(lambda line: not line.startswith(prefix),
-                                  self.log.splitlines()))
-        return '\n'.join(comment)
+        prefix = "comment:"
+        comment = until(
+            "Products:",
+            dropwhile(lambda line: not line.startswith(prefix), self.log.splitlines()),
+        )
+        return "\n".join(comment)
 
     def _read_headers(self):
         """Reads the template headers into a dictionary.
@@ -84,7 +85,7 @@ class TemplateParser(object):
         entries = defaultdict(list)
         comment = self._read_comment()
         log = self.log.replace(comment, "")
-        entries['comment'] = [comment[len('comment:'):].strip()]
+        entries["comment"] = [comment[len("comment:") :].strip()]
 
         lines = [line.strip() for line in log.splitlines() if line.strip()]
         header_end = len(until(self.end_marker, lines))
@@ -108,18 +109,18 @@ class TemplateParser(object):
         """
         log_entries = {}
         for key in entries:
-            value = '\n'.join(entries[key])
-            if key == 'Packages':
+            value = "\n".join(entries[key])
+            if key == "Packages":
                 log_entries[key] = split_comma(value)
-            elif key == 'Bugs':
+            elif key == "Bugs":
                 log_entries[key] = split_comma(value)
-            elif key == 'Products':
+            elif key == "Products":
                 log_entries[key] = split_products(value)
             elif key == "SRCRPMs":
                 log_entries[key] = split_srcrpms(value)
             elif key == "Rating":
                 log_entries[key] = Rating(value)
-            elif key == "comment" and value == 'NONE':
+            elif key == "comment" and value == "NONE":
                 log_entries[key] = None
             else:
                 log_entries[key] = value

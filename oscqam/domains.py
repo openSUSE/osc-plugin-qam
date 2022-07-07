@@ -5,8 +5,7 @@ from functools import total_ordering
 
 @total_ordering
 class Rating:
-    """Store a template's rating.
-    """
+    """Store a template's rating."""
 
     mapping = {"critical": 0, "important": 1, "moderate": 2, "low": 3, "": 4}
 
@@ -25,8 +24,7 @@ class Rating:
 
 @total_ordering
 class Priority:
-    """Store the priority of this request's associated incident.
-    """
+    """Store the priority of this request's associated incident."""
 
     def __init__(self, prio):
         self.priority = int(prio)

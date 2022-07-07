@@ -12,7 +12,7 @@ import prettytable
 from .fields import ReportField
 
 
-def terminal_dimensions(fd = None):
+def terminal_dimensions(fd=None):
     """Return dimensions of the terminal.
 
     :param fd: filedescriptor of the terminal.
@@ -24,17 +24,17 @@ def terminal_dimensions(fd = None):
         if not sys.stdout.isatty():
             return (0, 0)
         fd = sys.stdout.fileno()
-    dim = fcntl.ioctl(fd, termios.TIOCGWINSZ, '0000')
-    rows, columns = struct.unpack('hh', dim)
+    dim = fcntl.ioctl(fd, termios.TIOCGWINSZ, "0000")
+    rows, columns = struct.unpack("hh", dim)
     if rows == 0 and columns == 0:
         try:
-            rows, columns = (int(os.getenv(v)) for v in ['LINES', 'COLUMNS'])
+            rows, columns = (int(os.getenv(v)) for v in ["LINES", "COLUMNS"])
         except Exception:
             pass
     return rows, columns
 
 
-def os_lineseps(value, target = None):
+def os_lineseps(value, target=None):
     """Adjust the lineseperators in value to match the ones used by the current
     system.
 
@@ -46,20 +46,21 @@ def os_lineseps(value, target = None):
     :type target: str
 
     """
+
     def _windows_to_linux(value):
-        return value.replace('\r\n', '\n')
+        return value.replace("\r\n", "\n")
 
     def _linux_to_windows(value):
-        if '\r\n' in value:
+        if "\r\n" in value:
             # Seems there are already the correct lines present
             return value
-        return value.replace('\n', '\r\n')
+        return value.replace("\n", "\r\n")
 
     target = target if target else platform.system()
 
-    if target == 'Linux':
+    if target == "Linux":
         value = _windows_to_linux(value)
-    elif target == 'Windows':
+    elif target == "Windows":
         value = _linux_to_windows(value)
     else:
         return value
@@ -67,9 +68,9 @@ def os_lineseps(value, target = None):
 
 
 class Formatter(object):
-    """Base class for specialised formatters.
-    """
-    def __init__(self, listsep, formatters = {}):
+    """Base class for specialised formatters."""
+
+    def __init__(self, listsep, formatters={}):
         """
         :param listsep: Seperator for lists.
         :type listsep: str
@@ -120,14 +121,15 @@ class VerboseOutput(Formatter):
     <key>: <value>+
     --------------
     """
+
     def __init__(self):
-        super(VerboseOutput, self).__init__(',')
-        self.record_sep = '-' * terminal_dimensions()[1]
+        super(VerboseOutput, self).__init__(",")
+        self.record_sep = "-" * terminal_dimensions()[1]
 
     def output(self, keys, reports):
         output = []
         str_template = "{{0:{length}s}}: {{1}}".format(
-            length = max([len(str(k)) for k in keys])
+            length=max([len(str(k)) for k in keys])
         )
         for report in reports:
             values = []
@@ -149,15 +151,15 @@ class TabularOutput(Formatter):
     | <v1>   | <v2>   |
     +--------+--------+
     """
+
     def __init__(self):
         super(TabularOutput, self).__init__(
-            os.linesep,
-            {ReportField.comments:  self.comment_formatter}
+            os.linesep, {ReportField.comments: self.comment_formatter}
         )
 
     def output(self, keys, reports):
         table_formatter = prettytable.PrettyTable(keys)
-        table_formatter.align = 'l'
+        table_formatter.align = "l"
         table_formatter.border = True
         for report in reports:
             values = []

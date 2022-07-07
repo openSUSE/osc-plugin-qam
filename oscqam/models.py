@@ -35,16 +35,14 @@ class XmlFactoryMixin:
     """
 
     def __init__(self, remote, attributes, children):
-        """Will set every element in kwargs to a property of the class.
-        """
+        """Will set every element in kwargs to a property of the class."""
         attributes.update(children)
         for kwarg in attributes:
             setattr(self, kwarg, attributes[kwarg])
 
     @staticmethod
     def listify(dictionary, key):
-        """Will wrap an existing dictionary key in a list.
-        """
+        """Will wrap an existing dictionary key in a list."""
         if not isinstance(dictionary[key], list):
             value = dictionary[key]
             del dictionary[key]
@@ -142,8 +140,7 @@ class Attribute(XmlFactoryMixin):
 
 
 class Reviewer(metaclass=abc.ABCMeta):
-    """Superclass for possible reviewer-classes.
-    """
+    """Superclass for possible reviewer-classes."""
 
     @abc.abstractmethod
     def is_qam_group(self):
@@ -188,8 +185,7 @@ class IBSGroupFilter(GroupFilter):
 
 
 class Group(XmlFactoryMixin, Reviewer):
-    """A group object from the build service.
-    """
+    """A group object from the build service."""
 
     def __init__(self, remote, attributes, children):
         super(Group, self).__init__(remote, attributes, children)
@@ -233,9 +229,7 @@ class Group(XmlFactoryMixin, Reviewer):
 
 
 class User(XmlFactoryMixin, Reviewer):
-    """Wraps a user of the obs in an object.
-
-    """
+    """Wraps a user of the obs in an object."""
 
     def __init__(self, remote, attributes, children):
         super().__init__(remote, attributes, children)
@@ -244,8 +238,7 @@ class User(XmlFactoryMixin, Reviewer):
 
     @property
     def groups(self):
-        """Read-only property for groups a user is part of.
-        """
+        """Read-only property for groups a user is part of."""
         # Maybe use a invalidating cache as a trade-off between current
         # information and slow response.
         if not self._groups:
@@ -314,9 +307,7 @@ class User(XmlFactoryMixin, Reviewer):
 
 
 class Review:
-    """Base class for buildservice-review objects.
-
-    """
+    """Base class for buildservice-review objects."""
 
     OPEN_STATES = ("new", "review")
     CLOSED_STATES = ("accepted",)
@@ -567,8 +558,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     @property
     def packages(self):
-        """Collects all packages of the actions that are part of the request.
-        """
+        """Collects all packages of the actions that are part of the request."""
         if not self._packages:
             packages = set()
             for action in self.actions:
@@ -624,8 +614,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self.review_action(params, group=group, comment=comment)
 
     def review_unassign(self, group, reviewer, comment=None):
-        """Will undo the assignment by the group
-        """
+        """Will undo the assignment by the group"""
         params = {"cmd": "assignreview", "revert": 1, "reviewer": reviewer.login}
         self.review_action(params, group=group, comment=comment)
 
@@ -635,9 +624,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self.review_action(params, user, group, comment)
 
     def review_add(self, user=None, group=None, comment=None):
-        """Will add a new reviewrequest for the given user or group.
-
-        """
+        """Will add a new reviewrequest for the given user or group."""
         comment = self._format_review_comment(comment)
         params = {"cmd": "addreview"}
         self.review_action(params, user, group, comment)
@@ -679,9 +666,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return reject_reason
 
     def review_reopen(self, user=None, group=None, comment=None):
-        """Will reopen a reviewrequest for the given user or group.
-
-        """
+        """Will reopen a reviewrequest for the given user or group."""
         params = {"cmd": "changereviewstate", "newstate": "new"}
         self.review_action(params, user, group, comment)
 
@@ -691,8 +676,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return "[oscqam] {comment}".format(comment=comment)
 
     def review_list(self):
-        """Returns all reviews as a list.
-        """
+        """Returns all reviews as a list."""
         if not self._reviews:
             for review in self.reviews:
                 if review.by_group:
@@ -702,22 +686,19 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return self._reviews
 
     def review_list_open(self):
-        """Return only open reviews.
-        """
+        """Return only open reviews."""
         return [r for r in self.review_list() if r.state in Request.OPEN_STATES]
 
     def review_list_accepted(self):
         return [r for r in self.review_list() if r.state.lower() == "accepted"]
 
     def add_comment(self, comment):
-        """Adds a comment to this request.
-        """
+        """Adds a comment to this request."""
         endpoint = "/comments/request/{id}".format(id=self.reqid)
         self.remote.post(endpoint, comment)
 
     def get_template(self, template_factory):
-        """Return the template associated with this request.
-        """
+        """Return the template associated with this request."""
         if not self.src_project:
             raise MissingSourceProjectError(self)
         return template_factory(self)
@@ -785,8 +766,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
 
 class NullComment:
-    """Null-Object for comments.
-    """
+    """Null-Object for comments."""
 
     def __init__(self):
         self.id = None
@@ -911,17 +891,17 @@ class Template:
         return Template.STATUS_UNKNOWN
 
     def url(self):
-        """Return URL to machine readable version of the report.
-        """
+        """Return URL to machine readable version of the report."""
         return "{base}{prj}:{reqid}/log".format(
             base=self.base_url, prj=self._request.src_project, reqid=self._request.reqid
         )
 
     def fancy_url(self):
-        """Return URL to human readable version of the report.
-        """
+        """Return URL to human readable version of the report."""
         return "{base}{prj}:{reqid}/log".format(
-            base=self.fancy_base_url, prj=self._request.src_project, reqid=self._request.reqid
+            base=self.fancy_base_url,
+            prj=self._request.src_project,
+            reqid=self._request.reqid,
         )
 
 
@@ -934,8 +914,7 @@ class Bug(XmlFactoryMixin):
 
 
 def monkeypatch():
-    """Monkey patch retaining of history into the review class.
-    """
+    """Monkey patch retaining of history into the review class."""
 
     def monkey_patched_init(obj, review_node):
         # logging.debug("Monkeypatched init")

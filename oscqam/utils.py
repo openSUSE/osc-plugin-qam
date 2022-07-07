@@ -1,4 +1,3 @@
-
 import ssl
 from functools import wraps
 from urllib.error import HTTPError
@@ -16,13 +15,13 @@ def memoize(func):
     @wraps(func)
     def wrapped(*args, **kwargs):
         sorted_keys = sorted(kwargs.keys())
-        arguments = (frozenset(args),
-                     frozenset((k, kwargs[k]) for k in sorted_keys))
+        arguments = (frozenset(args), frozenset((k, kwargs[k]) for k in sorted_keys))
         if arguments in cache:
             return cache[arguments]
         result = func(*args, **kwargs)
         cache[arguments] = result
         return result
+
     return wrapped
 
 
