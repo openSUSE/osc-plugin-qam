@@ -225,7 +225,7 @@ class Group(XmlFactoryMixin, Reviewer):
         return self.__unicode__()
 
     def __unicode__(self):
-        return u"{0}".format(self.name)
+        return "{0}".format(self.name)
 
 
 class User(XmlFactoryMixin, Reviewer):
@@ -299,7 +299,7 @@ class User(XmlFactoryMixin, Reviewer):
         return self.__unicode__()
 
     def __unicode__(self):
-        return u"{0} ({1})".format(self.realname, self.email)
+        return "{0} ({1})".format(self.realname, self.email)
 
     @classmethod
     def parse(cls, remote, xml):
@@ -762,7 +762,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return self.__unicode__()
 
     def __unicode__(self):
-        return u"{0}".format(self.reqid)
+        return "{0}".format(self.reqid)
 
 
 class NullComment:
@@ -779,7 +779,7 @@ class NullComment:
             return unicode(self).encode("utf-8")  # noqa: E0602
 
     def __unicode__(self):
-        return u""
+        return ""
 
 
 class Comment(XmlFactoryMixin):
@@ -796,7 +796,7 @@ class Comment(XmlFactoryMixin):
         return self.__unicode__()
 
     def __unicode__(self):
-        return u"{0}: {1}".format(self.id, self.text)
+        return "{0}: {1}".format(self.id, self.text)
 
 
 class Template:
@@ -910,7 +910,7 @@ class Bug(XmlFactoryMixin):
         return self.__unicode__()
 
     def __unicode__(self):
-        return u"{0}:{1}".format(self.tracker, self.id)
+        return "{0}:{1}".format(self.tracker, self.id)
 
 
 def monkeypatch():

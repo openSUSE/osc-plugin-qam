@@ -53,4 +53,4 @@ class UnknownPriority(Priority):
         return self.__unicode__()
 
     def __unicode__(self):
-        return u"{0}".format(self.priority)
+        return "{0}".format(self.priority)
