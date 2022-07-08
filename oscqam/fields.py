@@ -1,4 +1,5 @@
 from enum import Enum
+
 from .errors import ReportedError
 
 
@@ -15,7 +16,7 @@ def levenshtein(first, second):
     first = " " + first
     second = " " + second
     rows, cols = (len(first), len(second))
-    matrix = [[0] * cols for i in range(rows)]
+    matrix = [[0] * cols for _ in range(rows)]
     # Set the axis
     for row in range(rows):
         matrix[row][0] = row
@@ -40,6 +41,16 @@ class InvalidFieldsError(ReportedError):
 
     _msg = "Unknown fields: {0}. " "Did you mean: {1}. " "(Available fields: {2})"
 
+    def __init__(self, bad_fields):
+        suggestions = self._get_suggestions(bad_fields)
+        super().__init__(
+            self._msg.format(
+                ", ".join(map(repr, bad_fields)),
+                ", ".join(suggestions),
+                ", ".join(map(str, ReportField)),
+            )
+        )
+
     def _get_suggestions(self, bad_fields):
         suggestions = set()
         for bad_field in bad_fields:
@@ -50,16 +61,6 @@ class InvalidFieldsError(ReportedError):
             nearest = min(distances, key=lambda d: d[1])
             suggestions.add(nearest[0])
         return suggestions
-
-    def __init__(self, bad_fields):
-        suggestions = self._get_suggestions(bad_fields)
-        super(InvalidFieldsError, self).__init__(
-            self._msg.format(
-                ", ".join(map(repr, bad_fields)),
-                ", ".join(suggestions),
-                ", ".join(map(str, ReportField)),
-            )
-        )
 
 
 class ReportField(Enum):
@@ -94,7 +95,7 @@ class ReportField(Enum):
         raise InvalidFieldsError([field])
 
 
-class ReportFields(object):
+class ReportFields:
     all_fields = [
         ReportField.review_request_id,
         ReportField.products,
