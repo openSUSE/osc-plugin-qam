@@ -1,7 +1,7 @@
 """Parsers to turn (external) data into a more usable formats.
 """
 from collections import defaultdict
-from itertools import takewhile, dropwhile
+from itertools import dropwhile, takewhile
 import logging
 import re
 
@@ -17,7 +17,11 @@ def until(snippet, lines):
     :param lines: lines to return until snippet matches.
     :type lines: [str]
     """
-    return list(takewhile(lambda line: not line.startswith(snippet), lines))
+
+    def condition(line):
+        return not line.startswith(snippet)
+
+    return list(takewhile(condition, lines))
 
 
 def split_comma(line):
@@ -31,6 +35,7 @@ def split_comma(line):
     return [v.strip() for v in line.split(",")]
 
 
+# TODO: this looks wrong, was valid maybe in beginning of SLE12
 def split_products(product_line):
     """Split products into a list and strip SLE-prefix from each product.
 
@@ -38,8 +43,10 @@ def split_products(product_line):
 
     :returns: [str]
     """
-    products = map(str.strip, product_line.split("),"))
-    products = [p if p.endswith(")") else p + ")" for p in products]
+    products = (
+        p if p.endswith(")") else p + ")"
+        for p in (l.strip() for l in product_line.split("),"))
+    )
     return [re.sub("^SLE-", "", product, 1) for product in products]
 
 
@@ -50,10 +57,10 @@ def split_srcrpms(srcrpm_line):
 
     :returns: [str]
     """
-    return list(map(str.strip, srcrpm_line.split(",")))
+    return [xs.strip() for xs in srcrpm_line.split(",")]
 
 
-class TemplateParser(object):
+class TemplateParser:
     """Parses a template-logs header-fields."""
 
     end_marker = "#############################"
@@ -70,10 +77,13 @@ class TemplateParser(object):
         return self._parse_headers(self._read_headers())
 
     def _read_comment(self):
+        def condition(line):
+            return not line.startswith(prefix)
+
         prefix = "comment:"
         comment = until(
             "Products:",
-            dropwhile(lambda line: not line.startswith(prefix), self.log.splitlines()),
+            dropwhile(condition, self.log.splitlines()),
         )
         return "\n".join(comment)
 
@@ -92,7 +102,7 @@ class TemplateParser(object):
         lines = lines[:header_end]
         for line in lines:
             try:
-                key, value = list(map(str.strip, line.split(":", 1)))
+                key, value = [l.strip() for l in line.split(":", 1)]
                 entries[key].append(value)
             except ValueError:
                 logging.debug("Could not parse line: %s", line)
