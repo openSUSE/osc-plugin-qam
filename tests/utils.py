@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from pathlib import Path
 
-from oscqam.models import TemplateParser
+from oscqam.parsers import TemplateParser
 
 path = Path(__file__).parent / "fixtures"
 
