@@ -1,9 +1,9 @@
 import builtins
 
-from decorator import contextmanager
+from contextlib import contextmanager
 
 from oscqam import formatters, cli
-from oscqam.actions import multi_level_sort
+from oscqam.utils import multi_level_sort
 
 
 @contextmanager

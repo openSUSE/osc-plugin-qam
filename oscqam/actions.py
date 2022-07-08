@@ -1,49 +1,28 @@
 import abc
-import itertools
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .errors import (
     NoCommentError,
-    NonMatchingGroupsError,
-    NonMatchingUserGroupsError,
     NoQamReviewsError,
     NoReviewError,
+    NonMatchingGroupsError,
+    NonMatchingUserGroupsError,
     NotAssignedError,
     NotPreviousReviewerError,
-    ReportedError,
     ReportNotYetGeneratedError,
+    ReportedError,
     TemplateNotFoundError,
     UninferableError,
 )
 from .fields import ReportField
 from .models import GroupReview, Request, Template, UserReview
 from .remotes import RemoteError
+from .utils import multi_level_sort
 
 PREFIX = "[oscqam]"
-
-
-def multi_level_sort(xs, criteria):
-    """Sort the given collection based on multiple criteria.
-    The criteria will be sorted by in the given order, whereas each group
-    from the first criteria will be sorted by the second criteria and so forth.
-
-    :param xs: Iterable of objects.
-    :type xs: [a]
-
-    :param criteria: Iterable of extractor functions.
-    :type criteria: [a -> b]
-
-    """
-    if not criteria:
-        return xs
-    extractor = criteria[-1]
-    xss = sorted(xs, key=extractor)
-    grouped = itertools.groupby(xss, extractor)
-    subsorts = (multi_level_sort(list(value), criteria[:-1]) for _, value in grouped)
-    return [s for sub in subsorts for s in sub]
 
 
 class OscAction:
