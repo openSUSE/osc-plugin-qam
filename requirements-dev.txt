@@ -1,7 +1,6 @@
 osc
 prettytable
 python-dateutil
-decorator
 pytest
 pytest-cov
 coverage

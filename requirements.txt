@@ -1,4 +1,3 @@
 prettytable
 osc
 python-dateutil
-decorator
