@@ -1,14 +1,12 @@
 from collections import defaultdict
 import logging
 
-from oscqam.remotes import (
-    CommentRemote,
-    GroupRemote,
-    PriorityRemote,
-    ProjectRemote,
-    RequestRemote,
-    UserRemote,
-)
+from oscqam.remotes.commentremote import CommentRemote
+from oscqam.remotes.groupremote import GroupRemote
+from oscqam.remotes.priorityremote import PriorityRemote
+from oscqam.remotes.projectremote import ProjectRemote
+from oscqam.remotes.requestremote import RequestRemote
+from oscqam.remotes.userremote import UserRemote
 
 from .utils import load_fixture
 
