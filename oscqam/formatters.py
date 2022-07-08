@@ -67,7 +67,7 @@ def os_lineseps(value, target=None):
     return value
 
 
-class Formatter(object):
+class Formatter:
     """Base class for specialised formatters."""
 
     def __init__(self, listsep, formatters={}):
@@ -123,7 +123,7 @@ class VerboseOutput(Formatter):
     """
 
     def __init__(self):
-        super(VerboseOutput, self).__init__(",")
+        super().__init__(",")
         self.record_sep = "-" * terminal_dimensions()[1]
 
     def output(self, keys, reports):
@@ -153,9 +153,7 @@ class TabularOutput(Formatter):
     """
 
     def __init__(self):
-        super(TabularOutput, self).__init__(
-            os.linesep, {ReportField.comments: self.comment_formatter}
-        )
+        super().__init__(os.linesep, {ReportField.comments: self.comment_formatter})
 
     def output(self, keys, reports):
         table_formatter = prettytable.PrettyTable(keys)
