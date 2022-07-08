@@ -3,11 +3,13 @@ from io import StringIO
 import pytest
 
 from oscqam import actions, errors, fields, models, reject_reasons, remotes
+from oscqam.actions.oscaction import OscAction
+from oscqam.actions.report import Report
 
 from .utils import create_template_data, load_fixture
 
 
-class UndoAction(actions.OscAction):
+class UndoAction(OscAction):
     def __init__(self):
         # Don't call super to prevent query to model objects.
         self.undo_stack = []
@@ -460,7 +462,7 @@ def test_report(remote):
     )
     request = remote.requests.by_id(cloud_open)
     template = models.Template(request, tr_getter=lambda x: report)
-    report = actions.Report(request=request, template_factory=lambda _: template)
+    report = Report(request=request, template_factory=lambda _: template)
     assert report.value(fields.ReportField.assigned_roles) == [
         "qam-sle -> Unknown User (anonymous@nowhere.none)"
     ]
