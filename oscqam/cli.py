@@ -1,31 +1,32 @@
-from oscqam import strict_version
 import logging
-import sys
 import os
+import sys
+
 from osc import cmdln
 import osc.commandline
 import osc.conf
 
+from oscqam import strict_version
 from oscqam.actions import (
-    ApproveUserAction,
     ApproveGroupAction,
+    ApproveUserAction,
     AssignAction,
-    ListOpenAction,
-    ListGroupAction,
-    ListAssignedGroupAction,
-    ListAssignedAction,
-    ListAssignedUserAction,
-    UnassignAction,
-    RejectAction,
     CommentAction,
-    InfoAction,
     DeleteCommentAction,
+    InfoAction,
+    ListAssignedAction,
+    ListAssignedGroupAction,
+    ListAssignedUserAction,
+    ListGroupAction,
+    ListOpenAction,
+    RejectAction,
+    UnassignAction,
 )
 from oscqam.errors import NotPreviousReviewerError, ReportedError
-from oscqam.formatters import VerboseOutput, TabularOutput
 from oscqam.fields import ReportFields
-from oscqam.remotes import RemoteFacade
+from oscqam.formatters import TabularOutput, VerboseOutput
 from oscqam.reject_reasons import RejectReason
+from oscqam.remotes import RemoteFacade
 
 
 class ConflictingOptions(ReportedError):
@@ -34,25 +35,25 @@ class ConflictingOptions(ReportedError):
 
 class NoCommentsError(ReportedError):
     def __init__(self):
-        super(NoCommentsError, self).__init__("No comments were found.")
+        super().__init__("No comments were found.")
 
 
 class MissingReviewIDError(ReportedError):
     def __init__(self):
-        super(MissingReviewIDError, self).__init__("Missing ReviewID")
+        super().__init__("Missing ReviewID")
 
 
 class MissingCommentError(ReportedError):
     def __init__(self):
-        super(MissingCommentError, self).__init__("Missing comment")
+        super().__init__("Missing comment")
 
 
 class InvalidCommentIdError(ReportedError):
-    def __init__(self, id, comments):
+    def __init__(self, rid, comments):
         msg = "Id {0} is not in valid ids: {1}".format(
-            id, ", ".join([c.id for c in comments])
+            rid, ", ".join([c.id for c in comments])
         )
-        super(InvalidCommentIdError, self).__init__(msg)
+        super().__init__(msg)
 
 
 class QamInterpreter(cmdln.Cmdln):
@@ -246,8 +247,8 @@ class QamInterpreter(cmdln.Cmdln):
         default=False,
         help="Display all available fields for a request: " + all_columns_string + ".",
     )
-    @cmdln.alias("list")
-    def do_open(self, subcmd, opts):
+    @cmdln.alias("open")
+    def do_list(self, subcmd, opts):
         """${cmd_name}: Show a list of OBS qam-requests that are open.
 
         By default, open requests assignable to yourself will be shown
@@ -431,7 +432,7 @@ class QamInterpreter(cmdln.Cmdln):
             if number not in ids:
                 print("Invalid number specified: {0}".format(number))
                 return self.query_enum(enum, id, desc)
-        return list(map(enum.from_id, numbers))
+        return [enum.from_ids(i) for i in numbers]
 
     @cmdln.option("-U", "--user", help="User that rejects this request.")
     @cmdln.option("-M", "--message", help="Message to use for rejection-comment.")
@@ -457,8 +458,8 @@ class QamInterpreter(cmdln.Cmdln):
         self.request_id = args[0]
 
         message = opts.message if opts.message else None
-        reasons = list(
-            map(RejectReason.from_str, opts.reason)
+        reasons = (
+            [RejectReason.from_str(r) for r in opts.reason]
             if opts.reason
             else self.query_enum(RejectReason, lambda r: r.enum_id, lambda r: r.text)
         )
