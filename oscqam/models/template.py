@@ -1,11 +1,10 @@
 from ..errors import TemplateNotFoundError
 from ..errors import TestResultMismatchError
-from ..errors import TestPlanReviewerNotSetError
 from ..parsers import TemplateParser
 from ..utils import https
 
 
-def get_testreport_web(log_path):
+def get_testreport_web(log_path, metadata_path):
     """Load the template belonging to the request from
     https://qam.suse.de/testreports/.
 
@@ -18,7 +17,12 @@ def get_testreport_web(log_path):
     report = https(log_path)
     if not report:
         raise TemplateNotFoundError(log_path)
-    return report.read()
+    metadata = https(metadata_path)
+    if not metadata:
+        metadata = None
+    report = report.read()
+
+    return (report, metadata)
 
 
 class Template:
@@ -50,8 +54,7 @@ class Template:
 
         """
         self._request = request
-        self._log_path = self.url()
-        self.log_entries = parser(tr_getter(self._log_path))
+        self.log_entries = parser(*tr_getter(self.url, self.metadata_url))
 
     def failed(self):
         """Assert that this template is from a failed test.
@@ -60,7 +63,7 @@ class Template:
 
         """
         if self.status != Template.STATUS_FAILURE:
-            raise TestResultMismatchError("FAILED", self._log_path)
+            raise TestResultMismatchError("FAILED", self.url)
 
     def passed(self):
         """Assert that this template is from a successful test.
@@ -69,20 +72,7 @@ class Template:
             not set to PASSED.
         """
         if self.status != Template.STATUS_SUCCESS:
-            raise TestResultMismatchError("PASSED", self._log_path)
-
-    def testplanreviewer(self):
-        """Assert that the Test Plan Reviewer for the template is set.
-
-        :raises: :class:`oscqam.models.TestPlanReviewerNotSetError` if reviewer
-            is not set or empty.
-        """
-        reviewer = self.log_entries.get("Test Plan Reviewer", "")
-        reviewer = self.log_entries.get("Test Plan Reviewers", reviewer)
-        reviewer = reviewer.strip()
-        if reviewer:
-            return reviewer
-        raise TestPlanReviewerNotSetError(self._log_path)
+            raise TestResultMismatchError("PASSED", self.url)
 
     @property
     def status(self):
@@ -93,16 +83,16 @@ class Template:
             return Template.STATUS_FAILURE
         return Template.STATUS_UNKNOWN
 
+    @property
     def url(self):
         """Return URL to machine readable version of the report."""
-        return "{base}{prj}:{reqid}/log".format(
-            base=self.base_url, prj=self._request.src_project, reqid=self._request.reqid
-        )
+        return f"{self.base_url}{self._request.src_project}:{self._request.reqid}/log"
 
+    @property
+    def metadata_url(self):
+        return f"{self.base_url}{self._request.src_project}:{self._request.reqid}/metadata.json"
+
+    @property
     def fancy_url(self):
         """Return URL to human readable version of the report."""
-        return "{base}{prj}:{reqid}/log".format(
-            base=self.fancy_base_url,
-            prj=self._request.src_project,
-            reqid=self._request.reqid,
-        )
+        return f"{self.fancy_base_url}{self._request.src_project}:{self._request.reqid}/log"

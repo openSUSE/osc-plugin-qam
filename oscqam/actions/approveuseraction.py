@@ -22,13 +22,11 @@ class ApproveUserAction(ApproveAction):
     def validate(self):
         """Check preconditions to be met before a request can be approved.
 
-        :raises: :class:`oscqam.models.TestResultMismatchError` or
-        :class:`oscqam.models.TestPlanReviewerNotSetError` if conditions
+        :raises: :class:`oscqam.models.TestResultMismatchError` if conditions
         are not met.
 
         """
         self.reviews_assigned()
-        self.template.testplanreviewer()
         self.template.passed()
 
     def additional_reviews(self):
@@ -37,7 +35,7 @@ class ApproveUserAction(ApproveAction):
 
     def action(self):
         self.validate()
-        url = self.template.fancy_url()
+        url = self.template.fancy_url
         groups = ", ".join([str(g) for g in self.user.in_review_groups(self.request)])
         msg = self.APPROVE_MSG.format(
             user=self.reviewer, groups=groups, request=self.request, url=url

@@ -19,7 +19,7 @@ from oscqam.models import (
 from oscqam.reject_reasons import RejectReason
 
 from .mockremote import MockRemote
-from .utils import create_template_data, load_fixture
+from .utils import FakeTrGetter, create_template_data, load_fixture
 
 
 comment_1_xml = load_fixture("comments_1.xml")
@@ -50,7 +50,7 @@ def create_template(request_data=None, template_data=None):
     if not template_data:
         template_data = template_txt
     request = Request.parse(MockRemote(), request_data)[0]
-    template = Template(request, tr_getter=lambda x: template_data)
+    template = Template(request, tr_getter=FakeTrGetter(template_data))
     return template
 
 
@@ -327,17 +327,6 @@ def test_obs27_workaround_post_152(remote):
 def test_request_str(remote):
     request = Request.parse(remote, req_1_xml)[0]
     assert str(request) == "12345"
-
-
-def test_test_plan_reviewer():
-    reviewer_singular = create_template(
-        template_data=create_template_data(**{"Test Plan Reviewer": "a"})
-    )
-    reviewer_plural = create_template(
-        template_data=create_template_data(**{"Test Plan Reviewers": "a"})
-    )
-    assert reviewer_singular.testplanreviewer() == "a"
-    assert reviewer_plural.testplanreviewer() == "a"
 
 
 def test_parse_comment(remote):

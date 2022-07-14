@@ -6,7 +6,7 @@ from oscqam import actions, errors, fields, models, reject_reasons, remotes
 from oscqam.actions.oscaction import OscAction
 from oscqam.actions.report import Report
 
-from .utils import create_template_data, load_fixture
+from .utils import FakeTrGetter, create_template_data, load_fixture
 
 
 class UndoAction(OscAction):
@@ -180,7 +180,7 @@ def test_unassign_multiple_groups(remote):
 def test_reject_not_failed(remote):
     """Can not reject a request when the test report is not failed."""
     request = remote.requests.by_id(cloud_open)
-    template = models.Template(request, tr_getter=lambda x: template_txt)
+    template = models.Template(request, tr_getter=FakeTrGetter(template_txt))
     action = actions.RejectAction(
         remote, user_id, cloud_open, reject_reasons.RejectReason.administrative
     )
@@ -195,7 +195,7 @@ def test_reject_no_comment(remote):
     request = remote.requests.by_id(cloud_open)
     template = models.Template(
         request,
-        tr_getter=lambda x: (
+        tr_getter=FakeTrGetter(
             "SUMMARY: FAILED" "\n" "comment: NONE" "\n" "\n" "Products: test"
         ),
     )
@@ -212,9 +212,11 @@ def test_reject_posts_reason(remote):
     request = remote.requests.by_id(cloud_open)
     template = models.Template(
         request,
-        tr_getter=lambda x: """SUMMARY: FAILED
+        tr_getter=FakeTrGetter(
+            """SUMMARY: FAILED
 
                                comment: Something broke.""",
+        ),
     )
     endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
         prj=request.src_project
@@ -273,34 +275,14 @@ def test_list_assigned(remote):
     assert len(requests) == 1
 
 
-def test_approval_requires_testplanreviewer(remote):
-    request = remote.requests.by_id(cloud_open)
-    report = create_template_data(**{"SUMMARY": "PASSED", "Test Plan Reviewer": ""})
-    template = models.Template(request, tr_getter=lambda x: report)
-    approval = actions.ApproveUserAction(
-        remote, user_id, "12345", user_id, template_factory=lambda _: template
-    )
-    with pytest.raises(errors.TestPlanReviewerNotSetError):
-        approval()
-
-
-def test_approval_no_testplanreviewer_key(remote):
-    request = remote.requests.by_id(cloud_open)
-    report = create_template_data(SUMMARY="PASSED")
-    template = models.Template(request, tr_getter=lambda x: report)
-    approval = actions.ApproveUserAction(
-        remote, user_id, "12345", user_id, template_factory=lambda _: template
-    )
-    with pytest.raises(errors.TestPlanReviewerNotSetError):
-        approval()
-
-
 def test_approval_requires_status_passed(remote):
     request = remote.requests.by_id(cloud_open)
     report = create_template_data(
-        **{"SUMMARY": "FAILED", "Test Plan Reviewer": "someone"}
+        **{
+            "SUMMARY": "FAILED",
+        }
     )
-    template = models.Template(request, tr_getter=lambda x: report)
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote, user_id, "12345", user_id, template_factory=lambda _: template
     )
@@ -311,9 +293,11 @@ def test_approval_requires_status_passed(remote):
 def test_approval(remote):
     request = remote.requests.by_id(cloud_open)
     report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
+        **{
+            "SUMMARY": "PASSED",
+        }
     )
-    template = models.Template(request, tr_getter=lambda x: report)
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote, user_id, "12345", user_id, template_factory=lambda _: template
     )
@@ -458,10 +442,12 @@ def test_assign_skip_template(remote):
 
 def test_report(remote):
     report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
+        **{
+            "SUMMARY": "PASSED",
+        }
     )
     request = remote.requests.by_id(cloud_open)
-    template = models.Template(request, tr_getter=lambda x: report)
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     report = Report(request=request, template_factory=lambda _: template)
     assert report.value(fields.ReportField.assigned_roles) == [
         "qam-sle -> Unknown User (anonymous@nowhere.none)"
@@ -502,9 +488,11 @@ def test_decline_output(remote):
     request = remote.requests.by_id(cloud_open)
     template = models.Template(
         request,
-        tr_getter=lambda x: """SUMMARY: FAILED
+        tr_getter=FakeTrGetter(
+            """SUMMARY: FAILED
 
                                comment: Something broke.""",
+        ),
     )
     endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
         prj=request.src_project
@@ -521,7 +509,7 @@ def test_decline_output(remote):
     action()
     assert (
         "Declining request {req} for {user}. See Testreport: {url}".format(
-            req=request, user=action.user, url=action.template.fancy_url()
+            req=request, user=action.user, url=action.template.fancy_url
         )
         in action.out.getvalue()
     )
@@ -530,10 +518,8 @@ def test_decline_output(remote):
 def test_approve_output(remote):
     out = StringIO()
     request = remote.requests.by_id(cloud_open)
-    report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
-    )
-    template = models.Template(request, tr_getter=lambda x: report)
+    report = create_template_data(**{"SUMMARY": "PASSED"})
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote, user_id, "12345", user_id, template_factory=lambda _: template, out=out
     )
@@ -542,7 +528,7 @@ def test_approve_output(remote):
         "Approving {req} for {user} ({group}). Testreport: {url}\n".format(
             req=request,
             user=approval.reviewer,
-            url=approval.template.fancy_url(),
+            url=approval.template.fancy_url,
             group="qam-sle",
         )
         == approval.out.getvalue()
@@ -552,10 +538,8 @@ def test_approve_output(remote):
 def test_approve_not_assigned(remote):
     """A user can not approve an update that is not assigned to him."""
     unassigned_request = remote.requests.by_id(multi_available_assign)
-    report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
-    )
-    template = models.Template(unassigned_request, tr_getter=lambda x: report)
+    report = create_template_data(**{"SUMMARY": "PASSED"})
+    template = models.Template(unassigned_request, tr_getter=FakeTrGetter(report))
     approve_action = actions.ApproveUserAction(
         remote,
         user_id,
@@ -579,9 +563,11 @@ def test_approve_additional_groups(remote):
         one_open,
     )
     report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
+        **{
+            "SUMMARY": "PASSED",
+        }
     )
-    template = models.Template(request, tr_getter=lambda x: report)
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote,
         user_id,
@@ -595,7 +581,7 @@ def test_approve_additional_groups(remote):
         "Approving {req} for {user} ({group}). Testreport: {url}\n".format(
             req=request,
             user=approval.reviewer,
-            url=approval.template.fancy_url(),
+            url=approval.template.fancy_url,
             group="qam-sle",
         )
         == approval.out.getvalue()
@@ -612,9 +598,11 @@ def test_approve_group(remote):
         one_open,
     )
     report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
+        **{
+            "SUMMARY": "PASSED",
+        }
     )
-    template = models.Template(request, tr_getter=lambda x: report)
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveGroupAction(
         remote,
         user_id,
@@ -636,9 +624,11 @@ def test_approve_group_not_in_request(remote):
         one_open,
     )
     report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
+        **{
+            "SUMMARY": "PASSED",
+        }
     )
-    template = models.Template(request, tr_getter=lambda x: report)
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveGroupAction(
         remote,
         user_id,
@@ -657,9 +647,11 @@ def test_approve_last_group_does_not_raise(remote):
         last_qam,
     )
     report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
+        **{
+            "SUMMARY": "PASSED",
+        }
     )
-    template = models.Template(request, tr_getter=lambda x: report)
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote,
         user_id,
@@ -673,7 +665,7 @@ def test_approve_last_group_does_not_raise(remote):
         "Approving {req} for {user} ({group}). Testreport: {url}".format(
             req=request,
             user=approval.reviewer,
-            url=approval.template.fancy_url(),
+            url=approval.template.fancy_url,
             group="qam-sle",
         )
         in approval.out.getvalue()
@@ -686,9 +678,11 @@ def test_approve_misses_assigned_role(remote):
         inverse_assign_order,
     )
     report = create_template_data(
-        **{"SUMMARY": "PASSED", "Test Plan Reviewer": "someone"}
+        **{
+            "SUMMARY": "PASSED",
+        }
     )
-    template = models.Template(request, tr_getter=lambda x: report)
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote,
         user_id,
@@ -702,7 +696,7 @@ def test_approve_misses_assigned_role(remote):
         "Approving {req} for {user} ({group}). Testreport: {url}".format(
             req=request,
             user=approval.reviewer,
-            url=approval.template.fancy_url(),
+            url=approval.template.fancy_url,
             group="qam-sle",
         )
         in approval.out.getvalue()
