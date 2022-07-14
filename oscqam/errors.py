@@ -17,6 +17,8 @@ class NoQamReviewsError(UninferableError):
     def __init__(self, accepted_reviews):
         """Create new error for accepted reviews."""
         message = "No 'qam'-groups need review."
+        from oscqam.models.review import GroupReview
+
         accept_reviews = [
             review for review in accepted_reviews if isinstance(review, GroupReview)
         ]
@@ -32,7 +34,7 @@ class NoQamReviewsError(UninferableError):
             if accept_reviews
             else ""
         )
-        super(NoQamReviewsError, self).__init__(message)
+        super().__init__(message)
 
 
 class NonMatchingGroupsError(UninferableError):
@@ -46,7 +48,7 @@ class NonMatchingGroupsError(UninferableError):
             eg=[g.name for g in expected_groups],
             fg=[r.name for r in found_groups],
         )
-        super(NonMatchingGroupsError, self).__init__(message)
+        super().__init__(message)
 
 
 class NonMatchingUserGroupsError(UninferableError):
@@ -66,7 +68,7 @@ class NonMatchingUserGroupsError(UninferableError):
             ug=[g.name for g in user_groups],
             og=[r.name for r in open_groups],
         )
-        super(NonMatchingUserGroupsError, self).__init__(message)
+        super().__init__(message)
 
 
 class InvalidRequestError(ReportedError):
@@ -82,7 +84,7 @@ class MissingSourceProjectError(InvalidRequestError):
     """Raise when a request is missing the source project property."""
 
     def __init__(self, request):
-        super(MissingSourceProjectError, self).__init__(
+        super().__init__(
             "Invalid build service request: "
             "{0} has no source project.".format(request)
         )
@@ -92,25 +94,14 @@ class TemplateNotFoundError(ReportedError):
     """Raise when a template could not be found."""
 
     def __init__(self, message):
-        super(TemplateNotFoundError, self).__init__(
-            "Report could not be loaded: {0}".format(message)
-        )
+        super().__init__("Report could not be loaded: {0}".format(message))
 
 
 class TestResultMismatchError(ReportedError):
     _msg = "Request-Status not '{0}': please check report: {1}"
 
     def __init__(self, expected, log_path):
-        super(TestResultMismatchError, self).__init__(
-            self._msg.format(expected, log_path)
-        )
-
-
-class TestPlanReviewerNotSetError(ReportedError):
-    _msg = "The testreport ({path}) is missing a test plan reviewer."
-
-    def __init__(self, path):
-        super(TestPlanReviewerNotSetError, self).__init__(self._msg.format(path=path))
+        super().__init__(self._msg.format(expected, log_path))
 
 
 class ActionError(ReportedError):
@@ -127,9 +118,7 @@ class NoReviewError(UninferableError):
     """
 
     def __init__(self, user):
-        super(NoReviewError, self).__init__(
-            "User {u} is not assigned for any groups.".format(u=user)
-        )
+        super().__init__("User {u} is not assigned for any groups.".format(u=user))
 
 
 class MultipleReviewsError(UninferableError):
@@ -139,7 +128,7 @@ class MultipleReviewsError(UninferableError):
     """
 
     def __init__(self, user, groups):
-        super(MultipleReviewsError, self).__init__(
+        super().__init__(
             "User {u} is currently reviewing for mulitple groups: {g}."
             "Please provide which group to unassign via -G parameter.".format(
                 u=user, g=groups
@@ -155,7 +144,7 @@ class ReportNotYetGeneratedError(ReportedError):
     )
 
     def __init__(self, request):
-        super(ReportNotYetGeneratedError, self).__init__(self._msg.format(str(request)))
+        super().__init__(self._msg.format(str(request)))
 
 
 class OneGroupAssignedError(ReportedError):
@@ -166,7 +155,7 @@ class OneGroupAssignedError(ReportedError):
     )
 
     def __init__(self, assignment):
-        super(OneGroupAssignedError, self).__init__(
+        super().__init__(
             self._msg.format(user=str(assignment.user), group=str(assignment.group))
         )
 
@@ -178,9 +167,7 @@ class NotPreviousReviewerError(ReportedError):
     )
 
     def __init__(self, reviewers):
-        super(NotPreviousReviewerError, self).__init__(
-            self._msg.format(reviewers=reviewers)
-        )
+        super().__init__(self._msg.format(reviewers=reviewers))
 
 
 class NoCommentError(ReportedError):
@@ -189,11 +176,11 @@ class NoCommentError(ReportedError):
     )
 
     def __init__(self):
-        super(NoCommentError, self).__init__(self._msg)
+        super().__init__(self._msg)
 
 
 class NotAssignedError(ReportedError):
     _msg = "The user {user} is not assigned to this update."
 
     def __init__(self, user):
-        super(NotAssignedError, self).__init__(self._msg.format(user=user))
+        super().__init__(self._msg.format(user=user))

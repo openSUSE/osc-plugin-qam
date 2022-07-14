@@ -31,8 +31,7 @@ class RejectAction(OscAction):
     def validate(self):
         """Check preconditions to be met before a request can be approved.
 
-        :raises: :class:`oscqam.models.TestResultMismatchError` or
-            :class:`oscqam.models.TestPlanReviewerNotSetError` if conditions
+        :raises: :class:`oscqam.models.TestResultMismatchError` if conditions
             are not met.
 
         """
@@ -42,7 +41,7 @@ class RejectAction(OscAction):
 
     def action(self):
         self.validate()
-        url = self.template.fancy_url()
+        url = self.template.fancy_url
         msg = RejectAction.DECLINE_MSG.format(
             user=self.user, request=self.request, url=url
         )

@@ -2,6 +2,8 @@
 """
 from collections import defaultdict
 from itertools import dropwhile, takewhile
+from json import loads
+from json.decoder import JSONDecodeError
 import logging
 import re
 
@@ -60,12 +62,20 @@ def split_srcrpms(srcrpm_line):
     return [xs.strip() for xs in srcrpm_line.split(",")]
 
 
+def process_packages(pkgs):
+    ret = set()
+    for key in pkgs.keys():
+        for pkg in pkgs[key]:
+            ret.add(pkg)
+    return list(ret)
+
+
 class TemplateParser:
     """Parses a template-logs header-fields."""
 
     end_marker = "#############################"
 
-    def __call__(self, log):
+    def __call__(self, log, metadata):
         """Return dictionary of headers from the log-file and values.
 
         :returns: {str: object}
@@ -74,7 +84,35 @@ class TemplateParser:
             self.log = log.decode()
         else:
             self.log = log
-        return self._parse_headers(self._read_headers())
+        if isinstance(metadata, bytes):
+            self.metadata = metadata.decode()
+        else:
+            self.metadata = metadata
+
+        log_entries = self._parse_headers(self._read_headers())
+
+        data = None
+        if metadata:
+            try:
+                data = loads(metadata)
+            except JSONDecodeError:
+                data = None
+                pass
+
+        if data:
+            log_entries.update(self._read_metadata(data))
+
+        return log_entries
+
+    @staticmethod
+    def _read_metadata(data):
+        log_entries = {}
+        log_entries["SRCRPMs"] = data.get("SRCRPMs")
+        log_entries["Products"] = split_products(",".join(data.get("products")))
+        log_entries["Rating"] = data.get("rating")
+        log_entries["Packages"] = process_packages(data.get("packages"))
+        log_entries["Bugs"] = data.get("bugs")
+        return log_entries
 
     def _read_comment(self):
         def condition(line):

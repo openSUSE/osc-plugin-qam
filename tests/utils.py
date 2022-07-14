@@ -21,3 +21,12 @@ def create_template_data(**data):
     if TemplateParser.end_marker not in data.keys():
         data[TemplateParser.end_marker] = ""
     return "\n".join(": ".join(v) for v in (zip(data.keys(), data.values())))
+
+
+class FakeTrGetter:
+    def __init__(self, tmpl, meta=None) -> None:
+        self.tmpl = tmpl
+        self.meta = meta
+
+    def __call__(self, *args, **kwds):
+        return (self.tmpl, self.meta)
