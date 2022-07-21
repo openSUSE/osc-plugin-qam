@@ -22,8 +22,9 @@ def get_testreport_web(log_path, metadata_path):
 
     if not metadata:
         metadata = None
+    else:
+        metadata = metadata.read()
 
-    metadata = metadata.read()
     report = report.read()
 
     return (report, metadata)
