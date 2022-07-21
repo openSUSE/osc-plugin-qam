@@ -17,9 +17,13 @@ def get_testreport_web(log_path, metadata_path):
     report = https(log_path)
     if not report:
         raise TemplateNotFoundError(log_path)
+
     metadata = https(metadata_path)
+
     if not metadata:
         metadata = None
+
+    metadata = metadata.read()
     report = report.read()
 
     return (report, metadata)
