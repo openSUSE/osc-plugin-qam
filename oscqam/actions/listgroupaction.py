@@ -10,4 +10,4 @@ class ListGroupAction(ListAction):
         self.groups = [self.remote.groups.for_name(group) for group in groups]
 
     def load_requests(self):
-        return {self.remote.requests.open_for_groups(self.groups)}
+        return set(self.remote.requests.open_for_groups(self.groups))
