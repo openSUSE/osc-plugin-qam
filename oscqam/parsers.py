@@ -109,7 +109,7 @@ class TemplateParser:
         log_entries = {}
         log_entries["SRCRPMs"] = data.get("SRCRPMs")
         log_entries["Products"] = split_products(",".join(data.get("products")))
-        log_entries["Rating"] = data.get("rating")
+        log_entries["Rating"] = Rating(data.get("rating"))
         log_entries["Packages"] = process_packages(data.get("packages"))
         log_entries["Bugs"] = data.get("bugs")
         return log_entries
