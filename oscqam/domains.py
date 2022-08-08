@@ -50,7 +50,4 @@ class UnknownPriority(Priority):
         return False
 
     def __str__(self):
-        return self.__unicode__()
-
-    def __unicode__(self):
         return "{0}".format(self.priority)
