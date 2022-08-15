@@ -112,6 +112,8 @@ class TemplateParser:
         log_entries["Rating"] = Rating(data.get("rating"))
         log_entries["Packages"] = process_packages(data.get("packages"))
         log_entries["Bugs"] = data.get("bugs")
+        log_entries["ReviewRequestID"] = data.get("rrid")
+
         return log_entries
 
     def _read_comment(self):
