@@ -5,3 +5,5 @@ pytest
 pytest-cov
 coverage
 black
+requests
+responses

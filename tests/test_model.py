@@ -3,6 +3,7 @@ from urllib.error import HTTPError
 
 import osc
 import pytest
+import responses
 
 from oscqam.domains import Priority, UnknownPriority
 from oscqam.errors import MissingSourceProjectError
@@ -241,6 +242,7 @@ def test_assignment_inference_ignores_qam_auto(remote):
     assert assignment.group.name == "qam-sle"
 
 
+@responses.activate
 def test_incident_priority(remote):
     request = Request.parse(remote, req_1_xml)[0]
     src_project = request.src_project
@@ -259,6 +261,7 @@ def test_incident_priority(remote):
     assert incident_priority == Priority(100)
 
 
+@responses.activate
 def test_incident_priority_empty(remote):
     request = Request.parse(remote, req_1_xml)[0]
     src_project = request.src_project
@@ -268,6 +271,7 @@ def test_incident_priority_empty(remote):
     assert incident_priority == UnknownPriority()
 
 
+@responses.activate
 def test_no_incident_priority(remote):
     def raise_http():
         raise HTTPError("test", 500, "test", "", StringIO(""))
