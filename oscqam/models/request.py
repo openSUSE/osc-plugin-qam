@@ -40,6 +40,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         self._reviews = []
         self._attributes = {}
         self._issues = []
+        self._incident = None
 
     def active(self):
         return self.state == "new" or self.state == "review"
@@ -49,6 +50,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if not self._priority:
             self._priority = self.remote.priorities.for_request(self)
         return self._priority
+
+    @property
+    def incident(self):
+        if not self._incident:
+            self._incident = self.src_project.split(":")[-1]
+        return self._incident
 
     @property
     def assigned_roles(self):
