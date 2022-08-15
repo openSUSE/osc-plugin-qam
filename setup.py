@@ -14,6 +14,6 @@ setup(
     + "abstractions.",
     long_description=open("README.rst").read(),
     url="https://gitlab.suse.de/qa-maintenance/qam-oscplugin",
-    install_requires=["osc", "python-dateutil", "prettytable"],
+    install_requires=["osc", "python-dateutil", "prettytable", "requests"],
     packages=find_packages(exclude=["tests"]),
 )
