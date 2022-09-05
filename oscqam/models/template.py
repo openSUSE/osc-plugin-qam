@@ -37,9 +37,9 @@ class Template:
     STATUS_FAILURE = 1
     STATUS_UNKNOWN = 2
     # Machine readable reports
-    base_url = "https://qam2.suse.de/testreports/"
+    base_url = "https://qam.suse.de/testreports/"
     # Human readable reports
-    fancy_base_url = "https://qam2.suse.de/reports/"
+    fancy_base_url = "https://qam.suse.de/reports/"
 
     def __init__(self, request, tr_getter=get_testreport_web, parser=TemplateParser()):
         """Create a template from the given request.
