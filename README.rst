@@ -29,7 +29,7 @@ http://download.suse.de/ibs/QA:/Maintenance/
 .. code:: bash
 
           zypper ar -f http://download.suse.de/ibs/QA:/Maintenance/<distribution>/QA:Maintenance.repo
-          zypper in python-oscqam
+          zypper in osc-plugin-qam
 
 Currently supported distributions are:
 
