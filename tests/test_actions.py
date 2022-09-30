@@ -344,8 +344,6 @@ def test_assign_previous_reject_not_old_reviewer(remote):
         assign()
 
 
-# TODO: FIX thix
-@pytest.mark.skip("Broken test - maybe wrong fixture")
 def test_assign_previous_reject_old_reviewer(remote):
     out = StringIO()
     remote.register_url(
@@ -399,8 +397,6 @@ def test_assign_previous_reject_not_old_reviewer_force(remote):
     )
 
 
-# TODO: FIX thix
-@pytest.mark.skip("Broken test - maybe wrong fixture")
 def test_assign_skip_template(remote):
     """Assign a request without a testreport template."""
     out = StringIO()

@@ -65,9 +65,13 @@ class AssignAction(OscAction):
         ]
         if not declined_requests:
             return
+        rejects = [
+            request
+            for request in declined_requests
+        ][0]
         reviewers = [
             review.reviewer
-            for review in (request.review_list() for request in declined_requests)
+            for review in rejects.review_list()
             if isinstance(review, UserReview)
         ]
         if self.user not in reviewers:
