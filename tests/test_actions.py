@@ -78,15 +78,16 @@ def test_unassign_explicit_group(remote):
     assert len(remote.post_calls) == 1
 
 
-# TODO: fix this
-@pytest.mark.skip("Logic changed in 0.42.0 - needs reimplementation")
 def test_unassign_multi_reviewer(remote):
     out = StringIO()
     unassign = actions.UnassignAction(
         remote, user_id, multireview, ["qam-sle"], out=out
     )
     unassign()
-    assert "Not reopening group - other assignments exist." in unassign.out.getvalue()
+    assert (
+        "Unassigning Unknown User (anonymous@nowhere.none) from 56789 for group qam-sle."
+        in unassign.out.getvalue()
+    )
 
 
 def test_unassign_inferred_group(remote):
@@ -95,8 +96,6 @@ def test_unassign_inferred_group(remote):
     assert len(remote.post_calls) == 1
 
 
-# TODO: fix this
-@pytest.mark.skip("Logic changed in 0.42.0 - needs reimplementation")
 def test_unassign_subset_group(remote):
     out = StringIO()
     unassign = actions.UnassignAction(
@@ -105,7 +104,7 @@ def test_unassign_subset_group(remote):
     unassign()
     assert len(remote.post_calls) == 1
     assert (
-        "Will close review for Unknown User (anonymous@nowhere.none)"
+        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-sle"
         in unassign.out.getvalue()
     )
 
@@ -157,8 +156,6 @@ def test_unassign_no_group(remote):
         unassign()
 
 
-# TODO: fix this
-@pytest.mark.skip("Logic changed in 0.42.0 - needs reimplementation")
 def test_unassign_multiple_groups(remote):
     out = StringIO()
     unassign = actions.UnassignAction(remote, user_id, two_assigned, out=out)
@@ -169,10 +166,6 @@ def test_unassign_multiple_groups(remote):
     )
     assert (
         "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-cloud"
-        in unassign.out.getvalue()
-    )
-    assert (
-        "Will close review for Unknown User (anonymous@nowhere.none)"
         in unassign.out.getvalue()
     )
 
