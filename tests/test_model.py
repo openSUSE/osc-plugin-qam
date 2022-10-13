@@ -272,6 +272,25 @@ def test_incident_priority_empty(remote):
 
 
 @responses.activate
+def test_incident_priority_empty_value(remote):
+    request = Request.parse(remote, req_1_xml)[0]
+    src_project = request.src_project
+    endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(src_project)
+    remote.register_url(
+        endpoint,
+        lambda: (
+            "<attributes>"
+            "<attribute name='IncidentPriority' namespace='OBS'>"
+            "<value />"
+            "</attribute>"
+            "</attributes>"
+        ),
+    )
+    incident_priority = request.incident_priority
+    assert incident_priority == UnknownPriority()
+
+
+@responses.activate
 def test_no_incident_priority(remote):
     def raise_http():
         raise HTTPError("test", 500, "test", "", StringIO(""))
