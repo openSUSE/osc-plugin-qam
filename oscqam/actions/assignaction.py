@@ -45,8 +45,8 @@ class AssignAction(OscAction):
         """
         try:
             self.request.get_template(self.template_factory)
-        except TemplateNotFoundError:
-            raise ReportNotYetGeneratedError(self.request)
+        except TemplateNotFoundError as e:
+            raise ReportNotYetGeneratedError(self.request, str(e))
 
     def check_previous_rejects(self):
         """If there were previous rejects for an incident users that have
