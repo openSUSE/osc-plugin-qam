@@ -140,11 +140,16 @@ class ReportNotYetGeneratedError(ReportedError):
     _msg = (
         "The report for request '{0}' is not generated yet. "
         "To prevent bugs in the template parser, assigning "
-        "is not yet possible."
+        "is not yet possible. "
+        "You can also inspect the server log at {1}"
     )
 
-    def __init__(self, request):
-        super().__init__(self._msg.format(str(request)))
+    def __init__(self, request, log_path):
+        super().__init__(
+            self._msg.format(
+                str(request), log_path.replace("/testreports/", "/reports/")
+            )
+        )
 
 
 class OneGroupAssignedError(ReportedError):
