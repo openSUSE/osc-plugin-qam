@@ -69,7 +69,6 @@ class QamInterpreter(cmdln.Cmdln):
     SUBQUERY_QUIT = 4
 
     def __init__(self, parent_cmdln, *args, **kwargs):
-        cmdln.Cmdln.__init__(self, *args, **kwargs)
         self.parent_cmdln = parent_cmdln
 
     name = "osc qam"
@@ -77,7 +76,7 @@ class QamInterpreter(cmdln.Cmdln):
     all_reasons_string = ", ".join(r.flag for r in RejectReason)
 
     def _set_required_params(self, opts):
-        self.parent_cmdln.postoptparse()
+        self.parent_cmdln.post_argparse()
         self.apiurl = self.parent_cmdln.get_api_url()
         self.api = RemoteFacade(self.apiurl)
         self.affected_user = None
@@ -616,7 +615,7 @@ def setup_logging():
 @cmdln.option("-U", "--user", help="User to use for the command.")
 @cmdln.option("-v", "--verbose", action="store_true", help="Generate verbose output.")
 @cmdln.option("--skip-template", help="Will not check if a template exists.")
-def do_qam(self, subcmd, opts, *args, **kwargs):
+def do_qam(self, subcmd, opts, *args):
     """Start the QA-Maintenance specific submode of osc for request handling."""
     osc_stdout = [None]
     setup_logging()
@@ -645,13 +644,12 @@ def do_qam(self, subcmd, opts, *args, **kwargs):
         try:
             restore_orig_stdout()
             interp = QamInterpreter(self)
-            interp.optparser = cmdln.SubCmdOptionParser()
             if args:
                 running = False
                 index = sys.argv.index("qam")
-                ret = interp.onecmd(sys.argv[index + 1 :])
+                ret = interp.main(sys.argv[index:])
             else:
-                ret = interp.cmdloop()
+                ret = interp.main()
                 if ret == QamInterpreter.INTERPRETER_QUIT:
                     running = False
         except ReportedError as e:
