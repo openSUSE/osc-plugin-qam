@@ -6,7 +6,7 @@ from osc import cmdln
 import osc.commandline
 import osc.conf
 
-from oscqam import strict_version
+from oscqam import __version__ as strict_version
 from oscqam.actions import (
     ApproveGroupAction,
     ApproveUserAction,
