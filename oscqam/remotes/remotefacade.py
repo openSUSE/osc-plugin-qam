@@ -27,7 +27,7 @@ class RemoteFacade:
         self.bugs = BugRemote(self)
 
     def _check_for_error(self, answer):
-        ret_code = answer.getcode()
+        ret_code = answer.status
         if ret_code >= 400 and ret_code < 600:
             raise RemoteError(
                 answer.url, ret_code, answer.msg, answer.headers, answer.fp
@@ -57,7 +57,7 @@ class RemoteFacade:
             logging.debug("Retrieving: %s" % url)
             remote = osc.core.http_GET(url)
         except HTTPError as e:
-            raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
+            raise RemoteError(e.url, e.status, e.msg, e.headers, e.fp)
         self._check_for_error(remote)
         xml = remote.read()
         return xml
@@ -71,4 +71,4 @@ class RemoteFacade:
             xml = remote.read()
             return xml
         except HTTPError as e:
-            raise RemoteError(e.url, e.getcode(), e.msg, e.headers, e.fp)
+            raise RemoteError(e.url, e.status, e.msg, e.headers, e.fp)
