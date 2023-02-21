@@ -7,7 +7,7 @@ only-test:
 
 .PHONY: checkstyle
 checkstyle:
-	black --check ./
+	black --check --diff ./
 
 .PHONY: tidy
 tidy:
