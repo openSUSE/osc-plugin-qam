@@ -1,4 +1,5 @@
 from ..errors import (
+    NoQamReviewsError,
     NotPreviousReviewerError,
     ReportNotYetGeneratedError,
     TemplateNotFoundError,
@@ -48,6 +49,10 @@ class AssignAction(OscAction):
         except TemplateNotFoundError as e:
             raise ReportNotYetGeneratedError(self.request, str(e))
 
+    def check_open_review(self) -> None:
+        if self.request.state.name not in Request.OPEN_STATES:
+            raise NoQamReviewsError([])
+
     def check_previous_rejects(self):
         """If there were previous rejects for an incident users that have
         already reviewed this incident should (preferably) review it again.
@@ -74,6 +79,8 @@ class AssignAction(OscAction):
             raise NotPreviousReviewerError(reviewers)
 
     def validate(self):
+        # if tehere isn't open review all other cheks aren't required and can't be overridden by self.force
+        self.check_open_review()
         if self.force:
             return
         if self.template_required:

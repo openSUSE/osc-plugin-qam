@@ -239,6 +239,18 @@ def test_assign_no_report(remote):
         assign()
 
 
+def test_assign_no_review(remote):
+    assign = actions.AssignAction(
+        remote,
+        user_id,
+        "rejected",
+        groups=["qam-test"],
+        template_factory=lambda r: True,
+    )
+    with pytest.raises(errors.NoQamReviewsError):
+        assign()
+
+
 # TODO: Fix this
 @pytest.mark.skip("Not implemented yet in mock")
 def test_list_assigned_user(remote):
