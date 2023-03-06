@@ -553,18 +553,6 @@ class QamInterpreter(cmdln.Cmdln):
         """${cmd_name}: Print the plugin's version."""
         print(strict_version)
 
-    @cmdln.alias("q")
-    @cmdln.alias("Q")
-    @cmdln.alias("exit")
-    def do_quit(self, subcmd, opts):
-        """${cmd_name}: Quit the qam-subinterpreter."""
-        self.stop = True
-        return self.INTERPRETER_QUIT
-
-    def _do_EOF(self, argv):
-        cmdln.Cmdln._do_EOF(self, argv)
-        return self.INTERPRETER_QUIT
-
 
 def setup_logging():
     level = os.environ.get("OSCQAM_LOG", "info").lower()
