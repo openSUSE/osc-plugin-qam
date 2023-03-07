@@ -419,7 +419,7 @@ class QamInterpreter(cmdln.Cmdln):
         """
         ids = [tid(member) for member in enum]
         for member in enum:
-            print("{0}. {1}".format(id(member), desc(member)))
+            print("{0}. {1}".format(tid(member), desc(member)))
         print("q. Quit")
         user_input = input(
             "Please specify the options " "(separate multiple values with ,): "
@@ -430,8 +430,8 @@ class QamInterpreter(cmdln.Cmdln):
         for number in numbers:
             if number not in ids:
                 print("Invalid number specified: {0}".format(number))
-                return self.query_enum(enum, id, desc)
-        return [enum.from_ids(i) for i in numbers]
+                return self.query_enum(enum, tid, desc)
+        return [enum.from_id(i) for i in numbers]
 
     @cmdln.option("-U", "--user", help="User that rejects this request.")
     @cmdln.option("-M", "--message", help="Message to use for rejection-comment.")
