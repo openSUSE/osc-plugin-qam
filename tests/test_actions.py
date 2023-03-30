@@ -175,7 +175,7 @@ def test_reject_not_failed(remote):
     request = remote.requests.by_id(cloud_open)
     template = models.Template(request, tr_getter=FakeTrGetter(template_txt))
     action = actions.RejectAction(
-        remote, user_id, cloud_open, reject_reasons.RejectReason.administrative
+        remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative], False
     )
     action._template = template
     with pytest.raises(errors.TestResultMismatchError) as context:
@@ -193,11 +193,27 @@ def test_reject_no_comment(remote):
         ),
     )
     action = actions.RejectAction(
-        remote, user_id, cloud_open, reject_reasons.RejectReason.administrative
+        remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative], False
     )
     action._template = template
     with pytest.raises(errors.NoCommentError):
         action()
+
+
+def test_reject_no_comment_force(remote):
+    """Reject can be forced without template"""
+    request = remote.requests.by_id(cloud_open)
+    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
+        prj=request.src_project
+    )
+    remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
+    action = actions.RejectAction(
+        remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative], True
+    )
+    action()
+    assert len(remote.post_calls), 2
+    assert request.src_project in remote.post_calls[0]
+    assert "Testreport: There is no template" in remote.post_calls[1]
 
 
 def test_reject_posts_reason(remote):
@@ -216,7 +232,7 @@ def test_reject_posts_reason(remote):
     )
     remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
     action = actions.RejectAction(
-        remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative]
+        remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative], False
     )
     action._template = template
     action()
@@ -508,6 +524,7 @@ def test_decline_output(remote):
         user_id,
         cloud_open,
         [reject_reasons.RejectReason.administrative],
+        False,
         out=out,
     )
     action._template = template

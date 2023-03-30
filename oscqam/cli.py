@@ -152,7 +152,7 @@ class QamInterpreter(cmdln.Cmdln):
         "--skip-template",
         action="store_true",
         default=False,
-        help="Will not check if a template exists.",
+        help="Do not check whether a template exists.",
     )
     def do_assign(self, subcmd, opts, *args):
         """${cmd_name}: Assign the request to the user.
@@ -441,6 +441,12 @@ class QamInterpreter(cmdln.Cmdln):
         action="append",
         help="Reason the request was rejected: " + all_reasons_string,
     )
+    @cmdln.option(
+        "--skip-template",
+        action="store_true",
+        default=False,
+        help="Do not check whether a template exists.",
+    )
     def do_reject(self, subcmd, opts, *args):
         """${cmd_name}: Reject the request for the user.
 
@@ -464,8 +470,14 @@ class QamInterpreter(cmdln.Cmdln):
         )
         if reasons == self.SUBQUERY_QUIT:
             return
+        template_skip: bool = False if opts.skip_template else True
         action = RejectAction(
-            self.api, self.affected_user, self.request_id, reasons, message
+            self.api,
+            self.affected_user,
+            self.request_id,
+            reasons,
+            template_skip,
+            message,
         )
         action()
 
@@ -573,36 +585,6 @@ def setup_logging():
     logging.basicConfig(filename=path, filemode="w", level=level)
 
 
-@cmdln.option(
-    "-A", "--assigned", action="store_true", help="Parameter for list command."
-)
-@cmdln.option(
-    "-F",
-    "--fields",
-    action="append",
-    help="Define the fields to output for the list command in "
-    "cumulative fashion (pass flag multiple times).",
-)
-@cmdln.option(
-    "-G",
-    "--group",
-    action="append",
-    help="Define the groups to use for the command."
-    "Pass multiple groups passing flag multiple times.",
-)
-@cmdln.option("-M", "--message", help="Message to use for the command.")
-@cmdln.option(
-    "-R", "--reason", action="append", help="Reason a request has to be rejected."
-)
-@cmdln.option(
-    "-T",
-    "--tabular",
-    action="store_true",
-    help="Create tabular output for list command.",
-)
-@cmdln.option("-U", "--user", help="User to use for the command.")
-@cmdln.option("-v", "--verbose", action="store_true", help="Generate verbose output.")
-@cmdln.option("--skip-template", help="Will not check if a template exists.")
 def do_qam(self, subcmd, opts, *args):
     """Start the QA-Maintenance specific submode of osc for request handling."""
     osc_stdout = [None]
@@ -627,7 +609,7 @@ def do_qam(self, subcmd, opts, *args):
 
     osc.conf.get_config()
     running = True
-    ret = None
+    ret = 0
     while running:
         try:
             restore_orig_stdout()
