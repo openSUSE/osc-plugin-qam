@@ -201,14 +201,8 @@ def test_reject_no_comment(remote):
 
 
 def test_reject_no_comment_force(remote):
-    """Can not reject a request when the test report is not failed."""
+    """Reject can be forced without template"""
     request = remote.requests.by_id(cloud_open)
-    template = models.Template(
-        request,
-        tr_getter=FakeTrGetter(
-            "SUMMARY: FAILED" "\n" "comment: NONE" "\n" "\n" "Products: test"
-        ),
-    )
     endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
         prj=request.src_project
     )
@@ -216,10 +210,10 @@ def test_reject_no_comment_force(remote):
     action = actions.RejectAction(
         remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative], True
     )
-    action._template = template
     action()
     assert len(remote.post_calls), 2
     assert request.src_project in remote.post_calls[0]
+    assert "Testreport: There is no template" in remote.post_calls[1]
 
 
 def test_reject_posts_reason(remote):
