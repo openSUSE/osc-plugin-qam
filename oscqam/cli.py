@@ -152,7 +152,7 @@ class QamInterpreter(cmdln.Cmdln):
         "--skip-template",
         action="store_true",
         default=False,
-        help="Will not check if a template exists.",
+        help="Do not check whether a template exists.",
     )
     def do_assign(self, subcmd, opts, *args):
         """${cmd_name}: Assign the request to the user.
@@ -441,6 +441,12 @@ class QamInterpreter(cmdln.Cmdln):
         action="append",
         help="Reason the request was rejected: " + all_reasons_string,
     )
+    @cmdln.option(
+        "--skip-template",
+        action="store_true",
+        default=False,
+        help="Do not check whether a template exists.",
+    )
     def do_reject(self, subcmd, opts, *args):
         """${cmd_name}: Reject the request for the user.
 
@@ -464,8 +470,14 @@ class QamInterpreter(cmdln.Cmdln):
         )
         if reasons == self.SUBQUERY_QUIT:
             return
+        template_skip: bool = False if opts.skip_template else True
         action = RejectAction(
-            self.api, self.affected_user, self.request_id, reasons, message
+            self.api,
+            self.affected_user,
+            self.request_id,
+            reasons,
+            template_skip,
+            message,
         )
         action()
 
