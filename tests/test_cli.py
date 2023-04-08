@@ -2,8 +2,9 @@ import builtins
 
 from contextlib import contextmanager
 
-from oscqam import formatters, cli
+from oscqam import formatters
 from oscqam.utils import multi_level_sort
+from oscqam.common import Common
 
 
 @contextmanager
@@ -32,7 +33,7 @@ def test_lineseperators():
 
 
 def test_yes_no_question_true():
-    interpreter = cli.QamInterpreter(None)
+    interpreter = Common
     with wrap_builtin("yes"):
         result = interpreter.yes_no("Sure about that")
         assert result
@@ -45,7 +46,7 @@ def test_yes_no_question_true():
 
 
 def test_yes_no_question_false():
-    interpreter = cli.QamInterpreter(None)
+    interpreter = Common
     with wrap_builtin("no"):
         result = interpreter.yes_no("Sure about that")
         assert result is False

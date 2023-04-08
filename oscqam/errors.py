@@ -189,3 +189,25 @@ class NotAssignedError(ReportedError):
 
     def __init__(self, user):
         super().__init__(self._msg.format(user=user))
+
+
+class ConflictingOptions(ReportedError):
+    pass
+
+
+class NoCommentsError(ReportedError):
+    def __init__(self):
+        super().__init__("No comments were found.")
+
+
+class MissingCommentError(ReportedError):
+    def __init__(self):
+        super().__init__("Missing comment")
+
+
+class InvalidCommentIdError(ReportedError):
+    def __init__(self, rid, comments):
+        msg = "Id {0} is not in valid ids: {1}".format(
+            rid, ", ".join([c.id for c in comments])
+        )
+        super().__init__(msg)
