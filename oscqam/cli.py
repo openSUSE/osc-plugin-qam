@@ -8,3 +8,6 @@ class QAMCommand(osc.commandline.OscCommand):
     """QE-Maintenace rewiew workflow helper"""
 
     name = "qam"
+
+    def run(self, _):
+        pass
