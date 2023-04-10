@@ -19,7 +19,7 @@ class QAMUnassignCommand(osc.commandline.OscCommand, Common):
     parent = "QAMCommand"
 
     def init_arguments(self):
-        self.add_argument("request_id", type=int, help="ID of review request")
+        self.add_argument("request_id", type=str, help="ID of review request")
         self.add_argument("-U", "--user", help="User to assign for this request.")
         self.add_argument(
             "-G",
@@ -33,7 +33,5 @@ class QAMUnassignCommand(osc.commandline.OscCommand, Common):
         self.set_required_params(args)
 
         group = args.group if args.group else None
-        action = UnassignAction(
-            self.api, self.affected_user, str(args.request_id), group
-        )
+        action = UnassignAction(self.api, self.affected_user, args.request_id, group)
         action()

@@ -17,7 +17,7 @@ class QAMApproveCommand(osc.commandline.OscCommand, Common):
             help="Group to *directly* approve for this request."
             "Only for groups that do not need reviews",
         )
-        self.add_argument("request_id", type=int, help="ID of review request")
+        self.add_argument("request_id", type=str, help="ID of review request")
 
     def run(self, args):
         self.set_required_params(args)
@@ -36,6 +36,6 @@ class QAMApproveCommand(osc.commandline.OscCommand, Common):
             )
         else:
             action = ApproveUserAction(
-                self.api, self.affected_user, str(args.request_id), self.affected_user
+                self.api, self.affected_user, args.request_id, self.affected_user
             )
         action()

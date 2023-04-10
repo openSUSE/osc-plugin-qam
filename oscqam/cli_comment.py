@@ -15,7 +15,7 @@ class QAMCommentCommand(osc.commandline.OscCommand, Common):
     parent = "QAMCommand"
 
     def init_arguments(self):
-        self.add_argument("request_id", type=int, help="ID of review request")
+        self.add_argument("request_id", type=str, help="ID of review request")
         self.add_argument("comment", nargs="*", type=str, help="Text of comment")
 
     def run(self, args):
@@ -25,7 +25,5 @@ class QAMCommentCommand(osc.commandline.OscCommand, Common):
 
         comment = " ".join(args.comment)
 
-        action = CommentAction(
-            self.api, self.affected_user, str(args.request_id), comment
-        )
+        action = CommentAction(self.api, self.affected_user, args.request_id, comment)
         action()

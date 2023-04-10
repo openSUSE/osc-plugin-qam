@@ -16,7 +16,7 @@ class QAMRejectCommand(osc.commandline.OscCommand, Common):
     parent = "QAMCommand"
 
     def init_arguments(self):
-        self.add_argument("request_id", type=int, help="ID of review request")
+        self.add_argument("request_id", type=str, help="ID of review request")
         self.add_argument("-U", "--user", help="User that rejects this request.")
         self.add_argument(
             "-M", "--message", help="Message to use for rejection-comment."
@@ -46,7 +46,7 @@ class QAMRejectCommand(osc.commandline.OscCommand, Common):
         action = RejectAction(
             self.api,
             self.affected_user,
-            str(args.request_id),
+            args.request_id,
             reasons,
             template_skip,
             message,

@@ -22,7 +22,7 @@ class QAMInfoCommand(osc.commandline.OscCommand, Common):
             "(pass flag multiple times).  "
             "Available fields: " + self.all_columns_string + ".",
         )
-        self.add_argument("request_id", type=int, help="ID of review request")
+        self.add_argument("request_id", type=str, help="ID of review request")
         self.add_argument(
             "-T",
             "--tabular",
@@ -44,6 +44,6 @@ class QAMInfoCommand(osc.commandline.OscCommand, Common):
 
         self.set_required_params(args)
         fields = ReportFields.review_fields_by_opts(args)
-        action = InfoAction(self.api, self.affected_user, str(args.request_id))
+        action = InfoAction(self.api, self.affected_user, args.request_id)
         keys = fields.fields(action)
         self.list_requests(action, args.tabular, keys)

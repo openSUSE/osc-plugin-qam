@@ -16,12 +16,12 @@ class QAMDeleteCommentCommand(osc.commandline.OscCommand, Common):
     aliases = ["rmcomment"]
 
     def init_arguments(self):
-        self.add_argument("request_id", type=int, help="ID of review request")
+        self.add_argument("request_id", type=str, help="ID of review request")
 
     def run(self, args):
         self.set_required_params(args)
 
-        request = self.api.requests.by_id(str(args.request_id))
+        request = self.api.requests.by_id(args.request_id)
 
         if not request.comments:
             raise NoCommentsError()
