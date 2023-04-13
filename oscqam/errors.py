@@ -1,4 +1,7 @@
-class ReportedError(RuntimeError):
+from osc.oscerr import OscBaseError
+
+
+class ReportedError(OscBaseError):
     """Raise on exceptions that can only be reported but not handled."""
 
     return_code = 10
