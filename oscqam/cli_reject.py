@@ -42,6 +42,7 @@ class QAMRejectCommand(osc.commandline.OscCommand, Common):
         )
         if reasons == self.SUBQUERY_QUIT:
             return
+        self.set_required_params(args)
         template_skip: bool = False if args.skip_template else True
         action = RejectAction(
             self.api,
