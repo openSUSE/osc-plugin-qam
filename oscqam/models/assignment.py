@@ -61,7 +61,8 @@ class Assignment:
                 assignments.add(Assignment(user, group))
             elif event.get_description() == cls.REOPENED_DESC:
                 logging.debug("Unassignment for: %s -> %s" % (group, user))
-                assignments.remove(Assignment(user, group))
+                if Assignment(user, group) in assignments:
+                    assignments.remove(Assignment(user, group))
             else:
                 logging.debug("Unknown event: %s " % event.get_description())
         return assignments

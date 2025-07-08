@@ -107,11 +107,12 @@ class ReportFields:
         ReportField.assigned_roles,
         ReportField.package_streams,
         ReportField.incident_priority,
+        ReportField.comments,
         ReportField.creator,
         ReportField.issues,
     ]
 
-    def fields(self, _):
+    def fields(self, action):
         return self.all_fields
 
     @staticmethod
@@ -133,5 +134,5 @@ class UserFields(ReportFields):
     def __init__(self, fields):
         self._fields = [ReportField.from_str(f) for f in fields]
 
-    def fields(self, _):
+    def fields(self, action):
         return self._fields
