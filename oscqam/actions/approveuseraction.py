@@ -5,8 +5,8 @@ from .approveaction import ApproveAction
 class ApproveUserAction(ApproveAction):
     """Approve a review for a user."""
 
-    APPROVE_MSG = "Approving {request} for {user} ({groups}). " "Testreport: {url}"
-    MORE_GROUPS_MSG = "The following groups could also be reviewed by you: " "{groups}"
+    APPROVE_MSG = "Approving {request} for {user} ({groups}). Testreport: {url}"
+    MORE_GROUPS_MSG = "The following groups could also be reviewed by you: {groups}"
 
     def get_reviewer(self, reviewer):
         return self.remote.users.by_name(reviewer)

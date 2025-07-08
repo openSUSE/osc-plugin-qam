@@ -6,7 +6,6 @@ from oscqam.errors import MissingCommentError
 
 
 class QAMCommentCommand(osc.commandline.OscCommand, Common):
-
     """Add a comment to a request.
 
     The command will add a comment to the given request."""

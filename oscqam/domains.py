@@ -1,5 +1,5 @@
-"""Defines domain-objects that encapsulate state without logic.
-"""
+"""Defines domain-objects that encapsulate state without logic."""
+
 from functools import total_ordering
 
 

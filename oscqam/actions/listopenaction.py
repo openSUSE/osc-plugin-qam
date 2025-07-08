@@ -21,7 +21,7 @@ class ListOpenAction(ListAction):
         qam_groups = self.user.qam_groups
         if not qam_groups:
             raise ReportedError(
-                "You are not part of a qam group. " "Can not list requests."
+                "You are not part of a qam group. Can not list requests."
             )
         group_requests = set(self.remote.requests.open_for_groups(qam_groups))
         return self.merge_requests(user_requests, group_requests)

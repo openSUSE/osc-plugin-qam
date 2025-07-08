@@ -27,8 +27,7 @@ class NoQamReviewsError(UninferableError):
         ]
         message += (
             (
-                " The following groups were already assigned/finished: "
-                "{msg}".format(
+                " The following groups were already assigned/finished: {msg}".format(
                     msg=", ".join(
                         ["{r.reviewer}".format(r=review) for review in accept_reviews]
                     )
@@ -88,8 +87,7 @@ class MissingSourceProjectError(InvalidRequestError):
 
     def __init__(self, request):
         super().__init__(
-            "Invalid build service request: "
-            "{0} has no source project.".format(request)
+            "Invalid build service request: {0} has no source project.".format(request)
         )
 
 
@@ -179,9 +177,7 @@ class NotPreviousReviewerError(ReportedError):
 
 
 class NoCommentError(ReportedError):
-    _msg = (
-        "The request you want to reject must have a comment set in the " "testreport."
-    )
+    _msg = "The request you want to reject must have a comment set in the testreport."
 
     def __init__(self):
         super().__init__(self._msg)
