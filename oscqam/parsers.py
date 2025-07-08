@@ -1,5 +1,5 @@
-"""Parsers to turn (external) data into a more usable formats.
-"""
+"""Parsers to turn (external) data into a more usable formats."""
+
 from collections import defaultdict
 from itertools import dropwhile, takewhile
 from json import loads

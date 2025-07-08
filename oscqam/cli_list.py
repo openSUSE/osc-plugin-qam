@@ -7,7 +7,6 @@ from oscqam.fields import ReportFields
 
 
 class QAMListCommand(osc.commandline.OscCommand, Common):
-
     """Show a list of OBS qam-requests that are open.
 
     By default, open requests assignable to yourself will be shown

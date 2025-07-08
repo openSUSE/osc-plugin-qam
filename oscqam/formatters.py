@@ -1,5 +1,5 @@
-"""Formatters used to generate nice looking output.
-"""
+"""Formatters used to generate nice looking output."""
+
 import fcntl
 import os
 import platform

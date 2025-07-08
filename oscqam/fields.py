@@ -39,7 +39,7 @@ def levenshtein(first, second):
 class InvalidFieldsError(ReportedError):
     """Raise when the user wants to output non-existent fields."""
 
-    _msg = "Unknown fields: {0}. " "Did you mean: {1}. " "(Available fields: {2})"
+    _msg = "Unknown fields: {0}. Did you mean: {1}. (Available fields: {2})"
 
     def __init__(self, bad_fields):
         suggestions = self._get_suggestions(bad_fields)

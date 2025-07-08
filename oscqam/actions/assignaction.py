@@ -26,7 +26,7 @@ class AssignAction(OscAction):
         template_factory=Template,
         force=False,
         template_required=True,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(remote, user, **kwargs)
         self.request = remote.requests.by_id(request_id)

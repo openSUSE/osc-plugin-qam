@@ -4,7 +4,6 @@ everything in a consistent state.
 
 """
 
-
 import osc.core
 
 from .attribute import Attribute

@@ -188,9 +188,7 @@ def test_reject_no_comment(remote):
     request = remote.requests.by_id(cloud_open)
     template = models.Template(
         request,
-        tr_getter=FakeTrGetter(
-            "SUMMARY: FAILED" "\n" "comment: NONE" "\n" "\n" "Products: test"
-        ),
+        tr_getter=FakeTrGetter("SUMMARY: FAILED\ncomment: NONE\n\nProducts: test"),
     )
     action = actions.RejectAction(
         remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative], False
@@ -290,7 +288,7 @@ def test_list_assigned_user(remote):
 def test_list_assigned(remote):
     action = actions.ListAssignedAction(remote, "anonymous", fields.DefaultFields())
     remote.register_url("group", lambda: load_fixture("group_all.xml"))
-    endpoint = "/source/SUSE:Maintenance:130/_attribute/" "OBS:IncidentPriority"
+    endpoint = "/source/SUSE:Maintenance:130/_attribute/OBS:IncidentPriority"
     remote.register_url(endpoint, lambda: load_fixture("incident_priority.xml"))
     requests = action.load_requests()
     assert len(requests) == 1
@@ -485,8 +483,7 @@ def test_unassign_permission_error(remote):
 
     out = StringIO()
     remote.register_url(
-        "request/twoassigned?newstate=accepted&"
-        "cmd=changereviewstate&by_user=anonymous",
+        "request/twoassigned?newstate=accepted&cmd=changereviewstate&by_user=anonymous",
         raiser,
         "[oscqam] Unassigning Unknown User (anonymous@nowhere.none) from "
         "twoassigned for group qam-cloud, qam-sle.",

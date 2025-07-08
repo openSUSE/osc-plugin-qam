@@ -71,7 +71,7 @@ class Common:
             print("{0}. {1}".format(tid(member), desc(member)))
         print("q. Quit")
         user_input = input(
-            "Please specify the options " "(separate multiple values with ,): "
+            "Please specify the options (separate multiple values with ,): "
         )
         if user_input.lower() == "q":
             return cls.SUBQUERY_QUIT
