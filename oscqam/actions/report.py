@@ -46,5 +46,5 @@ class Report:
         elif field == ReportField.issues:
             value = str(len(self.request.issues))
         else:
-            value = entries[str(field)]
+            value = entries.get(str(field), "")
         return value
