@@ -303,7 +303,7 @@ def test_approval_requires_status_passed(remote):
     )
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
-        remote, user_id, "12345", user_id, template_factory=lambda _: template
+        remote, user_id, "12345", user_id, False, template_factory=lambda _: template
     )
     with pytest.raises(errors.TestResultMismatchError):
         approval()
@@ -318,7 +318,7 @@ def test_approval(remote):
     )
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
-        remote, user_id, "12345", user_id, template_factory=lambda _: template
+        remote, user_id, "12345", user_id, False, template_factory=lambda _: template
     )
     approval()
     assert len(remote.post_calls) == 1
@@ -540,7 +540,13 @@ def test_approve_output(remote):
     report = create_template_data(**{"SUMMARY": "PASSED"})
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
-        remote, user_id, "12345", user_id, template_factory=lambda _: template, out=out
+        remote,
+        user_id,
+        "12345",
+        user_id,
+        False,
+        template_factory=lambda _: template,
+        out=out,
     )
     approval()
     assert (
@@ -564,6 +570,7 @@ def test_approve_not_assigned(remote):
         user_id,
         multi_available_assign,
         user_id,
+        False,
         template_factory=lambda _: template,
     )
     with pytest.raises(errors.NotAssignedError):
@@ -592,6 +599,7 @@ def test_approve_additional_groups(remote):
         user_id,
         one_open,
         user_id,
+        False,
         template_factory=lambda _: template,
         out=out,
     )
@@ -627,6 +635,7 @@ def test_approve_group(remote):
         user_id,
         one_open,
         "qam-test",
+        False,
         template_factory=lambda _: template,
         out=out,
     )
@@ -653,6 +662,7 @@ def test_approve_group_not_in_request(remote):
         user_id,
         one_open,
         "qam-cloud",
+        False,
         template_factory=lambda _: template,
         out=out,
     )
@@ -676,6 +686,7 @@ def test_approve_last_group_does_not_raise(remote):
         user_id,
         last_qam,
         user_id,
+        False,
         template_factory=lambda _: template,
         out=out,
     )
@@ -707,6 +718,7 @@ def test_approve_misses_assigned_role(remote):
         user_id,
         inverse_assign_order,
         user_id,
+        False,
         template_factory=lambda _: template,
         out=out,
     )

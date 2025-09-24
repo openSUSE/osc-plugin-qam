@@ -18,6 +18,11 @@ class QAMApproveCommand(osc.commandline.OscCommand, Common):
             "Only for groups that do not need reviews",
         )
         self.add_argument("request_id", type=str, help="ID of review request")
+        self.add_argument(
+            "--skip-template",
+            action="store_true",
+            help="Do not check template exists.",
+        )
 
     def run(self, args):
         self.set_required_params(args)
@@ -32,10 +37,18 @@ class QAMApproveCommand(osc.commandline.OscCommand, Common):
             ):
                 return
             action = ApproveGroupAction(
-                self.api, self.affected_user, args.request_id, args.group
+                self.api,
+                self.affected_user,
+                args.request_id,
+                args.group,
+                args.skip_template,
             )
         else:
             action = ApproveUserAction(
-                self.api, self.affected_user, args.request_id, self.affected_user
+                self.api,
+                self.affected_user,
+                args.request_id,
+                self.affected_user,
+                args.skip_template,
             )
         action()

@@ -27,7 +27,8 @@ class ApproveUserAction(ApproveAction):
 
         """
         self.reviews_assigned()
-        self.template.passed()
+        if self.template:
+            self.template.passed()
 
     def additional_reviews(self):
         """Return groups that could also be reviewed by the user."""
@@ -35,7 +36,10 @@ class ApproveUserAction(ApproveAction):
 
     def action(self):
         self.validate()
-        url = self.template.fancy_url
+        if self.template:
+            url = self.template.fancy_url
+        else:
+            url = "no template"
         groups = ", ".join([str(g) for g in self.user.in_review_groups(self.request)])
         msg = self.APPROVE_MSG.format(
             user=self.reviewer, groups=groups, request=self.request, url=url

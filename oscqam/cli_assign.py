@@ -34,10 +34,10 @@ class QAMAssignCommand(osc.commandline.OscCommand, Common):
             help="Do not check whether a template exists.",
         )
 
-    def run(self, args):
+    def run(self, args) -> None:
         self.set_required_params(args)
         group = args.group if args.group else None
-        template_required = False if args.skip_template else True
+        template_required: bool = args.skip_template
         action = AssignAction(
             self.api,
             self.affected_user,
