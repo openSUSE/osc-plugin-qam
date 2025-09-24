@@ -33,7 +33,7 @@ class QAMRejectCommand(osc.commandline.OscCommand, Common):
             help="Do not check whether a template exists.",
         )
 
-    def run(self, args):
+    def run(self, args) -> None:
         message = args.message if args.message else None
         reasons = (
             [RejectReason.from_str(r) for r in args.reason]

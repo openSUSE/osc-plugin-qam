@@ -18,6 +18,7 @@ class ApproveAction(OscAction):
         user,
         request_id,
         reviewer,
+        template_skip: bool,
         template_factory=Template,
         out=sys.stdout,
     ):
@@ -43,7 +44,10 @@ class ApproveAction(OscAction):
         """
         super().__init__(remote, user, out)
         self.request = remote.requests.by_id(request_id)
-        self.template = self.request.get_template(template_factory)
+        if template_skip:
+            self.template = None
+        else:
+            self.template = self.request.get_template(template_factory)
         self.reviewer = self.get_reviewer(reviewer)
 
     @abc.abstractmethod
