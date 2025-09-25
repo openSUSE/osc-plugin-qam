@@ -28,6 +28,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     REVIEW_GROUP = "BY_GROUP"
     REVIEW_OTHER = "BY_OTHER"
     COMPLETE_REQUEST_ID_SRE = re.compile(r"(open)?SUSE:Maintenance:\d+:(?P<req>\d+)")
+    COMPLETE_REQUEST_ID_SRE_PI = re.compile(r"(open)?SUSE:PI:.+:(?P<req>\d+)")
 
     def __init__(self, remote):
         self.remote = remote
@@ -118,6 +119,25 @@ class Request(osc.core.Request, XmlFactoryMixin):
             if hasattr(action, "src_project"):
                 prj = action.src_project
                 if prj:
+                    return prj
+                else:
+                    logging.info("This project has no source project: %s", self.reqid)
+                    return ""
+        return ""
+
+    @property
+    def src_project_to_rrid(self):
+        """Will return the src_project or an empty string if no src_project
+        can be found in the request.
+
+        """
+        for action in self.actions:
+            if hasattr(action, "src_project"):
+                prj = action.src_project
+                if prj:
+                    if prj.startswith("SUSE:SLFO:"):
+                        ver = prj.split(":")[-2]
+                        return f"SUSE:PI:{ver}"
                     return prj
                 else:
                     logging.info("This project has no source project: %s", self.reqid)
@@ -281,6 +301,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
         """
         reqid = cls.COMPLETE_REQUEST_ID_SRE.match(request_id)
+        if reqid:
+            return reqid.group("req")
+        reqid = cls.COMPLETE_REQUEST_ID_SRE_PI.match(request_id)
         if reqid:
             return reqid.group("req")
         return request_id
