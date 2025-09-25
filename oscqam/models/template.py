@@ -91,13 +91,13 @@ class Template:
     @property
     def url(self):
         """Return URL to machine readable version of the report."""
-        return f"{self.base_url}{self._request.src_project}:{self._request.reqid}/log"
+        return f"{self.base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/log"
 
     @property
     def metadata_url(self):
-        return f"{self.base_url}{self._request.src_project}:{self._request.reqid}/metadata.json"
+        return f"{self.base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/metadata.json"
 
     @property
     def fancy_url(self):
         """Return URL to human readable version of the report."""
-        return f"{self.fancy_base_url}{self._request.src_project}:{self._request.reqid}/log"
+        return f"{self.fancy_base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/log"
