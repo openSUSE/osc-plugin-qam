@@ -12,6 +12,8 @@ class BugRemote:
         self.remote = remote
 
     def for_request(self, request):
+        if request.src_project.startswith("SUSE:SLFO:"):
+            return []
         incident = request.src_project
         endpoint = self.endpoint.format(incident=incident)
         xml = self.remote.get(endpoint)
