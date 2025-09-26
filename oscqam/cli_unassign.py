@@ -1,3 +1,5 @@
+"""Provides a command-line interface for unassigning requests."""
+
 import osc.commandline
 
 from oscqam.actions import UnassignAction
@@ -19,6 +21,7 @@ class QAMUnassignCommand(osc.commandline.OscCommand, Common):
     parent = "QAMCommand"
 
     def init_arguments(self):
+        """Initializes the command-line arguments for the command."""
         self.add_argument("request_id", type=str, help="ID of review request")
         self.add_argument("-U", "--user", help="User to assign for this request.")
         self.add_argument(
@@ -30,6 +33,11 @@ class QAMUnassignCommand(osc.commandline.OscCommand, Common):
         )
 
     def run(self, args):
+        """Runs the command.
+
+        Args:
+            args: The command-line arguments.
+        """
         self.set_required_params(args)
 
         group = args.group if args.group else None

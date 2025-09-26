@@ -1,3 +1,5 @@
+"""Provides a command-line interface for assigning requests."""
+
 import osc.commandline
 
 from oscqam.actions import AssignAction
@@ -13,12 +15,14 @@ class QAMAssignCommand(osc.commandline.OscCommand, Common):
 
     It will attempt to automatically find a group that is not currently
     reviewed, but that the user could review for.  If no group can be
-    automatically determined a group must be passed as an argument."""
+    automatically determined a group must be passed as an argument.
+    """
 
     name = "assign"
     parent = "QAMCommand"
 
     def init_arguments(self):
+        """Initializes the command-line arguments for the command."""
         self.add_argument("request_id", type=str, help="ID of review request")
         self.add_argument("-U", "--user", help="User to assign for this request.")
         self.add_argument(
@@ -35,6 +39,11 @@ class QAMAssignCommand(osc.commandline.OscCommand, Common):
         )
 
     def run(self, args) -> None:
+        """Runs the command.
+
+        Args:
+            args: The command-line arguments.
+        """
         self.set_required_params(args)
         group = args.group if args.group else None
         template_required: bool = args.skip_template

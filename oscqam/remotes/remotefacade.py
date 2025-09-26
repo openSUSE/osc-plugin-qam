@@ -1,3 +1,5 @@
+"""Provides a facade for interacting with the remote build service."""
+
 import logging
 from urllib.error import HTTPError
 from urllib.parse import urlencode
@@ -15,8 +17,27 @@ from .userremote import UserRemote
 
 
 class RemoteFacade:
+    """A facade for interacting with the remote build service.
+
+    This class provides a simplified interface to the various remote APIs.
+
+    Attributes:
+        remote: The URL of the remote build service.
+        comments: A CommentRemote object for interacting with comments.
+        groups: A GroupRemote object for interacting with groups.
+        requests: A RequestRemote object for interacting with requests.
+        users: A UserRemote object for interacting with users.
+        projects: A ProjectRemote object for interacting with projects.
+        priorities: A PriorityRemote object for interacting with priorities.
+        bugs: A BugRemote object for interacting with bugs.
+    """
+
     def __init__(self, remote):
-        """Initialize a new RemoteOscRemote that points to the given remote."""
+        """Initialize a new RemoteFacade that points to the given remote.
+
+        Args:
+            remote: The URL of the remote build service.
+        """
         self.remote = remote
         self.comments = CommentRemote(self)
         self.groups = GroupRemote(self)
@@ -27,6 +48,14 @@ class RemoteFacade:
         self.bugs = BugRemote(self)
 
     def _check_for_error(self, answer):
+        """Checks if the response from the remote contains an error.
+
+        Args:
+            answer: The response object from the remote.
+
+        Raises:
+            RemoteError: If the response contains an error.
+        """
         ret_code = answer.status
         if ret_code >= 400 and ret_code < 600:
             raise RemoteError(
@@ -34,6 +63,15 @@ class RemoteFacade:
             )
 
     def delete(self, endpoint, params=None):
+        """Sends a DELETE request to the remote.
+
+        Args:
+            endpoint: The API endpoint to send the request to.
+            params: A dictionary of parameters to include in the request.
+
+        Returns:
+            The XML response from the remote.
+        """
         url = "/".join([self.remote, endpoint])
         if params:
             params = urlencode(params)
@@ -46,8 +84,15 @@ class RemoteFacade:
     def get(self, endpoint, params=None):
         """Retrieve information at the given endpoint with the parameters.
 
-        Call the callback function with the result.
+        Args:
+            endpoint: The API endpoint to send the request to.
+            params: A dictionary of parameters to include in the request.
 
+        Returns:
+            The XML response from the remote.
+
+        Raises:
+            RemoteError: If an HTTPError occurs.
         """
         url = "/".join([self.remote, endpoint])
         if params:
@@ -63,6 +108,18 @@ class RemoteFacade:
         return xml
 
     def post(self, endpoint, data=None):
+        """Sends a POST request to the remote.
+
+        Args:
+            endpoint: The API endpoint to send the request to.
+            data: The data to include in the request body.
+
+        Returns:
+            The XML response from the remote.
+
+        Raises:
+            RemoteError: If an HTTPError occurs.
+        """
         url = "/".join([self.remote, endpoint])
         try:
             logging.debug("Posting: %s" % url)

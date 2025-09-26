@@ -1,4 +1,4 @@
-"""Implement the possible reject reasons as an enum:"""
+"""Implements an enum for the possible reject reasons."""
 
 from enum import Enum
 from .errors import ReportedError
@@ -10,6 +10,11 @@ class InvalidRejectError(ReportedError):
     _msg = "Unknown fields: {0}. (Available fields: {1})"
 
     def __init__(self, bad_fields):
+        """Initializes an InvalidRejectError.
+
+        Args:
+            bad_fields: A list of invalid fields.
+        """
         super(InvalidRejectError, self).__init__(
             self._msg.format(
                 ", ".join(map(repr, bad_fields)),
@@ -19,6 +24,14 @@ class InvalidRejectError(ReportedError):
 
 
 class RejectReason(Enum):
+    """An enum for the possible reject reasons.
+
+    Attributes:
+        enum_id: The integer ID of the enum member.
+        flag: The command-line flag for the reason.
+        text: The explanation text for the reason.
+    """
+
     administrative = (
         0,
         "admin",
@@ -52,25 +65,38 @@ class RejectReason(Enum):
     )
 
     def __init__(self, enum_id, flag, text):
-        """
-        :param enum_id: Id of the enum.
-        :type enum_id: int
+        """Initializes a RejectReason.
 
-        :param flag: Command line flag to specify the reason.
-        :type enum_id: str
-
-        :param text: Explanation text for the value.
-        :type text: str
+        Args:
+            enum_id: Id of the enum.
+            flag: Command line flag to specify the reason.
+            text: Explanation text for the value.
         """
         self.enum_id = enum_id
         self.flag = flag
         self.text = text
 
     def __str__(self):
+        """Returns the string representation of the reason.
+
+        Returns:
+            The explanation text for the reason.
+        """
         return self.text
 
     @classmethod
     def from_str(cls, field):
+        """Gets a RejectReason from a string.
+
+        Args:
+            field: The string to convert to a RejectReason.
+
+        Returns:
+            A RejectReason object.
+
+        Raises:
+            InvalidRejectError: If the string does not match any reason.
+        """
         for f in cls:
             if f.value[1] == field:
                 return f
@@ -78,6 +104,17 @@ class RejectReason(Enum):
 
     @classmethod
     def from_id(cls, id):
+        """Gets a RejectReason from an ID.
+
+        Args:
+            id: The ID to convert to a RejectReason.
+
+        Returns:
+            A RejectReason object.
+
+        Raises:
+            ValueError: If the ID does not match any reason.
+        """
         ids = [e.enum_id for e in RejectReason]
         for f in cls:
             if f.value[0] == id:

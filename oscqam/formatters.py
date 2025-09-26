@@ -15,10 +15,11 @@ from .fields import ReportField
 def terminal_dimensions(fd=None):
     """Return dimensions of the terminal.
 
-    :param fd: filedescriptor of the terminal.
-    :type fd: int.
+    Args:
+        fd: filedescriptor of the terminal.
 
-    :returns: (int, int) tuple with rows and columns.
+    Returns:
+        A tuple of (rows, columns).
     """
     if not fd:
         if not sys.stdout.isatty():
@@ -38,13 +39,13 @@ def os_lineseps(value, target=None):
     """Adjust the lineseperators in value to match the ones used by the current
     system.
 
-    :param value: The text to modify
-    :type value: str
+    Args:
+        value: The text to modify.
+        target: The system identifier whose line-endings should be
+            substituted.
 
-    :param target: The system identifier whose line-endings should be
-    substituted.
-    :type target: str
-
+    Returns:
+        The modified text.
     """
 
     def _windows_to_linux(value):
@@ -68,15 +69,19 @@ def os_lineseps(value, target=None):
 
 
 class Formatter:
-    """Base class for specialised formatters."""
+    """Base class for specialised formatters.
+
+    Attributes:
+        listsep: The separator to use for lists.
+        default_format: The default formatter to use.
+    """
 
     def __init__(self, listsep, formatters={}):
-        """
-        :param listsep: Seperator for lists.
-        :type listsep: str
+        """Initializes a Formatter.
 
-        :param formatters: Alternative formatter to use for certain keys.
-        :type formatters: dict(ReportField, formatter)
+        Args:
+            listsep: Seperator for lists.
+            formatters: Alternative formatter to use for certain keys.
         """
         self.listsep = listsep
         self._formatters = {
@@ -95,23 +100,46 @@ class Formatter:
     def output(self, keys, reports):
         """Format the reports for output based on the keys.
 
-        :param keys: The fields to output for each report.
-        :type keys: [:class:`oscqam.fields.ReportField`]
+        Args:
+            keys: The fields to output for each report.
+            reports: The reports to format for outputting.
 
-        :param reports: The reports to format for outputting.
-        :type reports: [:class:`oscqam.actions.Report`]
-
-        :returns: Value that can be passed to print.
+        Returns:
+            A string that can be passed to print.
         """
         pass
 
     def formatter(self, key):
+        """Gets the formatter for a given key.
+
+        Args:
+            key: The key to get the formatter for.
+
+        Returns:
+            The formatter function.
+        """
         return self._formatters.get(key, self.default_format)
 
     def comment_formatter(self, value):
+        """Formats a comment.
+
+        Args:
+            value: The comment to format.
+
+        Returns:
+            The formatted comment.
+        """
         return self.listsep.join([os_lineseps(str(v)) for v in value])
 
     def list_formatter(self, value):
+        """Formats a list.
+
+        Args:
+            value: The list to format.
+
+        Returns:
+            The formatted list as a string.
+        """
         return self.listsep.join(value)
 
 
@@ -120,13 +148,26 @@ class VerboseOutput(Formatter):
 
     <key>: <value>+
     --------------
+
+    Attributes:
+        record_sep: The separator to use between records.
     """
 
     def __init__(self):
+        """Initializes a VerboseOutput formatter."""
         super().__init__(",")
         self.record_sep = "-" * terminal_dimensions()[1]
 
     def output(self, keys, reports):
+        """Formats the reports for verbose output.
+
+        Args:
+            keys: The fields to output for each report.
+            reports: The reports to format for outputting.
+
+        Returns:
+            A string that can be passed to print.
+        """
         output = []
         str_template = "{{0:{length}s}}: {{1}}".format(
             length=max([len(str(k)) for k in keys])
@@ -153,9 +194,19 @@ class TabularOutput(Formatter):
     """
 
     def __init__(self):
+        """Initializes a TabularOutput formatter."""
         super().__init__(os.linesep, {ReportField.comments: self.comment_formatter})
 
     def output(self, keys, reports):
+        """Formats the reports for tabular output.
+
+        Args:
+            keys: The fields to output for each report.
+            reports: The reports to format for outputting.
+
+        Returns:
+            A PrettyTable object.
+        """
         table_formatter = prettytable.PrettyTable(keys)
         table_formatter.align = "l"
         table_formatter.border = True

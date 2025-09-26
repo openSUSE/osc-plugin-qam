@@ -1,3 +1,5 @@
+"""Provides a base class for actions that operate on a list of requests."""
+
 import abc
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
@@ -15,6 +17,11 @@ class ListAction(OscAction):
 
     Subclasses must overwrite the 'load_requests' method that return the list
     of requests that should be output according to the formatter and fields.
+
+    Attributes:
+        default_fields: A list of fields to display by default.
+        template_factory: A function to create a template.
+        reports: A list of reports.
     """
 
     default_fields = [
@@ -41,11 +48,22 @@ class ListAction(OscAction):
         )
 
     def __init__(self, remote, user, template_factory=Template):
+        """Initializes a ListAction.
+
+        Args:
+            remote: A remote facade.
+            user: The user performing the action.
+            template_factory: A function to create a template.
+        """
         super().__init__(remote, user)
         self.template_factory = template_factory
 
     def action(self):
-        """Return all reviews that match the parameters of the RequestAction."""
+        """Return all reviews that match the parameters of the RequestAction.
+
+        Returns:
+            A list of reports.
+        """
         self.reports = self._load_listdata(self.load_requests())
         self.group_sort_reports()
         return self.reports
@@ -54,7 +72,8 @@ class ListAction(OscAction):
     def load_requests(self):
         """Load requests this class should operate on.
 
-        :returns: [:class:`oscqam.models.Request`]
+        Returns:
+            A list of requests.
         """
         pass
 
@@ -62,6 +81,12 @@ class ListAction(OscAction):
         """Merge the requests together and set a field 'origin' to determine
         where the request came from.
 
+        Args:
+            user_requests: A set of requests from the user.
+            group_requests: A set of requests from the group.
+
+        Returns:
+            A set of all requests.
         """
         all_requests = user_requests.union(group_requests)
         for request in all_requests:
@@ -79,9 +104,11 @@ class ListAction(OscAction):
         occur and not be a problem: e.g. the template creation script has not
         yet run).
 
-        :param requests: [:class:`oscqam.models.Request`]
+        Args:
+            requests: A list of requests.
 
-        :returns: :class:`oscqam.actions.Report`-generator
+        Yields:
+            A Report object.
         """
         with ThreadPoolExecutor() as executor:
             results = [

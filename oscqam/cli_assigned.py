@@ -1,3 +1,5 @@
+"""Provides a command-line interface for listing assigned requests."""
+
 import osc.commandline
 
 from oscqam.actions import (
@@ -14,12 +16,14 @@ class QAMAssignedCommand(osc.commandline.OscCommand, Common):
     """Show a list of OBS qam-requests that are in review.
 
     A request is in review, as soon as a user has been assigned for a
-    group that is required to review a request."""
+    group that is required to review a request.
+    """
 
     name = "assigned"
     parent = "QAMCommand"
 
     def init_arguments(self):
+        """Initializes the command-line arguments for the command."""
         self.add_argument(
             "-G",
             "--group",
@@ -59,6 +63,14 @@ class QAMAssignedCommand(osc.commandline.OscCommand, Common):
         )
 
     def run(self, args):
+        """Runs the command.
+
+        Args:
+            args: The command-line arguments.
+
+        Raises:
+            ConflictingOptions: If conflicting options are provided.
+        """
         if args.verbose and args.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         if args.user and args.group:

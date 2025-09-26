@@ -1,3 +1,5 @@
+"""Represents the assignment of a user to a group for a review."""
+
 import logging
 
 from dateutil import parser
@@ -12,6 +14,12 @@ class Assignment:
     This is solely a QAM construct as the buildservice has no concept of these
     assignments.
 
+    Attributes:
+        ASSIGNED_DESC: A string describing an assigned review.
+        ACCEPTED_DESC: A string describing an accepted review.
+        REOPENED_DESC: A string describing a reopened review.
+        user: The user assigned to the review.
+        group: The group the user is assigned to review for.
     """
 
     ASSIGNED_DESC = "Review got assigned"
@@ -19,6 +27,12 @@ class Assignment:
     REOPENED_DESC = "Review got reopened"
 
     def __init__(self, user, group):
+        """Initializes an Assignment.
+
+        Args:
+            user: The user to assign.
+            group: The group to assign the user to.
+        """
         self.user = user
         self.group = group
 
@@ -36,10 +50,26 @@ class Assignment:
 
     @classmethod
     def infer_group(cls, remote, request, group_review):
+        """Infers assignments for a specific group review.
+
+        Args:
+            remote: A remote facade.
+            request: The request to infer assignments for.
+            group_review: The group review to infer assignments from.
+
+        Returns:
+            A set of assignments for the group.
+        """
+
         def get_history(review_state):
             """Return the history events for the given state that are needed to
             find assignments in ascending order of occurrence (by date).
 
+            Args:
+                review_state: The review state to get history from.
+
+            Returns:
+                A sorted list of relevant history events.
             """
             events = review_state.statehistory
             # TODO: refactor out lambda and filter ...
@@ -76,11 +106,12 @@ class Assignment:
         Once the group assignments (to users) are found, the already finished
         ones will be removed.
 
-        :param request: Request to check for a possible assigned roles.
-        :type request: :class:`oscqam.models.Request`
+        Args:
+            remote: A remote facade.
+            request: Request to check for a possible assigned roles.
 
-        :returns: [:class:`oscqam.models.Assignment`]
-
+        Returns:
+            A list of assignments.
         """
         assigned_groups = [
             g

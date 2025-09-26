@@ -1,3 +1,5 @@
+"""Provides a base class for approval actions."""
+
 from .oscaction import OscAction
 import abc
 import sys
@@ -10,6 +12,11 @@ class ApproveAction(OscAction):
     Subclasses need to overwrite:
 
     - get_reviewer: whose review is done.
+
+    Attributes:
+        request: The request to approve.
+        template: The template to use for the approval message.
+        reviewer: The reviewer to approve the request for.
     """
 
     def __init__(
@@ -24,23 +31,14 @@ class ApproveAction(OscAction):
     ):
         """Approve a review for either a User or a Group.
 
-        :param remote: Remote interface for build service calls.
-        :type remote: L{oscqam.remote.RemoteFacade}
-
-        :param user: The user performing this action.
-        :type user: L{string}
-
-        :param request_id: Id of the request to accept.
-        :type request_id: L{int}
-
-        :param reviewer: Reviewer to accept this request for.
-        :type reviewer: L{oscqam.models.User} | L{oscqam.models.Group}
-
-        :param template_factory: Function to get a report-template from.
-        :type template_factory:
-
-        :param out: File like object to write output messages to.
-        :type out:
+        Args:
+            remote: Remote interface for build service calls.
+            user: The user performing this action.
+            request_id: Id of the request to accept.
+            reviewer: Reviewer to accept this request for.
+            template_skip: If True, do not use a template.
+            template_factory: Function to get a report-template from.
+            out: File like object to write output messages to.
         """
         super().__init__(remote, user, out)
         self.request = remote.requests.by_id(request_id)
@@ -52,5 +50,12 @@ class ApproveAction(OscAction):
 
     @abc.abstractmethod
     def get_reviewer(self, reviwer):
-        """Return the object for the given reviewer."""
+        """Return the object for the given reviewer.
+
+        Args:
+            reviwer: The reviewer to get the object for.
+
+        Returns:
+            The reviewer object.
+        """
         pass

@@ -1,3 +1,5 @@
+"""Common classes and functions for osc-qam."""
+
 import osc.conf
 
 from oscqam.fields import ReportFields
@@ -7,12 +9,25 @@ from oscqam.remotes import RemoteFacade
 
 
 class Common:
+    """A collection of common methods and attributes.
+
+    Attributes:
+        SUBQUERY_QUIT: An integer used to signal that a subquery should be quit.
+        all_columns_string: A string of all available report fields.
+        all_reasons_string: A string of all available reject reasons.
+    """
+
     SUBQUERY_QUIT = 4
 
     all_columns_string = ", ".join(str(f) for f in ReportFields.all_fields)
     all_reasons_string = ", ".join(r.flag for r in RejectReason)
 
     def set_required_params(self, args):
+        """Sets required parameters from the command line arguments.
+
+        Args:
+            args: The command line arguments.
+        """
         self.apiurl = args.apiurl
         self.api = RemoteFacade(self.apiurl)
         self.affected_user = None
@@ -22,6 +37,13 @@ class Common:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
 
     def list_requests(self, action, tabular, keys):
+        """Lists requests using the specified action and formatter.
+
+        Args:
+            action: A function that returns a list of requests.
+            tabular: A boolean indicating whether to use tabular output.
+            keys: The keys to include in the output.
+        """
         listdata = action()
         formatter = TabularOutput() if tabular else VerboseOutput()
         if listdata:
@@ -29,6 +51,18 @@ class Common:
 
     @staticmethod
     def yes_no(question: str, default: str = "no") -> bool:
+        """Asks a yes/no question to the user.
+
+        Args:
+            question: The question to ask.
+            default: The default answer ('yes' or 'no').
+
+        Returns:
+            True if the user answers yes, False otherwise.
+
+        Raises:
+            ValueError: If the default value is not 'yes' or 'no'.
+        """
         if default not in ("yes", "no"):
             raise ValueError("Default must be 'yes' or 'no'")
         valid = {"y": True, "yes": True, "n": False, "no": False}
@@ -54,16 +88,13 @@ class Common:
         The enum needs a method 'from_id' that returns the enum for
         the given id.
 
-        :param enum: The enum class to query for
+        Args:
+            enum: The enum class to query for.
+            tid: Function that returns a unique id for a enum-member.
+            desc: Function that returns a descriptive text for a enum-member.
 
-        :param id: Function that returns a unique id for a enum-member.
-        :type id: enum -> object
-
-        :param desc: Function that returns a descriptive text
-                for a enum-member.
-        :type id: enum -> str
-
-        :returns: enum selected by the user.
+        Returns:
+            A list of enum members selected by the user, or SUBQUERY_QUIT.
 
         """
         ids = [tid(member) for member in enum]

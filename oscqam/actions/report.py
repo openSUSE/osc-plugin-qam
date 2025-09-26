@@ -1,3 +1,5 @@
+"""Provides a class to compose a request with a template."""
+
 from ..fields import ReportField
 from ..models import GroupReview
 
@@ -8,21 +10,29 @@ class Report:
     Provides a method to output a list of keys from requests/templates and
     will dispatch to the correct object.
 
+    Attributes:
+        request: The request to report on.
+        template: The template associated with the request.
     """
 
     def __init__(self, request, template_factory):
-        """Associate a request with the correct template."""
+        """Associate a request with the correct template.
+
+        Args:
+            request: The request to report on.
+            template_factory: A function to create a template.
+        """
         self.request = request
         self.template = request.get_template(template_factory)
 
     def value(self, field):
         """Return the values for fields.
 
-        :type keys: [:class:`actions.ReportField`]
-        :param keys: Identifiers for the data to be returned from the template
-                    or associated request.
+        Args:
+            field: The field to get the value for.
 
-        :returns: [str]
+        Returns:
+            The value of the field.
         """
         entries = self.template.log_entries
         if field == ReportField.unassigned_roles:

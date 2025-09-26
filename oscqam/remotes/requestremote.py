@@ -1,15 +1,35 @@
+"""Provides a class for interacting with requests on the remote."""
+
 from ..models import Request, RequestFilter
 
 
 class RequestRemote:
-    """Facade for retrieving Request objects from the buildservice API."""
+    """Facade for retrieving Request objects from the buildservice API.
+
+    Attributes:
+        remote: A remote facade.
+        endpoint: The API endpoint for requests.
+    """
 
     def __init__(self, remote):
+        """Initializes a RequestRemote.
+
+        Args:
+            remote: A remote facade.
+        """
         self.remote = remote
         self.endpoint = "request"
 
     def _group_xpath(self, groups, state):
-        """Search the given groups with the given state."""
+        """Builds an XPath expression to search for reviews by group and state.
+
+        Args:
+            groups: A list of groups to search for.
+            state: The state of the review to search for.
+
+        Returns:
+            An XPath expression as a string.
+        """
 
         def get_group_name(group):
             if isinstance(group, str):
@@ -26,6 +46,16 @@ class RequestRemote:
         return "( {0} )".format(xpath)
 
     def _get_groups(self, groups, state, **kwargs):
+        """Gets requests for a list of groups with a given state.
+
+        Args:
+            groups: A list of groups to get requests for.
+            state: The state of the reviews to search for.
+            **kwargs: Additional parameters for the search.
+
+        Returns:
+            A list of Request objects.
+        """
         if not kwargs:
             kwargs = {"withfullhistory": "1"}
         xpaths = ["(state/@name='{0}')".format("review")]
@@ -42,9 +72,11 @@ class RequestRemote:
         that are still open: the state of the review should be in state 'new'.
 
         Args:
-            - remote: The remote facade to use.
-            - groups: The groups that should be used.
-            - **kwargs: additional parameters for the search.
+            groups: The groups that should be used.
+            **kwargs: additional parameters for the search.
+
+        Returns:
+            A list of open Request objects.
         """
         return self._get_groups(groups, "new", **kwargs)
 
@@ -55,9 +87,11 @@ class RequestRemote:
         'accepted', while a user is in state 'new' for that group.
 
         Args:
-            - remote: The remote facade to use.
-            - groups: The groups that should be used.
-            - **kwargs: additional parameters for the search.
+            groups: The groups that should be used.
+            **kwargs: additional parameters for the search.
+
+        Returns:
+            A list of Request objects in review.
         """
         requests = self._get_groups(groups, "accepted", **kwargs)
         return [request for request in requests if request.assigned_roles]
@@ -66,6 +100,11 @@ class RequestRemote:
         """Will return all requests for the user if they are part of a
         SUSE:Maintenance project.
 
+        Args:
+            user: The user to get requests for.
+
+        Returns:
+            A list of Request objects.
         """
         params = {
             "user": user.login,
@@ -79,6 +118,12 @@ class RequestRemote:
     def for_incident(self, incident):
         """Return all requests for the given incident that have a qam-group
         as reviewer.
+
+        Args:
+            incident: The incident to get requests for.
+
+        Returns:
+            A list of Request objects.
         """
         params = {"project": incident, "view": "collection", "withfullhistory": "1"}
         requests = Request.parse(self.remote, self.remote.get(self.endpoint, params))
@@ -89,6 +134,14 @@ class RequestRemote:
         ]
 
     def by_id(self, req_id):
+        """Gets a request by its ID.
+
+        Args:
+            req_id: The ID of the request to get.
+
+        Returns:
+            A Request object.
+        """
         req_id = Request.parse_request_id(req_id)
         endpoint = "/".join([self.endpoint, req_id])
         req = Request.parse(

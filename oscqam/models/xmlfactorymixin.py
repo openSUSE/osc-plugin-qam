@@ -1,3 +1,5 @@
+"""Provides a mixin for creating objects from XML."""
+
 from xml.etree import ElementTree as ET
 
 
@@ -12,14 +14,25 @@ class XmlFactoryMixin:
     """
 
     def __init__(self, remote, attributes, children):
-        """Will set every element in kwargs to a property of the class."""
+        """Will set every element in kwargs to a property of the class.
+
+        Args:
+            remote: A remote facade.
+            attributes: A dictionary of attributes for the XML element.
+            children: A dictionary of child elements for the XML element.
+        """
         attributes.update(children)
         for kwarg in attributes:
             setattr(self, kwarg, attributes[kwarg])
 
     @staticmethod
     def listify(dictionary, key):
-        """Will wrap an existing dictionary key in a list."""
+        """Will wrap an existing dictionary key in a list.
+
+        Args:
+            dictionary: The dictionary to modify.
+            key: The key to listify.
+        """
         if not isinstance(dictionary[key], list):
             value = dictionary[key]
             del dictionary[key]
@@ -30,6 +43,15 @@ class XmlFactoryMixin:
         """Recursively parses an element-tree instance.
 
         Will iterate over the tag as root-level.
+
+        Args:
+            remote: A remote facade.
+            et: The element tree to parse.
+            tag: The tag to iterate over.
+            wrapper_cls: The class to wrap the parsed objects in.
+
+        Returns:
+            A list of parsed objects.
         """
         if not wrapper_cls:
             wrapper_cls = cls
@@ -67,5 +89,15 @@ class XmlFactoryMixin:
 
     @classmethod
     def parse(cls, remote, xml, tag):
+        """Parses an object from XML.
+
+        Args:
+            remote: A remote facade.
+            xml: The XML to parse.
+            tag: The root tag of the object.
+
+        Returns:
+            A list of parsed objects.
+        """
         root = ET.fromstring(xml)
         return cls.parse_et(remote, root, tag, cls)

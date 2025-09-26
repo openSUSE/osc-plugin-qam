@@ -1,3 +1,5 @@
+"""A collection of utility functions."""
+
 from itertools import groupby
 import ssl
 from urllib.error import HTTPError
@@ -5,6 +7,16 @@ from urllib.request import urlopen
 
 
 def https(url):
+    """Make an HTTPS request.
+
+    Args:
+        url: The URL to request.
+
+    Returns:
+        A file-like object representing the response, or None if an HTTPError
+        occurs.
+
+    """
     try:
         ctx = ssl.create_default_context()
         return urlopen(url, context=ctx)
@@ -14,14 +26,16 @@ def https(url):
 
 def multi_level_sort(xs, criteria):
     """Sort the given collection based on multiple criteria.
+
     The criteria will be sorted by in the given order, whereas each group
     from the first criteria will be sorted by the second criteria and so forth.
 
-    :param xs: Iterable of objects.
-    :type xs: [a]
+    Args:
+        xs: Iterable of objects.
+        criteria: Iterable of extractor functions.
 
-    :param criteria: Iterable of extractor functions.
-    :type criteria: [a -> b]
+    Returns:
+        The sorted list.
 
     """
     if not criteria:
