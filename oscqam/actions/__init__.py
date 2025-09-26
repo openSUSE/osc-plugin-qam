@@ -1,3 +1,5 @@
+"""A collection of actions that can be performed on requests."""
+
 from .approvegrpoupaction import ApproveGroupAction
 from .approveuseraction import ApproveUserAction
 from .assignaction import AssignAction

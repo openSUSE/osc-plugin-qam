@@ -13,11 +13,12 @@ from .domains import Rating
 def until(snippet, lines):
     """Return lines until the snippet is matched at the beginning of the line.
 
-    :param snippet: snippet to match at the beginning of a line.
-    :type snippet: str
+    Args:
+        snippet: snippet to match at the beginning of a line.
+        lines: lines to return until snippet matches.
 
-    :param lines: lines to return until snippet matches.
-    :type lines: [str]
+    Returns:
+        A list of lines until the snippet is matched.
     """
 
     def condition(line):
@@ -29,10 +30,11 @@ def until(snippet, lines):
 def split_comma(line):
     """Parse a line from a template-log into a list.
 
-    :type package_line: str
+    Args:
+        line: The line to parse.
 
-    :returns: [str]
-
+    Returns:
+        A list of strings.
     """
     return [v.strip() for v in line.split(",")]
 
@@ -41,9 +43,11 @@ def split_comma(line):
 def split_products(product_line):
     """Split products into a list and strip SLE-prefix from each product.
 
-    :type product_line: str
+    Args:
+        product_line: The line to parse.
 
-    :returns: [str]
+    Returns:
+        A list of strings.
     """
     products = (
         p if p.endswith(")") else p + ")"
@@ -55,14 +59,24 @@ def split_products(product_line):
 def split_srcrpms(srcrpm_line):
     """Parse 'SRCRPMs' from a template-log into a list.
 
-    :type srcrpm_line: str
+    Args:
+        srcrpm_line: The line to parse.
 
-    :returns: [str]
+    Returns:
+        A list of strings.
     """
     return [xs.strip() for xs in srcrpm_line.split(",")]
 
 
 def process_packages(pkgs):
+    """Processes a dictionary of packages into a list of unique packages.
+
+    Args:
+        pkgs: A dictionary of packages.
+
+    Returns:
+        A list of unique packages.
+    """
     ret = set()
     for key in pkgs.keys():
         for pkg in pkgs[key]:
@@ -71,14 +85,25 @@ def process_packages(pkgs):
 
 
 class TemplateParser:
-    """Parses a template-logs header-fields."""
+    """Parses a template-logs header-fields.
+
+    Attributes:
+        end_marker: The marker for the end of the header.
+        log: The log file content.
+        metadata: The metadata file content.
+    """
 
     end_marker = "#############################"
 
     def __call__(self, log, metadata):
         """Return dictionary of headers from the log-file and values.
 
-        :returns: {str: object}
+        Args:
+            log: The log file content.
+            metadata: The metadata file content.
+
+        Returns:
+            A dictionary of headers and values.
         """
         if isinstance(log, bytes):
             self.log = log.decode()
@@ -106,6 +131,14 @@ class TemplateParser:
 
     @staticmethod
     def _read_metadata(data):
+        """Reads metadata from a dictionary.
+
+        Args:
+            data: A dictionary of metadata.
+
+        Returns:
+            A dictionary of log entries.
+        """
         log_entries = {}
         log_entries["SRCRPMs"] = data.get("SRCRPMs")
         log_entries["Products"] = split_products(",".join(data.get("products")))
@@ -117,6 +150,12 @@ class TemplateParser:
         return log_entries
 
     def _read_comment(self):
+        """Reads the comment from the log file.
+
+        Returns:
+            The comment as a string.
+        """
+
         def condition(line):
             return not line.startswith(prefix)
 
@@ -131,6 +170,9 @@ class TemplateParser:
         """Reads the template headers into a dictionary.
 
         Accumulates comment entry into a list.
+
+        Returns:
+            A dictionary of headers.
         """
         entries = defaultdict(list)
         comment = self._read_comment()
@@ -152,10 +194,11 @@ class TemplateParser:
     def _parse_headers(self, entries):
         """Parses the header-lists into objects or strings.
 
-        :param entries: Dictionary of headers.
-        :type entries: {str: list}
+        Args:
+            entries: Dictionary of headers.
 
-        :returns: Dictionary of header-fields: {str: object}
+        Returns:
+            Dictionary of header-fields.
         """
         log_entries = {}
         for key in entries:

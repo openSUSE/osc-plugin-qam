@@ -1,3 +1,5 @@
+"""Provides an action to assign a user to a request."""
+
 from ..errors import (
     NoQamReviewsError,
     NotPreviousReviewerError,
@@ -10,6 +12,20 @@ from .oscaction import OscAction
 
 
 class AssignAction(OscAction):
+    """Assigns a user to a request.
+
+    Attributes:
+        ASSIGN_MSG: The message to use when assigning a user.
+        AUTO_INFER_MSG: The message to use when a group is auto-inferred.
+        MULTIPLE_GROUPS_MSG: The message to use when multiple groups could be
+            reviewed.
+        request: The request to assign the user to.
+        groups: The groups to assign the user to.
+        template_factory: A function to get a template from.
+        template_required: A boolean indicating whether a template is required.
+        force: A boolean indicating whether to force the assignment.
+    """
+
     ASSIGN_MSG = "Assigning {user} to {group} for {request}."
     AUTO_INFER_MSG = "Found a possible group: {group}."
     MULTIPLE_GROUPS_MSG = (
@@ -28,6 +44,19 @@ class AssignAction(OscAction):
         template_required=True,
         **kwargs,
     ):
+        """Initializes an AssignAction.
+
+        Args:
+            remote: A remote facade.
+            user: The user to assign.
+            request_id: The ID of the request to assign the user to.
+            groups: The groups to assign the user to.
+            template_factory: A function to get a template from.
+            force: A boolean indicating whether to force the assignment.
+            template_required: A boolean indicating whether a template is
+                required.
+            **kwargs: Additional keyword arguments.
+        """
         super().__init__(remote, user, **kwargs)
         self.request = remote.requests.by_id(request_id)
         self.groups = (
@@ -43,6 +72,10 @@ class AssignAction(OscAction):
         If the template is not yet generated, assigning a user can lead
         to the template-generator no longer finding the request and
         never generating the template.
+
+        Raises:
+            ReportNotYetGeneratedError: If the template has not yet been
+                generated.
         """
         try:
             self.request.get_template(self.template_factory)
@@ -50,6 +83,11 @@ class AssignAction(OscAction):
             raise ReportNotYetGeneratedError(self.request, str(e))
 
     def check_open_review(self) -> None:
+        """Checks that the request is in an open state.
+
+        Raises:
+            NoQamReviewsError: If the request is not in an open state.
+        """
         if self.request.state.name not in Request.OPEN_STATES:
             raise NoQamReviewsError([])
 
@@ -59,6 +97,9 @@ class AssignAction(OscAction):
 
         If the user trying to assign himself is not one of the previous
         reviewers a warning is issued.
+
+        Raises:
+            NotPreviousReviewerError: If the user is not a previous reviewer.
         """
         related_requests = self.remote.requests.for_incident(self.request.src_project)
         if not related_requests:
@@ -79,6 +120,7 @@ class AssignAction(OscAction):
             raise NotPreviousReviewerError(reviewers)
 
     def validate(self):
+        """Validates the assignment."""
         # if tehere isn't open review all other cheks aren't required and can't be overridden by self.force
         self.check_open_review()
         if self.force:
@@ -88,6 +130,7 @@ class AssignAction(OscAction):
         self.check_previous_rejects()
 
     def action(self):
+        """Performs the assignment action."""
         if self.groups:
             self.assign(self.groups)
         else:
@@ -99,6 +142,11 @@ class AssignAction(OscAction):
         """Based on the given user and request search for a group that
         the user could do the review for.
 
+        Returns:
+            A list of groups that the user can review for.
+
+        Raises:
+            UninferableError: If the user can review for more than one group.
         """
         groups = self.user.reviewable_groups(self.request)
         if len(groups) > 1:
@@ -110,6 +158,11 @@ class AssignAction(OscAction):
         return [group]
 
     def assign(self, groups):
+        """Assigns the user to the given groups.
+
+        Args:
+            groups: The groups to assign the user to.
+        """
         self.validate()
         for group in groups:
             msg = AssignAction.ASSIGN_MSG.format(

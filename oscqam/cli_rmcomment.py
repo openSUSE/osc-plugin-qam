@@ -1,3 +1,5 @@
+"""Provides a command-line interface for deleting comments from requests."""
+
 import osc.commandline
 
 from oscqam.actions import DeleteCommentAction
@@ -9,16 +11,27 @@ class QAMDeleteCommentCommand(osc.commandline.OscCommand, Common):
     """Remove a comment for the given request.
 
     The command will list all available comments of the request to allow
-    choosing the one to remove."""
+    choosing the one to remove.
+    """
 
     name = "deletecomment"
     parent = "QAMCommand"
     aliases = ["rmcomment"]
 
     def init_arguments(self):
+        """Initializes the command-line arguments for the command."""
         self.add_argument("request_id", type=str, help="ID of review request")
 
     def run(self, args):
+        """Runs the command.
+
+        Args:
+            args: The command-line arguments.
+
+        Raises:
+            NoCommentsError: If the request has no comments.
+            InvalidCommentIdError: If the user provides an invalid comment ID.
+        """
         self.set_required_params(args)
 
         request = self.api.requests.by_id(args.request_id)

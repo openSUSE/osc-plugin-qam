@@ -1,3 +1,5 @@
+"""Provides a command-line interface for listing open requests."""
+
 import osc.commandline
 
 from oscqam.actions import ListGroupAction, ListOpenAction
@@ -10,13 +12,15 @@ class QAMListCommand(osc.commandline.OscCommand, Common):
     """Show a list of OBS qam-requests that are open.
 
     By default, open requests assignable to yourself will be shown
-    (currently assigned to a qam-group you are a member of.)"""
+    (currently assigned to a qam-group you are a member of.).
+    """
 
     name = "list"
     parent = "QAMCommand"
     aliases = ["open"]
 
     def init_arguments(self):
+        """Initializes the command-line arguments for the command."""
         self.add_argument(
             "-F",
             "--fields",
@@ -57,6 +61,14 @@ class QAMListCommand(osc.commandline.OscCommand, Common):
         )
 
     def run(self, args):
+        """Runs the command.
+
+        Args:
+            args: The command-line arguments.
+
+        Raises:
+            ConflictingOptions: If conflicting options are provided.
+        """
         if args.describe_fields and args.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self.set_required_params(args)

@@ -1,3 +1,5 @@
+"""Provides a command-line interface for listing requests assigned to the current user."""
+
 import osc.commandline
 
 from oscqam.actions import ListAssignedUserAction
@@ -7,12 +9,13 @@ from oscqam.fields import ReportFields
 
 
 class QAMMyCommand(osc.commandline.OscCommand, Common):
-    """list ...."""
+    """Lists requests assigned to the current user."""
 
     name = "my"
     parent = "QAMCommand"
 
     def init_arguments(self):
+        """Initializes the command-line arguments for the command."""
         self.add_argument(
             "-F",
             "--fields",
@@ -38,6 +41,14 @@ class QAMMyCommand(osc.commandline.OscCommand, Common):
         )
 
     def run(self, args):
+        """Runs the command.
+
+        Args:
+            args: The command-line arguments.
+
+        Raises:
+            ConflictingOptions: If conflicting options are provided.
+        """
         if args.describe_fields and args.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
         self.set_required_params(args)

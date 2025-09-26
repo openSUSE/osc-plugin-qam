@@ -1,3 +1,5 @@
+"""Provides a command-line interface for getting information about requests."""
+
 import osc.commandline
 
 from oscqam.actions import InfoAction
@@ -13,6 +15,7 @@ class QAMInfoCommand(osc.commandline.OscCommand, Common):
     parent = "QAMCommand"
 
     def init_arguments(self):
+        """Initializes the command-line arguments for the command."""
         self.add_argument(
             "-F",
             "--fields",
@@ -39,6 +42,14 @@ class QAMInfoCommand(osc.commandline.OscCommand, Common):
         )
 
     def run(self, args):
+        """Runs the command.
+
+        Args:
+            args: The command-line arguments.
+
+        Raises:
+            ConflictingOptions: If conflicting options are provided.
+        """
         if args.describe_fields and args.fields:
             raise ConflictingOptions("Only pass '-v' or '-F' not both")
 

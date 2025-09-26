@@ -1,5 +1,6 @@
-from ..errors import TemplateNotFoundError
-from ..errors import TestResultMismatchError
+"""Provides a class for interacting with test report templates."""
+
+from ..errors import TemplateNotFoundError, TestResultMismatchError
 from ..parsers import TemplateParser
 from ..utils import https
 
@@ -8,11 +9,16 @@ def get_testreport_web(log_path, metadata_path):
     """Load the template belonging to the request from
     https://qam.suse.de/testreports/.
 
-    :param request: The request this template is associated with.
-    :type request: :class:`oscqam.models.Request`
+    Args:
+        log_path: The path to the log file.
+        metadata_path: The path to the metadata file.
 
-    :return: Content of the log-file as string.
+    Returns:
+        A tuple containing the content of the log file and metadata file as
+        strings.
 
+    Raises:
+        TemplateNotFoundError: If the log file cannot be found.
     """
     report = https(log_path)
     if not report:
@@ -31,7 +37,16 @@ def get_testreport_web(log_path, metadata_path):
 
 
 class Template:
-    """Facade to web-based templates."""
+    """Facade to web-based templates.
+
+    Attributes:
+        STATUS_SUCCESS: An integer representing a successful test status.
+        STATUS_FAILURE: An integer representing a failed test status.
+        STATUS_UNKNOWN: An integer representing an unknown test status.
+        base_url: The base URL for machine-readable reports.
+        fancy_base_url: The base URL for human-readable reports.
+        log_entries: A dictionary of log entries from the template.
+    """
 
     STATUS_SUCCESS = 0
     STATUS_FAILURE = 1
@@ -44,19 +59,12 @@ class Template:
     def __init__(self, request, tr_getter=get_testreport_web, parser=TemplateParser()):
         """Create a template from the given request.
 
-        :param request: The request the template is associated with.
-        :type request: :class:`oscqam.models.Request`.
-
-        :param tr_getter: Function that can load the template's log file based
-                          on the request. Will default to loading testreports
-                          from http://qam.suse.de.
-
-        :type tr_getter: Function: :class:`oscqam.models.Request` ->
-                         :class:`str`
-
-        :param parser: Class that can parse the data returned by tr_getter.
-        :type parser: :class:`oscqam.parsers.TemplateParser`
-
+        Args:
+            request: The request the template is associated with.
+            tr_getter: Function that can load the template's log file based
+                on the request. Will default to loading testreports
+                from http://qam.suse.de.
+            parser: Class that can parse the data returned by tr_getter.
         """
         self._request = request
         self.log_entries = parser(*tr_getter(self.url, self.metadata_url))
@@ -66,6 +74,8 @@ class Template:
 
         If the template says the test did not fail this will raise an error.
 
+        Raises:
+            TestResultMismatchError: If the test did not fail.
         """
         if self.status != Template.STATUS_FAILURE:
             raise TestResultMismatchError("FAILED", self.url)
@@ -73,14 +83,15 @@ class Template:
     def passed(self):
         """Assert that this template is from a successful test.
 
-        :raises: :class:`oscqam.models.TestResultMismatchError` if template is
-            not set to PASSED.
+        Raises:
+            TestResultMismatchError: if template is not set to PASSED.
         """
         if self.status != Template.STATUS_SUCCESS:
             raise TestResultMismatchError("PASSED", self.url)
 
     @property
     def status(self):
+        """The status of the test."""
         summary = self.log_entries["SUMMARY"]
         if summary.upper() == "PASSED":
             return Template.STATUS_SUCCESS
@@ -95,6 +106,7 @@ class Template:
 
     @property
     def metadata_url(self):
+        """The URL to the metadata file."""
         return f"{self.base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/metadata.json"
 
     @property

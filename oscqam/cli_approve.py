@@ -1,3 +1,5 @@
+"""Provides a command-line interface for approving requests."""
+
 import osc.commandline
 
 from oscqam.actions import ApproveGroupAction, ApproveUserAction
@@ -5,12 +7,17 @@ from oscqam.common import Common
 
 
 class QAMApproveCommand(osc.commandline.OscCommand, Common):
-    """Approve the request for the user"""
+    """Approve the request for the user.
+
+    This command allows a user to approve a request, either for themselves or
+    for a group.
+    """
 
     name = "approve"
     parent = "QAMCommand"
 
     def init_arguments(self):
+        """Initializes the command-line arguments for the command."""
         self.add_argument(
             "-G",
             "--group",
@@ -25,6 +32,11 @@ class QAMApproveCommand(osc.commandline.OscCommand, Common):
         )
 
     def run(self, args):
+        """Runs the command.
+
+        Args:
+            args: The command-line arguments.
+        """
         self.set_required_params(args)
         if args.group:
             if self.yes_no(

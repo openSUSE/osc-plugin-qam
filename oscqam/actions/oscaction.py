@@ -1,3 +1,5 @@
+"""Provides a base class for actions that interface with the build service."""
+
 import abc
 import os
 import sys
@@ -6,18 +8,22 @@ from ..remotes import RemoteError
 
 
 class OscAction(metaclass=abc.ABCMeta):
-    """Base class for actions that need to interface with the open build service."""
+    """Base class for actions that need to interface with the open build service.
+
+    Attributes:
+        remote: A remote facade.
+        user: The user performing the action.
+        undo_stack: A list of actions to perform on rollback.
+        out: A file-like object to print messages to.
+    """
 
     def __init__(self, remote, user, out=sys.stdout):
-        """
-        :param remote: Remote endpoint to the buildservice.
-        :type remote: :class:`oscqam.models.RemoteFacade`
+        """Initializes an OscAction.
 
-        :param user: Username that performs the action.
-        :type user: str
-
-        :param out: Filelike to print enduser-messages to.
-        :type out: :class:`file`
+        Args:
+            remote: Remote endpoint to the buildservice.
+            user: Username that performs the action.
+            out: Filelike to print enduser-messages to.
         """
         self.remote = remote
         self.user = remote.users.by_name(user)
@@ -28,6 +34,12 @@ class OscAction(metaclass=abc.ABCMeta):
         """Will attempt the encapsulated action and call the rollback function if an
         Error is encountered.
 
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            The result of the action, or None if an error occurred.
         """
         try:
             return self.action(*args, **kwargs)
@@ -37,9 +49,16 @@ class OscAction(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def action(self, *args, **kwargs):
+        """The main action to perform.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
         pass
 
     def rollback(self):
+        """Rolls back any actions performed by this action."""
         for action in self.undo_stack:
             action()
 
@@ -48,7 +67,9 @@ class OscAction(metaclass=abc.ABCMeta):
 
         Print the given message and add a newline.
 
-        :type msg: str
+        Args:
+            msg: The message to print.
+            end: The line ending to use.
         """
         self.out.write(msg)
         self.out.write(end)
