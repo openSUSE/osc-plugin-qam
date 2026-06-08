@@ -20,9 +20,3 @@ pull_request_rules:
       - and: *base_checks
       - "label=merge-fast"
     actions: *merge
-  - name: ask to resolve conflict
-    conditions:
-      - conflict
-    actions:
-      comment:
-        message: This pull request is now in conflicts. Could you fix it? 🙏
