@@ -51,7 +51,7 @@ def split_products(product_line):
     """
     products = (
         p if p.endswith(")") else p + ")"
-        for p in (l.strip() for l in product_line.split("),"))
+        for p in (part.strip() for part in product_line.split("),"))
     )
     return [re.sub("^SLE-", "", product, 1) for product in products]
 
@@ -184,7 +184,7 @@ class TemplateParser:
         lines = lines[:header_end]
         for line in lines:
             try:
-                key, value = [l.strip() for l in line.split(":", 1)]
+                key, value = [part.strip() for part in line.split(":", 1)]
                 entries[key].append(value)
             except ValueError:
                 logging.debug("Could not parse line: %s", line)
