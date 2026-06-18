@@ -74,8 +74,10 @@ class Assignment:
             events = review_state.statehistory
             # TODO: refactor out lambda and filter ...
             relevant_events = filter(
-                lambda e: e.get_description()
-                in [cls.ASSIGNED_DESC, cls.ACCEPTED_DESC, cls.REOPENED_DESC],
+                lambda e: (
+                    e.get_description()
+                    in [cls.ASSIGNED_DESC, cls.ACCEPTED_DESC, cls.REOPENED_DESC]
+                ),
                 events,
             )
             return sorted(relevant_events, key=lambda e: parser.parse(e.when))

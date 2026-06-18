@@ -1,4 +1,0 @@
-prettytable
-osc
-python-dateutil
-requests
