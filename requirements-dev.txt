@@ -1,9 +1,0 @@
-osc
-prettytable
-python-dateutil
-pytest
-pytest-cov
-coverage
-black
-requests
-responses

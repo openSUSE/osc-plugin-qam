@@ -3,19 +3,19 @@ all:
 
 .PHONY: only-test
 only-test:
-	python3 -m pytest
+	uv run pytest
 
 .PHONY: checkstyle
 checkstyle:
-	black --check --diff ./
+	uv run ruff format --check --diff ./
 
 .PHONY: tidy
 tidy:
-	black ./
+	uv run ruff format ./
 
 .PHONY: test-with-coverage
 test-with-coverage:
-	python3 -m pytest -v --cov=./oscqam --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy
+	uv run pytest -v --cov=./oscqam --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy
 
 .PHONY: test
 test: only-test checkstyle

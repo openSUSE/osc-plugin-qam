@@ -7,12 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v8.1.0
         with:
-          python-version: '3.8'
-          cache: 'pip'
-      - name: Setup enviroment
-        run: pip install -r requirements-dev.txt
+          enable-cache: true
+          python-version: '3.9'
+      - name: Setup environment
+        run: uv sync --locked
       - name: Run tests + cov report
         run: make test-with-coverage
       - name: Check style
