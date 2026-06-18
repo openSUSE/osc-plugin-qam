@@ -41,9 +41,9 @@ class ListAction(OscAction):
         self.reports = multi_level_sort(
             reports,
             [
-                lambda l: l.request.reqid,
-                lambda l: l.template.log_entries["Rating"],
-                lambda l: l.request.incident_priority,
+                lambda report: report.request.reqid,
+                lambda report: report.template.log_entries["Rating"],
+                lambda report: report.request.incident_priority,
             ],
         )
 
