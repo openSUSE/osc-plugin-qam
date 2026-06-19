@@ -54,6 +54,8 @@ class PriorityRemote:
         else:
             value = xml.find(".//value")
             try:
+                if value is None:
+                    raise AttributeError(".//value not found")
                 return Priority(value.text)
             except (AttributeError, TypeError):
                 return self._smelt_prio(request)

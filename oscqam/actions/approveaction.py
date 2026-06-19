@@ -49,11 +49,11 @@ class ApproveAction(OscAction):
         self.reviewer = self.get_reviewer(reviewer)
 
     @abc.abstractmethod
-    def get_reviewer(self, reviwer):
+    def get_reviewer(self, reviewer):
         """Return the object for the given reviewer.
 
         Args:
-            reviwer: The reviewer to get the object for.
+            reviewer: The reviewer to get the object for.
 
         Returns:
             The reviewer object.
