@@ -9,6 +9,10 @@ only-test:
 checkstyle:
 	uv run ruff format --check --diff ./
 
+.PHONY: typecheck
+typecheck:
+	uv run ty check
+
 .PHONY: tidy
 tidy:
 	uv run ruff format ./

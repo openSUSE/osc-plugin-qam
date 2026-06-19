@@ -14,6 +14,9 @@ jobs:
           python-version: '3.9'
       - name: Setup environment
         run: uv sync --locked
+      - name: Type check
+        run: make typecheck
+        continue-on-error: true
       - name: Run tests + cov report
         run: make test-with-coverage
       - name: Check style
