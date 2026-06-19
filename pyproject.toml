@@ -27,6 +27,7 @@ dev = [
     "coverage",
     "ruff",
     "responses",
+    "ty",
 ]
 
 [tool.setuptools.dynamic]
@@ -43,3 +44,9 @@ line-length = 88
 target-version = "py39"
 
 [tool.ruff.format]
+
+[tool.ty.environment]
+python-version = "3.9"
+
+[tool.ty.src]
+include = ["oscqam"]
