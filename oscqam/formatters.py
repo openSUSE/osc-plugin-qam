@@ -25,11 +25,11 @@ def terminal_dimensions(fd=None):
         if not sys.stdout.isatty():
             return (0, 0)
         fd = sys.stdout.fileno()
-    dim = fcntl.ioctl(fd, termios.TIOCGWINSZ, "0000")
+    dim = fcntl.ioctl(fd, termios.TIOCGWINSZ, b"\0\0\0\0")
     rows, columns = struct.unpack("hh", dim)
     if rows == 0 and columns == 0:
         try:
-            rows, columns = (int(os.getenv(v)) for v in ["LINES", "COLUMNS"])
+            rows, columns = (int(os.environ[v]) for v in ["LINES", "COLUMNS"])
         except Exception:
             pass
     return rows, columns

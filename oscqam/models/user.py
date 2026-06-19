@@ -138,12 +138,13 @@ class User(XmlFactoryMixin, Reviewer):
         return "{0} ({1})".format(self.realname, self.email)
 
     @classmethod
-    def parse(cls, remote, xml):
+    def parse(cls, remote, xml, tag=None):
         """Parses a user from XML.
 
         Args:
             remote: A remote facade.
             xml: The XML to parse.
+            tag: Unused; accepted for compatibility with the base signature.
 
         Returns:
             A User object.

@@ -220,7 +220,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if group:
             params["by_group"] = group.name
         url_params = urlencode(params)
-        url = "/".join([self.remote.requests.endpoint, self.reqid])
+        url = "/".join([str(self.remote.requests.endpoint), str(self.reqid)])
         url += "?" + url_params
         self.remote.post(url, comment)
 
@@ -405,12 +405,13 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return [r for r in requests if request_substring in r.src_project]
 
     @classmethod
-    def parse(cls, remote, xml):
+    def parse(cls, remote, xml, tag=None):
         """Parses a list of requests from XML.
 
         Args:
             remote: A remote facade.
             xml: The XML to parse.
+            tag: Unused; accepted for compatibility with the base signature.
 
         Returns:
             A list of Request objects.

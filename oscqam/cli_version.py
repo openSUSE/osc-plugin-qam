@@ -11,10 +11,10 @@ class QAMVersionCommand(osc.commandline.OscCommand):
     name = "version"
     parent = "QAMCommand"
 
-    def run(self, _):
+    def run(self, args):
         """Runs the command.
 
         Args:
-            _: The command-line arguments (unused).
+            args: The command-line arguments (unused).
         """
         print(version)

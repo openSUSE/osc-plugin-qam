@@ -45,7 +45,10 @@ def monkeypatch():
 
     # logging.warn("Careful - your osc-version requires monkey patching.")
     original_init = osc.core.ReviewState.__init__
-    osc.core.ReviewState.__init__ = monkey_patched_init
+    # Deliberate runtime monkeypatch of a third-party class to retain review
+    # history; the replacement intentionally differs from the original
+    # signature, so the type checker's assignment check does not apply here.
+    osc.core.ReviewState.__init__ = monkey_patched_init  # ty: ignore[invalid-assignment]
 
 
 monkeypatch()

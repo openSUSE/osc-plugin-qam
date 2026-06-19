@@ -15,13 +15,13 @@ class QAMCommand(osc.commandline.OscCommand):
 
     name = "qam"
 
-    def run(self, _):
+    def run(self, args):
         """Run the command.
 
         This method is called when the command is executed.
 
         Args:
-            _: The arguments passed to the command.
+            args: The arguments passed to the command.
 
         """
         pass

@@ -7,10 +7,13 @@ class GroupFilter(metaclass=abc.ABCMeta):
     """Methods that allow filtering on groups."""
 
     @abc.abstractmethod
-    def is_qam_group(self):
+    def is_qam_group(self, group):
         """Checks if a group is a QAM group.
 
         This method must be implemented by subclasses.
+
+        Args:
+            group: The group to check.
         """
         pass
 

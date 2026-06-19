@@ -1,5 +1,6 @@
 """Provides a mixin for creating objects from XML."""
 
+from typing import Any
 from xml.etree import ElementTree as ET
 
 
@@ -24,6 +25,27 @@ class XmlFactoryMixin:
         attributes.update(children)
         for kwarg in attributes:
             setattr(self, kwarg, attributes[kwarg])
+
+    def __getattr__(self, name: str) -> Any:
+        """Declares that instances expose attributes populated from XML.
+
+        Instances of this mixin (and its subclasses) receive their attributes
+        dynamically in ``__init__`` via :func:`setattr`, based on the parsed XML
+        structure. This hook makes those dynamically-set attributes visible to
+        static type checkers. It is only invoked for attributes that are not
+        found through normal lookup, so it does not interfere with attributes
+        that were actually set.
+
+        Args:
+            name: The name of the attribute being accessed.
+
+        Raises:
+            AttributeError: Always, to preserve normal attribute-error
+                semantics for attributes that were never set from XML.
+        """
+        raise AttributeError(
+            f"{type(self).__name__!r} object has no attribute {name!r}"
+        )
 
     @staticmethod
     def listify(dictionary, key):
@@ -77,8 +99,11 @@ class XmlFactoryMixin:
                     else:
                         value = None
                 if key in kwargs:
-                    XmlFactoryMixin.listify(kwargs, key)
-                    kwargs[key].append(value)
+                    existing = kwargs[key]
+                    if isinstance(existing, list):
+                        existing.append(value)
+                    else:
+                        kwargs[key] = [existing, value]
                 else:
                     kwargs[key] = value
             if request.text:
@@ -88,13 +113,14 @@ class XmlFactoryMixin:
         return objects
 
     @classmethod
-    def parse(cls, remote, xml, tag):
+    def parse(cls, remote, xml, tag=None):
         """Parses an object from XML.
 
         Args:
             remote: A remote facade.
             xml: The XML to parse.
-            tag: The root tag of the object.
+            tag: The root tag of the object. Subclasses typically supply a
+                fixed tag and may ignore any value passed by a caller.
 
         Returns:
             A list of parsed objects.

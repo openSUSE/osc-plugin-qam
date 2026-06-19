@@ -39,12 +39,13 @@ class Comment(XmlFactoryMixin):
         self.remote.comments.delete(self)
 
     @classmethod
-    def parse(cls, remote, xml):
+    def parse(cls, remote, xml, tag=None):
         """Parses a comment from XML.
 
         Args:
             remote: A remote facade.
             xml: The XML to parse.
+            tag: Unused; accepted for compatibility with the base signature.
 
         Returns:
             A Comment object.

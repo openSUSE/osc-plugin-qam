@@ -30,12 +30,13 @@ class Attribute(XmlFactoryMixin):
             self.value = [self.value]
 
     @classmethod
-    def parse(cls, remote, xml):
+    def parse(cls, remote, xml, tag=None):
         """Parses an attribute from XML.
 
         Args:
             remote: A remote facade.
             xml: The XML to parse.
+            tag: Unused; accepted for compatibility with the base signature.
 
         Returns:
             An Attribute object.
