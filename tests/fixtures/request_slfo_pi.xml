@@ -1,0 +1,11 @@
+<request id="415655">
+  <action type="release">
+    <source project="SUSE:SLFO:Products:SLES:16.0:TEST" package="patchinfo"/>
+    <target project="SUSE:Products:SLE-Product-SLES:16.0:aarch64" package="patchinfo"/>
+  </action>
+  <review state="new" when="2024-11-14T11:12:53" who="anonymous" by_group="qam-sle">
+  </review>
+  <state name="review" who="anonymous" when="2024-12-01T14:46:23">
+    <comment>In review</comment>
+  </state>
+</request>
