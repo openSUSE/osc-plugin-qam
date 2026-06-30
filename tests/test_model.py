@@ -167,7 +167,9 @@ def test_template_url_classic_maintenance(remote):
     """Template.url for a classic maintenance request is unchanged."""
     request = Request.parse(remote, req_1_xml)[0]
     template = Template(request, tr_getter=FakeTrGetter(template_txt))
-    assert template.url == "https://qam.suse.de/testreports/SUSE:Maintenance:130:12345/log"
+    assert (
+        template.url == "https://qam.suse.de/testreports/SUSE:Maintenance:130:12345/log"
+    )
 
 
 def test_template_url_slfo_pi(remote):
