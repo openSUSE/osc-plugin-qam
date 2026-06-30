@@ -38,6 +38,8 @@ req_invalid = load_fixture("request_no_src.xml")
 req_sle11sp4 = load_fixture("request_sle11sp4.xml")
 req_qam_auto = load_fixture("request_qam_auto.xml")
 req_two_assign = load_fixture("request_twoassign.xml")
+req_slfo_staging = load_fixture("request_slfo_staging.xml")
+req_slfo_pi = load_fixture("request_slfo_pi.xml")
 template_txt = load_fixture("template.txt")
 template_rh = load_fixture("template_rh.txt")
 user_txt = load_fixture("person_anonymous.xml")
@@ -131,6 +133,50 @@ def test_parse_request_id():
     test_id = "SUSE:Maintenance:123:45678"
     req_id = Request.parse_request_id(test_id)
     assert req_id == "45678"
+
+
+def test_src_project_to_rrid_classic_maintenance(remote):
+    """Classic maintenance requests return the source project verbatim."""
+    request = Request.parse(remote, req_1_xml)[0]
+    assert request.src_project_to_rrid == "SUSE:Maintenance:130"
+
+
+def test_src_project_to_rrid_slfo_staging(remote):
+    """SLFO staging requests (home:*:slfo-patchinfos → SUSE:SLFO:1.1) must
+    resolve the RRID from the TARGET project so the report URL is correct."""
+    request = Request.parse(remote, req_slfo_staging)[0]
+    assert request.src_project_to_rrid == "SUSE:SLFO:1.1"
+
+
+def test_src_project_to_rrid_slfo_pi(remote):
+    """SLFO PI/product-release requests (source IS SUSE:SLFO:*) keep the
+    existing SUSE:PI:<ver> mapping."""
+    request = Request.parse(remote, req_slfo_pi)[0]
+    assert request.src_project_to_rrid == "SUSE:PI:16.0"
+
+
+def test_template_url_slfo_staging(remote):
+    """Template.url for an SLFO staging request must point to
+    testreports/SUSE:SLFO:1.1:<reqid>/log, not the staging home project."""
+    request = Request.parse(remote, req_slfo_staging)[0]
+    template = Template(request, tr_getter=FakeTrGetter(template_txt))
+    assert template.url == "https://qam.suse.de/testreports/SUSE:SLFO:1.1:415080/log"
+
+
+def test_template_url_classic_maintenance(remote):
+    """Template.url for a classic maintenance request is unchanged."""
+    request = Request.parse(remote, req_1_xml)[0]
+    template = Template(request, tr_getter=FakeTrGetter(template_txt))
+    assert (
+        template.url == "https://qam.suse.de/testreports/SUSE:Maintenance:130:12345/log"
+    )
+
+
+def test_template_url_slfo_pi(remote):
+    """Template.url for an SLFO PI request keeps the SUSE:PI:<ver> mapping."""
+    request = Request.parse(remote, req_slfo_pi)[0]
+    template = Template(request, tr_getter=FakeTrGetter(template_txt))
+    assert template.url == "https://qam.suse.de/testreports/SUSE:PI:16.0:415655/log"
 
 
 def test_template_splits_srcrpms():

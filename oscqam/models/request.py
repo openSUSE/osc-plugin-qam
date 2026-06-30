@@ -166,14 +166,25 @@ class Request(osc.core.Request, XmlFactoryMixin):
         This is a special version for requests that are submitted to a
         staging project first.
 
+        For SLFO staging requests (source is a home/staging project, target
+        is SUSE:SLFO:*) the RRID is derived from the target project so that
+        the correct report URL is generated (e.g. SUSE:SLFO:1.1:<reqid>).
+
         Returns:
             The source project name for the PI request.
         """
         for action in self.actions:
             if hasattr(action, "src_project"):
                 prj = action.src_project
+                tgt = getattr(action, "tgt_project", None) or ""
                 if prj:
+                    if tgt.startswith("SUSE:SLFO:"):
+                        # SLFO staging request: report lives under the target
+                        # project, e.g. SUSE:SLFO:1.1:<reqid>/log
+                        return tgt
                     if prj.startswith("SUSE:SLFO:"):
+                        # PI / product release: source IS the SLFO project;
+                        # derive the version component for SUSE:PI:<ver>
                         ver = prj.split(":")[-2]
                         return f"SUSE:PI:{ver}"
                     return prj
