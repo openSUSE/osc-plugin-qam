@@ -34,7 +34,7 @@ dev = [
 version = { attr = "oscqam.__version__" }
 
 [tool.setuptools.packages.find]
-exclude = ["tests*"]
+exclude = ["tests*", "Documentation"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
