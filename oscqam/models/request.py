@@ -464,7 +464,9 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 if "acceptinfo" not in str(e):
                     raise
                 else:
-                    logging.warning("Dropping request due to incompatible server: %s", e)
+                    logging.warning(
+                        "Dropping request due to incompatible server: %s", e
+                    )
                     # not appended, effectively dropped with warning (not silent)
         return requests
 
