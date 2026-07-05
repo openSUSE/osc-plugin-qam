@@ -1,6 +1,7 @@
 from collections import defaultdict
 import logging
 
+from oscqam.remotes.bugremote import BugRemote
 from oscqam.remotes.commentremote import CommentRemote
 from oscqam.remotes.groupremote import GroupRemote
 from oscqam.remotes.priorityremote import PriorityRemote
@@ -33,6 +34,7 @@ class MockRemote:
         self.comments = CommentRemote(self)
         self.projects = ProjectRemote(self)
         self.priorities = PriorityRemote(self)
+        self.bugs = BugRemote(self)
         self.remote = "suse-remote"
 
     def _load(self, prefix, ids):
@@ -45,10 +47,12 @@ class MockRemote:
         This makes register_url calls robust to dict key ordering in call sites
         (e.g. params={} literals in RequestRemote).
         """
+
         def norm(a):
             if isinstance(a, dict):
                 return tuple(sorted((k, v) for k, v in a.items()))
             return a
+
         if args:
             normed = tuple(norm(a) for a in args)
             return repr(normed)
