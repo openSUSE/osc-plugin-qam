@@ -7,7 +7,7 @@ name = "osc-plugin-qam"
 dynamic = ["version"]
 description = "Plugin for OSC to support the workflow for the QA maintenance department when using the new request / review osc abstractions."
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "GPL-2.0-only"
 license-files = ["LICENSE"]
 dependencies = [
@@ -35,8 +35,6 @@ doc = [
 ]
 
 [tool.uv.dependency-groups]
-# Docs need sphinx>=8, which does not support the 3.9 project floor;
-# the docs CI job runs on a recent Python.
 doc = { requires-python = ">=3.11" }
 
 [tool.setuptools.dynamic]
@@ -60,12 +58,12 @@ markers = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py311"
 
 [tool.ruff.format]
 
 [tool.ty.environment]
-python-version = "3.9"
+python-version = "3.11"
 
 [tool.ty.terminal]
 # Make 'ty check' fail hard on warnings (aligns with mtui/repose practice)
