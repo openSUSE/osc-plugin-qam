@@ -51,8 +51,8 @@ def test_infer_no_groups_match(remote):
 
 
 def test_infer_groups_match(remote):
-    # Use exact params order as constructed in RequestRemote.for_incident
-    # so the mock override matches (the mock uses repr of args for lookup).
+    # Params must match RequestRemote.for_incident by content; the mock's
+    # override lookup normalizes dict key order.
     args = {
         "project": "SUSE:Maintenance:130",
         "view": "collection",
@@ -126,7 +126,8 @@ def test_assign_multiple_groups(remote):
 
 
 def test_assign_multiple_groups_explicit(remote):
-    # Match exact params construction in for_incident to hit the mock override.
+    # Params must match for_incident by content (dict order is normalized)
+    # to hit the mock override.
     args = {
         "project": "SUSE:Maintenance:130",
         "view": "collection",
@@ -265,8 +266,8 @@ def test_assign_no_review(remote):
 
 
 def test_list_assigned_user(remote):
-    # Match the exact dict construction (key order) in RequestRemote.for_user
-    # so the mock's repr-based override lookup succeeds.
+    # Params must match RequestRemote.for_user by content; the mock's
+    # override lookup normalizes dict key order.
     remote.register_url(
         "request",
         lambda: load_fixture("search_request.xml"),
@@ -291,6 +292,45 @@ def test_list_assigned(remote):
     remote.register_url(endpoint, lambda: load_fixture("incident_priority.xml"))
     requests = action.load_requests()
     assert len(requests) == 1
+
+
+def test_approval_fails_closed_without_summary(remote):
+    """A template without a SUMMARY line is STATUS_UNKNOWN and must not be
+    approvable (fail closed)."""
+    request = remote.requests.by_id(cloud_open)
+    report = create_template_data()
+    template = models.Template(request, tr_getter=FakeTrGetter(report))
+    assert template.status == models.Template.STATUS_UNKNOWN
+    approval = actions.ApproveUserAction(
+        remote, user_id, "12345", user_id, False, template_factory=lambda _: template
+    )
+    with pytest.raises(errors.TestResultMismatchError):
+        approval()
+
+
+def test_group_sort_reports_missing_rating(remote):
+    """Templates without a Rating entry sort with the lowest priority instead
+    of raising a KeyError."""
+    endpoint = "/source/SUSE:Maintenance:130/_attribute/OBS:IncidentPriority"
+    remote.register_url(endpoint, lambda: load_fixture("incident_priority.xml"))
+    rated_request = remote.requests.by_id(cloud_open)
+    rated_template = models.Template(
+        rated_request,
+        tr_getter=FakeTrGetter(create_template_data(Rating="critical")),
+    )
+    rated = Report(request=rated_request, template_factory=lambda _: rated_template)
+    unrated_request = remote.requests.by_id(cloud_open)
+    unrated_template = models.Template(
+        unrated_request, tr_getter=FakeTrGetter(create_template_data())
+    )
+    assert "Rating" not in unrated_template.log_entries
+    unrated = Report(
+        request=unrated_request, template_factory=lambda _: unrated_template
+    )
+    action = actions.ListOpenAction(remote, user_id, template_factory=lambda r: r)
+    action.reports = [unrated, rated]
+    action.group_sort_reports()
+    assert action.reports == [rated, unrated]
 
 
 def test_approval_requires_status_passed(remote):

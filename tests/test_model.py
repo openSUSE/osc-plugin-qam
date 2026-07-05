@@ -1,3 +1,4 @@
+import logging
 from io import StringIO
 from urllib.error import HTTPError
 
@@ -60,6 +61,8 @@ def create_template(request_data=None, template_data=None):
 def test_merge_requests(remote):
     request_1 = Request.parse(remote, req_1_xml)[0]
     request_2 = Request.parse(remote, req_1_xml)[0]
+    assert request_1 == request_2
+    assert hash(request_1) == hash(request_2)
     requests = set([request_1, request_2])
     assert len(requests) == 1
 
@@ -70,6 +73,54 @@ def test_request_eq_other_type(remote):
     assert request.__eq__("12345") is NotImplemented
     assert (request == "12345") is False
     assert (request != "12345") is True
+    assert request.__eq__(None) is NotImplemented
+    assert (request == None) is False  # noqa: E711 - exercises the eq path
+    assert (request == 42) is False
+
+
+def test_request_eq_hash_without_actions(remote):
+    """Requests without any actions can be compared and hashed."""
+    empty_1 = Request(remote)
+    empty_2 = Request(remote)
+    assert empty_1 == empty_2
+    assert hash(empty_1) == hash(empty_2)
+    parsed = Request.parse(remote, req_1_xml)[0]
+    assert empty_1 != parsed
+    assert len({empty_1, empty_2, parsed}) == 2
+
+
+def test_parse_drops_invalid_request(remote, caplog):
+    """A malformed request in a collection is dropped with an ERROR log,
+    while the valid requests are still returned."""
+    collection = "<collection>{0}{1}</collection>".format(
+        req_1_xml, '<request><state name="new"/></request>'
+    )
+    with caplog.at_level(logging.ERROR):
+        requests = Request.parse(remote, collection)
+    assert len(requests) == 1
+    assert requests[0].reqid == "12345"
+    drops = [r for r in caplog.records if "Dropping request" in r.getMessage()]
+    assert len(drops) == 1
+    assert drops[0].levelno == logging.ERROR
+
+
+def test_packages_ignores_actions_without_src_package(remote):
+    """Action types without a src_package (e.g. delete) must not break the
+    packages property."""
+    request_xml = (
+        '<request id="77777">'
+        '<action type="submit">'
+        '<source project="SUSE:Maintenance:130" package="glibc"/>'
+        '<target project="SUSE:SLE-12:Update" package="glibc.130"/>'
+        "</action>"
+        '<action type="delete">'
+        '<target project="SUSE:SLE-12:Update" package="obsolete-pkg"/>'
+        "</action>"
+        '<state name="review" who="anonymous" when="2014-12-01T14:46:23"/>'
+        "</request>"
+    )
+    request = Request.parse(remote, request_xml)[0]
+    assert request.packages == {"glibc"}
 
 
 def test_search(remote):
@@ -209,6 +260,13 @@ def test_is_slfo_classic(remote):
 def test_bugs_skipped_for_slfo(remote):
     """Bug collection is skipped for SLFO requests (via is_slfo)."""
     request = Request.parse(remote, req_slfo_pi)[0]
+    assert remote.bugs.for_request(request) == []
+
+
+def test_bugs_skipped_for_slfo_staging(remote):
+    """Bug collection is skipped for SLFO staging requests, where only the
+    TARGET project is SUSE:SLFO:* (the source is a home: staging project)."""
+    request = Request.parse(remote, req_slfo_staging)[0]
     assert remote.bugs.for_request(request) == []
 
 

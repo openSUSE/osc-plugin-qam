@@ -4,6 +4,7 @@ import abc
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 
+from ..domains import Rating
 from ..errors import TemplateNotFoundError
 from ..fields import ReportField
 from ..models import Template
@@ -42,7 +43,9 @@ class ListAction(OscAction):
             reports,
             [
                 lambda report: report.request.reqid,
-                lambda report: report.template.log_entries["Rating"],
+                # A template without a Rating header sorts with the lowest
+                # priority instead of raising a KeyError.
+                lambda report: report.template.log_entries.get("Rating", Rating("")),
                 lambda report: report.request.incident_priority,
             ],
         )

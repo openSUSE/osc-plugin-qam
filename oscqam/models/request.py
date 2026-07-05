@@ -134,8 +134,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
         if not self._packages:
             packages = set()
             for action in self.actions:
-                pkg = action.src_package
-                if pkg != "patchinfo":
+                # Not all action types carry a source package (e.g. delete,
+                # add_role, set_bugowner, group actions).
+                pkg = getattr(action, "src_package", None)
+                if pkg is not None and pkg != "patchinfo":
                     packages.add(pkg)
             self._packages = packages
         return self._packages
@@ -455,7 +457,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 req.read(request)
                 requests.append(req)
             except osc.oscerr.APIError as e:
-                logging.warning("Dropping request due to APIError: %s", e.msg)
+                logging.error("Dropping request due to APIError: %s", e.msg)
             except osc.oscerr.WrongArgs as e:
                 # Temporary workaround, as OBS >= 2.7 can return requests with
                 # acceptinfo-elements that old osc can not handle.
