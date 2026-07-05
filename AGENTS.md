@@ -20,10 +20,11 @@
 - Make targets:
   - `make typecheck` — `uv run ty check`
   - `make only-test` — `uv run pytest`
-  - `make test-with-coverage` — pytest with `--cov=./oscqam` + junit/xml (what CI runs)
-  - `make checkstyle` — `uv run ruff format --check --diff ./`
+  - `make test-with-coverage` — pytest (cov config from pyproject) + xml/junit report + `--cov-fail-under=65` (CI test job)
+  - `make checkstyle` — `uv run ruff format --check --diff ./` + `ruff check .`
   - `make tidy` — `uv run ruff format ./` (auto-fix style)
   - `make test` — `only-test` + `checkstyle` + `typecheck` + `docs` (full gate)
+  - `make docs` — sphinx-build with -W (used by CI docs job)
 - Run as a user does: `osc qam --help` (the plugin must be on osc's plugin path;
   see `Documentation/devel.rst`).
 
@@ -69,9 +70,15 @@
   **`not-ready`** (or `acceptance-tests-needed`) label; fast-track with `merge-fast`.
 
 ## Definition of Done (hard rules)
-- Run the full gate on the **whole repo** (`./`) before pushing or claiming done:
-  `make typecheck` **and** `make test-with-coverage` **and** `make checkstyle`
-  (equivalently `uv run ty check`, `uv run pytest`, `uv run ruff format --check ./`).
+- Run the full gate on the **whole repo** (`./`) before pushing or claiming done.
+  CI uses separate jobs (lint, typecheck, docs, test with 3.13/3.14 matrix).
+  Locally run: `make checkstyle && make typecheck && make docs && make test-with-coverage`
+  (or `make test` for the components except the cov-fail-under variant).
+  Equivalently:
+  `uv run ty check`
+  `uv run ruff format --check --diff ./ && uv run ruff check .`
+  `uv run --group doc sphinx-build -b html -W --keep-going Documentation Documentation/_build/html`
+  `uv run pytest --cov-report=xml --junitxml=junit.xml -o junit_family=legacy --cov-fail-under=65`
 - "Done" means CI is **observed** green, not predicted — report status from the
   actual run. Patch coverage is enforced via Codecov.
 - Rebase on `upstream/master` and keep history **linear** (mergify requires it).
@@ -81,6 +88,7 @@
   Gitea API for SLFO pull requests. Source installs use `uv`, not PyPI.
 
 ## Further Reading
-- `Documentation/devel.rst` — dev setup, the osc plugin path, and running the tests.
+- `Documentation/devel.rst` — dev setup, the osc plugin path, and running the tests. (includes release tagging for GH release workflow)
 - `README.rst` — user-facing overview and workflows.
 - `.mergify.yml` — merge automation rules referenced above.
+- `.github/workflows/ci.yml`, `codeql-analysis.yml`, `release.yml` — modernized CI (lint/typecheck/docs/test matrix), CodeQL, and tag-triggered releases (no 'v' prefix).
