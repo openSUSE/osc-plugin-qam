@@ -23,7 +23,7 @@
   - `make test-with-coverage` — pytest with `--cov=./oscqam` + junit/xml (what CI runs)
   - `make checkstyle` — `uv run ruff format --check --diff ./`
   - `make tidy` — `uv run ruff format ./` (auto-fix style)
-  - `make test` — `only-test` + `checkstyle`
+  - `make test` — `only-test` + `checkstyle` + `typecheck` + `docs` (full gate)
 - Run as a user does: `osc qam --help` (the plugin must be on osc's plugin path;
   see `Documentation/devel.rst`).
 
@@ -51,11 +51,11 @@
 - Report/queue data comes from the QEM dashboard and `qam.suse.de`.
 
 ## Type & Style
-- Supported Python is **3.9+** (`requires-python = ">=3.9"`); ruff
-  `target-version = "py39"`, `line-length = 88`; `ty` is pinned to `python-version =
-  "3.9"`. Keep code 3.9-compatible.
-- `make checkstyle` is `ruff format --check`, and CI lints the **whole repo
-  including `tests/`** — format `tests/` too. A tests-only formatting miss is the
+- Supported Python is **3.13+** (`requires-python = ">=3.13"`); ruff
+  `target-version = "py313"`, `line-length = 88`; `ty` is pinned to `python-version =
+  "3.13"`. Keep code 3.13-compatible.
+- `make checkstyle` is `ruff format --check --diff ./` + `ruff check .`, and CI lints the **whole repo
+  including `tests/`** — format and lint `tests/` too. A tests-only formatting miss is the
   most common way to red the pipeline.
 
 ## Change Workflow
