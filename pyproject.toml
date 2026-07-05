@@ -18,7 +18,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.suse.de/qa-maintenance/qam-oscplugin"
+Homepage = "https://github.com/openSUSE/osc-plugin-qam"
+Documentation = "https://github.com/openSUSE/osc-plugin-qam"
 
 [dependency-groups]
 dev = [

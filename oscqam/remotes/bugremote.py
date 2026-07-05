@@ -32,7 +32,8 @@ class BugRemote:
         Returns:
             A list of Bug objects.
         """
-        if request.src_project.startswith("SUSE:SLFO:"):
+        if request.is_slfo:
+            # SLFO requests (PI or staging) do not use the classic patchinfo bug endpoint.
             return []
         incident = request.src_project
         endpoint = self.endpoint.format(incident=incident)

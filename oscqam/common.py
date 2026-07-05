@@ -15,12 +15,19 @@ class Common:
         SUBQUERY_QUIT: An integer used to signal that a subquery should be quit.
         all_columns_string: A string of all available report fields.
         all_reasons_string: A string of all available reject reasons.
+        api: RemoteFacade (set by set_required_params).
+        apiurl: str (set by set_required_params).
+        affected_user: str or None (set by set_required_params).
     """
 
     SUBQUERY_QUIT = 4
 
     all_columns_string = ", ".join(str(f) for f in ReportFields.all_fields)
     all_reasons_string = ", ".join(r.flag for r in RejectReason)
+
+    api: "RemoteFacade"
+    apiurl: str
+    affected_user: str | None = None
 
     def set_required_params(self, args):
         """Sets required parameters from the command line arguments.
@@ -35,6 +42,14 @@ class Common:
             self.affected_user = args.user
         else:
             self.affected_user = osc.conf.get_apiurl_usr(self.apiurl)
+
+    def template_skip_from_args(self, args):
+        """Return whether template check should be skipped, from --skip-template flag.
+
+        Central helper to keep --skip-template handling consistent across
+        assign/approve/reject (avoids repeated inversion bugs).
+        """
+        return bool(getattr(args, "skip_template", False))
 
     def list_requests(self, action, tabular, keys):
         """Lists requests using the specified action and formatter.

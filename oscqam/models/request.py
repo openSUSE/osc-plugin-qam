@@ -160,8 +160,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
     @property
     def src_project_to_rrid(self):
-        """Will return the src_project or an empty string if no src_project
-        can be found in the request.
+        """Return the RRID (report identifier) derived from source/target project.
 
         This is a special version for requests that are submitted to a
         staging project first.
@@ -170,8 +169,10 @@ class Request(osc.core.Request, XmlFactoryMixin):
         is SUSE:SLFO:*) the RRID is derived from the target project so that
         the correct report URL is generated (e.g. SUSE:SLFO:1.1:<reqid>).
 
+        For classic requests this is typically the src_project.
+
         Returns:
-            The source project name for the PI request.
+            The RRID string (or empty if none).
         """
         for action in self.actions:
             if hasattr(action, "src_project"):
@@ -192,6 +193,25 @@ class Request(osc.core.Request, XmlFactoryMixin):
                     logging.info("This project has no source project: %s", self.reqid)
                     return ""
         return ""
+
+    @property
+    def is_slfo(self):
+        """Return True for SLFO-related requests.
+
+        Covers:
+        - PI / product releases where src_project starts with SUSE:SLFO:
+        - Staging submits where the target project is SUSE:SLFO:* (RRID comes from target).
+
+        Note: This is a compatibility / RRID / skip helper. All requests (SLFO or not)
+        continue to flow through osc.core; there is no separate Gitea backend in this plugin.
+        """
+        if self.src_project.startswith("SUSE:SLFO:"):
+            return True
+        for action in self.actions:
+            tgt = getattr(action, "tgt_project", None) or ""
+            if tgt.startswith("SUSE:SLFO:"):
+                return True
+        return False
 
     def attribute(self, attribute):
         """Load the specified attribute for this request.
@@ -472,8 +492,11 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return request_id
 
     def __eq__(self, other):
-        project = self.actions[0].src_project
-        other_project = other.actions[0].src_project
+        if not isinstance(other, Request):
+            return NotImplemented
+        # Use the safe src_project property (handles missing/empty actions gracefully).
+        project = self.src_project
+        other_project = other.src_project
         return self.reqid == other.reqid and project == other_project
 
     def __hash__(self):

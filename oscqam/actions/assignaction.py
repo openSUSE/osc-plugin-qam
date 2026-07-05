@@ -111,17 +111,20 @@ class AssignAction(OscAction):
         ]
         if not declined_requests:
             return
+        # Flatten reviews across declined requests and collect UserReviewers.
+        # Fixed from broken generator expression that yielded lists instead of reviews.
         reviewers = [
-            review.reviewer
-            for review in (request.review_list() for request in declined_requests)
-            if isinstance(review, UserReview)
+            r.reviewer
+            for req in declined_requests
+            for r in req.review_list()
+            if isinstance(r, UserReview)
         ]
         if self.user not in reviewers:
             raise NotPreviousReviewerError(reviewers)
 
     def validate(self):
         """Validates the assignment."""
-        # if tehere isn't open review all other cheks aren't required and can't be overridden by self.force
+        # If there is no open review, all other checks aren't required and can't be overridden by self.force.
         self.check_open_review()
         if self.force:
             return

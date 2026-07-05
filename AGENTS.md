@@ -6,9 +6,12 @@
   `reject`, `comment`, `info`, `list`, `my`, `unassign`, `rmcomment`, `assigned`,
   `version`) on top of osc's request/review API to assign, sign off, and
   approve/reject maintenance requests.
-- Two request backends: classic OBS/IBS requests dispatch through `osc`; SLFO
-  requests dispatch to **Gitea** pull requests. The plugin recognises which one is
-  in play from the request, not from a flag.
+- All requests (classic OBS/IBS and SLFO) are handled via osc's request/review API
+  (dispatched through `osc` / `osc.core`). SLFO support is limited to:
+  - special RRID derivation in `Request.src_project_to_rrid` (for staging requests
+    the RRID comes from the **target** project such as `SUSE:SLFO:1.1`; for PI
+    releases it maps source `SUSE:SLFO:...` to `SUSE:PI:<ver>`);
+  - skipping bug collection for SLFO requests (PI via src starting SUSE:SLFO:* or staging via target SUSE:SLFO:*).
 - The library lives in `oscqam/`; the user-facing entry points are the thin osc
   plugin wrappers `qam_*.py` installed to `/usr/lib/osc-plugins/`, each mapping to
   one `osc qam <name>`.
@@ -43,7 +46,7 @@
 - `oscqam/models/` — domain wrappers over `osc.core`:
   - `request.py` (`Request`): note `src_project_to_rrid` derives the testreport RRID.
     For SLFO **staging** requests the report id comes from the request's **target**
-    project (e.g. `SUSE:SLFO:1.1`), not the source project.
+    project (e.g. `SUSE:SLFO:1.1`), not the source project. (See also bug skipping in BugRemote.)
   - `template.py` (`Template`): builds the `qam.suse.de/testreports/<rrid>/log`
     machine/human report URLs. A wrong RRID here surfaces as a misleading
     "report not generated yet" on assign/approve.
@@ -84,8 +87,8 @@
 - Rebase on `upstream/master` and keep history **linear** (mergify requires it).
 
 ## External Dependencies
-- Driven through `osc` (`osc.core`) for OBS/IBS request/review actions and through the
-  Gitea API for SLFO pull requests. Source installs use `uv`, not PyPI.
+- Driven through `osc` (`osc.core`) for all OBS/IBS request/review actions
+  (SLFO requests use the same path, with only RRID + bug-skip special cases). Source installs use `uv`, not PyPI.
 
 ## Further Reading
 - `Documentation/devel.rst` — dev setup, the osc plugin path, and running the tests. (includes release tagging for GH release workflow)

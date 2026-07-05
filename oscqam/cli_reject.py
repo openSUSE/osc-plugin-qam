@@ -51,7 +51,8 @@ class QAMRejectCommand(osc.commandline.OscCommand, Common):
         if reasons == self.SUBQUERY_QUIT:
             return
         self.set_required_params(args)
-        template_skip: bool = False if args.skip_template else True
+        # Use shared helper (inverts the flag meaning for RejectAction).
+        template_skip: bool = not self.template_skip_from_args(args)
         action = RejectAction(
             self.api,
             self.affected_user,
