@@ -27,9 +27,6 @@ jobs:
           cache-suffix: lint
       - name: Setup environment
         run: uv sync --locked
-      - uses: astral-sh/ruff-action@0ce1b0bf8b818ef400413f810f8a11cdbda0034b  # v4.0.0
-        with:
-          args: "--version"
       - name: Check style
         run: make checkstyle
 
@@ -58,7 +55,7 @@ jobs:
           python-version: '3.13'
           cache-suffix: docs
       - name: Setup environment
-        run: uv sync --group doc
+        run: uv sync --locked --group doc
       - name: Build documentation
         run: >-
           uv run sphinx-build -b html -W --keep-going Documentation Documentation/_build/html
