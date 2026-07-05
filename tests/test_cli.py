@@ -189,11 +189,32 @@ def test_assign_no_force_returns(monkeypatch, remote):
 
 
 def test_reject_passes_template_skip(monkeypatch, remote):
+    """--skip-template must skip validation: RejectAction receives force=True."""
     recorder, created = recording_action()
     monkeypatch.setattr(cli_reject, "RejectAction", recorder)
     monkeypatch.setattr("oscqam.common.RemoteFacade", lambda apiurl: remote)
     command = make_command(cli_reject.QAMRejectCommand)
     command.run(make_args(skip_template=True, message="broken", reason=["admin"]))
+    assert len(created) == 1
+    action = created[0]
+    assert action.args == (
+        remote,
+        "anonymous",
+        "12345",
+        [RejectReason.administrative],
+        True,
+        "broken",
+    )
+    assert action.calls == 1
+
+
+def test_reject_default_validates_template(monkeypatch, remote):
+    """Without --skip-template the template is validated: force=False."""
+    recorder, created = recording_action()
+    monkeypatch.setattr(cli_reject, "RejectAction", recorder)
+    monkeypatch.setattr("oscqam.common.RemoteFacade", lambda apiurl: remote)
+    command = make_command(cli_reject.QAMRejectCommand)
+    command.run(make_args(skip_template=False, message="broken", reason=["admin"]))
     assert len(created) == 1
     action = created[0]
     assert action.args == (
