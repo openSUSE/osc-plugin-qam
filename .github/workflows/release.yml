@@ -5,9 +5,13 @@ on:
   push:
     tags:
       # Version tags: 2.0.2, 2.1.0, optionally with a pre-release suffix
-      # (2.1.0rc1). The project tags without a "v" prefix.
+      # (2.1.0rc1). Historical tags in this repo use a "v" prefix
+      # (v0.23.0), so both forms are accepted; the version check below
+      # strips the prefix before comparing.
       - '[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+*'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
 
 permissions:
   contents: read
@@ -29,7 +33,8 @@ jobs:
       - name: Verify tag matches package version
         run: |
           pkg="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' oscqam/__init__.py)"
-          if [ "$pkg" != "$GITHUB_REF_NAME" ]; then
+          ver="${GITHUB_REF_NAME#v}"
+          if [ "$pkg" != "$ver" ]; then
             echo "::error::tag '$GITHUB_REF_NAME' != oscqam.__version__ '$pkg'"
             exit 1
           fi
@@ -42,6 +47,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release create "$GITHUB_REF_NAME"
-          --title "$GITHUB_REF_NAME"
+          --title "${GITHUB_REF_NAME#v}"
           --generate-notes
           dist/*
