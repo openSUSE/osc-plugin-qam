@@ -20,6 +20,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          enable-cache: true
+          python-version: '3.13'
+          cache-suffix: lint
+      - name: Setup environment
+        run: uv sync --locked
       - uses: astral-sh/ruff-action@0ce1b0bf8b818ef400413f810f8a11cdbda0034b  # v4.0.0
         with:
           args: "--version"
@@ -50,10 +57,11 @@ jobs:
         with:
           python-version: '3.13'
           cache-suffix: docs
+      - name: Setup environment
+        run: uv sync --group doc
       - name: Build documentation
         run: >-
-          uv run --locked --group doc
-          sphinx-build -b html -W --keep-going Documentation Documentation/_build/html
+          uv run sphinx-build -b html -W --keep-going Documentation Documentation/_build/html
 
   test:
     runs-on: ubuntu-latest
