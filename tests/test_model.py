@@ -64,6 +64,14 @@ def test_merge_requests(remote):
     assert len(requests) == 1
 
 
+def test_request_eq_other_type(remote):
+    """Comparing a request against a non-request must not blow up."""
+    request = Request.parse(remote, req_1_xml)[0]
+    assert request.__eq__("12345") is NotImplemented
+    assert (request == "12345") is False
+    assert (request != "12345") is True
+
+
 def test_search(remote):
     """Only requests that are part of SUSE:Maintenance projects should be
     used.
