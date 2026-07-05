@@ -45,6 +45,10 @@ def split_products(product_line):
     Note: The SLE- stripping and splitting logic is retained for compatibility
     with older SLE maintenance update testreports (pre-SLE12 era comment).
     Modern/SLFO products may arrive via metadata without the prefix.
+
+    TODO: this looks wrong (was maybe valid in early SLE12): entries without
+    a closing paren get a stray ')' appended when reassembling after the
+    split on '),'. Behavior is kept as-is on purpose.
     """
     products = (
         p if p.endswith(")") else p + ")"
