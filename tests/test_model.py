@@ -179,6 +179,31 @@ def test_template_url_slfo_pi(remote):
     assert template.url == "https://qam.suse.de/testreports/SUSE:PI:16.0:415655/log"
 
 
+def test_is_slfo_staging(remote):
+    """SLFO staging (target SUSE:SLFO:*) is detected even if src is home:."""
+    request = Request.parse(remote, req_slfo_staging)[0]
+    assert request.is_slfo is True
+    assert not request.src_project.startswith("SUSE:SLFO:")
+
+
+def test_is_slfo_pi(remote):
+    """Direct SUSE:SLFO: PI sources are detected."""
+    request = Request.parse(remote, req_slfo_pi)[0]
+    assert request.is_slfo is True
+
+
+def test_is_slfo_classic(remote):
+    """Classic maintenance requests are not SLFO."""
+    request = Request.parse(remote, req_1_xml)[0]
+    assert request.is_slfo is False
+
+
+def test_bugs_skipped_for_slfo(remote):
+    """Bug collection is skipped for SLFO requests (via is_slfo)."""
+    request = Request.parse(remote, req_slfo_pi)[0]
+    assert remote.bugs.for_request(request) == []
+
+
 def test_template_splits_srcrpms():
     assert create_template().log_entries["SRCRPMs"] == ["glibc", "glibc-devel"]
 
