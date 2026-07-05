@@ -12,9 +12,12 @@
     the RRID comes from the **target** project such as `SUSE:SLFO:1.1`; for PI
     releases it maps source `SUSE:SLFO:...` to `SUSE:PI:<ver>`);
   - skipping bug collection for SLFO requests (PI via src starting SUSE:SLFO:* or staging via target SUSE:SLFO:*).
-- The library lives in `oscqam/`; the user-facing entry points are the thin osc
-  plugin wrappers `qam_*.py` installed to `/usr/lib/osc-plugins/`, each mapping to
-  one `osc qam <name>`.
+- The library lives in `oscqam/`; the user-facing entry points are the
+  `osc.commandline.OscCommand` subclasses in `oscqam/cli.py` (the `osc qam`
+  parent command) and `oscqam/cli_*.py` (one subcommand each, via
+  `parent = "QAMCommand"`). osc discovers them by scanning its plugin
+  directories (`/usr/lib/osc-plugins`, `~/.osc-plugins`, …) for modules
+  defining `OscCommand` subclasses — see `Documentation/devel.rst`.
 - PRs go to GitHub **`openSUSE/osc-plugin-qam`**, default branch **`master`**. The
   package is built in IBS `QA:Maintenance`.
 
@@ -41,8 +44,8 @@
 - `oscqam/actions/` — one `*Action` per operation (`assignaction`, `approveaction` /
   `approveuseraction` / `approvegrpoupaction`, `rejectaction`, the `list*` family,
   …), all subclassing `actions/oscaction.py`. The `oscqam/cli_*.py` modules wire each
-  osc subcommand to its action; the `/usr/lib/osc-plugins/qam_*.py` wrappers are the
-  osc entry points.
+  osc subcommand to its action and are themselves the osc entry points (no
+  separate wrapper files exist).
 - `oscqam/models/` — domain wrappers over `osc.core`:
   - `request.py` (`Request`): note `src_project_to_rrid` derives the testreport RRID.
     For SLFO **staging** requests the report id comes from the request's **target**
