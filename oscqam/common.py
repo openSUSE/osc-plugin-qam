@@ -1,5 +1,7 @@
 """Common classes and functions for osc-qam."""
 
+from __future__ import annotations
+
 import osc.conf
 
 from oscqam.fields import ReportFields
