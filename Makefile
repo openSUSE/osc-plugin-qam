@@ -8,6 +8,7 @@ only-test:
 .PHONY: checkstyle
 checkstyle:
 	uv run ruff format --check --diff ./
+	uv run ruff check .
 
 .PHONY: typecheck
 typecheck:
@@ -19,7 +20,11 @@ tidy:
 
 .PHONY: test-with-coverage
 test-with-coverage:
-	uv run pytest -v --cov=./oscqam --cov-report=xml --cov-report=term --junitxml=junit.xml -o junit_family=legacy
+	uv run pytest --cov-report=xml --junitxml=junit.xml -o junit_family=legacy --cov-fail-under=65
+
+.PHONY: docs
+docs:
+	uv run --group doc sphinx-build -b html -W --keep-going Documentation Documentation/_build/html
 
 .PHONY: test
-test: only-test checkstyle
+test: only-test checkstyle typecheck docs

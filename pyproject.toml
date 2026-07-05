@@ -7,7 +7,7 @@ name = "osc-plugin-qam"
 dynamic = ["version"]
 description = "Plugin for OSC to support the workflow for the QA maintenance department when using the new request / review osc abstractions."
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 license = "GPL-2.0-only"
 license-files = ["LICENSE"]
 dependencies = [
@@ -29,6 +29,10 @@ dev = [
     "responses",
     "ty",
 ]
+doc = [
+    "sphinx>=8",
+    "sphinx-rtd-theme",
+]
 
 [tool.setuptools.dynamic]
 version = { attr = "oscqam.__version__" }
@@ -38,15 +42,44 @@ exclude = ["tests*", "Documentation"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = [
+  "-v",
+  "--strict-markers",
+  "--cov=./oscqam",
+  "--cov-report=term-missing",
+]
+markers = [
+  "slow: tests that are slow",
+  "integration: tests that require more setup",
+]
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py313"
 
 [tool.ruff.format]
 
 [tool.ty.environment]
-python-version = "3.9"
+python-version = "3.13"
+
+[tool.ty.terminal]
+# Make 'ty check' fail hard on warnings (aligns with mtui/repose practice)
+error-on-warning = true
 
 [tool.ty.src]
 include = ["oscqam"]
+
+[tool.coverage.run]
+source = ["oscqam"]
+omit = [
+  "*/tests/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]
