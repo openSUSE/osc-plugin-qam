@@ -4,16 +4,24 @@ Development
 Hosting
 -------
 
-The plugin is hosted on our internal ``gitlab`` instance:
-https://gitlab.suse.de/qa-maintenance/qam-oscplugin
+The plugin is hosted on GitHub:
+https://github.com/openSUSE/osc-plugin-qam (default branch ``master``).
 
 Working from source
 -------------------
 
-After checking out the source code it is required to setup the plugin, so
-``osc`` can find and use it.
+Clone the repository and install the project's dependencies with uv_ (this
+matches CI):
 
-By default ``osc`` will look in the following paths for plugins:
+.. code-block:: bash
+
+          git clone https://github.com/openSUSE/osc-plugin-qam.git
+          cd osc-plugin-qam
+          uv sync --locked
+
+To run the plugin the way a user does, ``osc`` needs to discover it on its
+plugin path. By default ``osc`` scans the following directories for modules
+defining ``OscCommand`` subclasses:
 
 - ``/usr/lib/osc-plugins``
 
@@ -23,46 +31,33 @@ By default ``osc`` will look in the following paths for plugins:
 
 - ``~/.osc-plugins``
 
-To make ``oscqam`` available to ``osc`` the start-up point needs to be
-available in one of these paths and the modules from oscqam need to be
-importable.
-
-An easy way is to symlink the ``oscqam`` folder and ``cli.py`` file into
-e.g. ``~/.osc-plugins`` and set the ``PYTHONPATH`` to include this folder:
-
-.. note::
-
-   To make usage of the ``development`` version easier, while also having a
-   version from the repository installed, it makes sense to add the
-   ``PYTHONPATH`` change to your ``.{bash,zsh}rc``.  To return to the
-   installed version just remove the symbolic links.
-
-.. code-block:: bash
-
-                git clone gitlab@gitlab.suse.de:qa-maintenance/qam-oscplugin.git
-                ln -s "$PWD/oscqam/cli.py" ~/.osc-plugins/oscqam/cli.py
-                ln -s "$PWD/oscqam/oscqam" ~/.osc-plugin/oscqam
-                export PYTHONPATH="~/.osc-plugins:$PYTHONPATH"
+Make the ``oscqam`` package and the ``cli.py`` entry point importable from one
+of these paths (for example by symlinking them into ``~/.osc-plugins``), then
+run ``osc qam --help``.
 
 Testing
 -------
 
-The oscqam plugin uses pytest_ library to run the test. To setup the project
-correctly for usage with it, install it using pip:
+The oscqam plugin uses pytest_ to run the tests, driven through the project's
+``make`` targets:
 
 .. code-block:: bash
 
-          cd <src_directory_oscqam>
-          pip install --user -e .
+          make only-test          # uv run pytest
+          make test-with-coverage # pytest with coverage + reports
+          make checkstyle         # ruff format --check + ruff check
+          make typecheck          # ty check
+          make docs               # sphinx-build -W
+          make test               # only-test + checkstyle + typecheck + docs
 
-Now running the tests with ``py.test`` should work:
+To focus a single test:
 
 .. code-block:: bash
 
-          cd <src_directory_oscqam>
-          py.test ./tests
+          uv run pytest tests/test_model.py::test_name
 
 
+.. _uv: https://docs.astral.sh/uv/
 .. _pytest: http://pytest.org/
 
 Release
@@ -88,45 +83,13 @@ Creating a matching version tag will automatically trigger the GitHub release wo
 
 Note: the RPM package itself is still built and released via the internal IBS in ``QA:Maintenance`` (python-oscqam).
 
-Using a virtual environment
----------------------------
+Virtual environment
+-------------------
 
-To process to setup a virtual environment for the plugin is a little more
-involved than or other projects due to dependencies of `osc`.
-
-The process is as follows:
-
-- Install development headers for `python`, `openssl` and `libcurl`:
-
-.. code:: bash
-
-   sudo zypper in python-devel openssl-devel libcurl-devel
-
-- Create the virtualenvironment and switch to it.
-
-- Install the dependencies for `osc`: when installing `pycurl` make sure to set
-  `PYCURL_SSL_LIBRARY=openssl` otherwise the installation of `urlgrabber` will
-  fail.
-
-.. code:: bash
-
-   pip install pycurl urlgrabber
-
-- Install the osc version referenced by this repository:
-
-.. code:: bash
-
-   git submodule init
-
-   git submodule update
-
-   pip install ./osc
-
-- Install this project into the virtualenvironment:
-
-.. code:: bash
-
-   pip install -e .
+``uv sync --locked`` creates and manages a project-local virtual environment
+under ``.venv`` containing ``osc`` and every other dependency. Prefix commands
+with ``uv run`` (as the ``make`` targets do) to execute them inside it, or run
+``uv run osc qam --help`` to exercise the plugin from the checkout.
 
 Bug reporting
 -------------

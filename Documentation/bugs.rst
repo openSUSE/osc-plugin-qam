@@ -1,25 +1,12 @@
-.. _workarounds:
-
 Known bugs & workarounds
 ========================
 
-This page will list known bugs and (if required) possible workarounds for the
+This page lists known bugs and, where required, possible workarounds for the
 problem.
 
-1. No readline support
-----------------------
+There are currently no known issues that require a workaround. Bugs can be
+reported on GitHub (https://github.com/openSUSE/osc-plugin-qam/issues) or via
+`bugzilla`_ by setting the product to ``SUSE Tools`` and choosing the component
+``oscqam``.
 
-The fact that the interactive mode is currently not using the
-``readline``-module is known and (unfortunately), because of some changes that
-``osc`` has made.
-
-To allow ``readline``-like functionality it is possible to use rlwrap_
-with the plugin as a current workaround:
-
-After installing rlwrap the following command will restore readline functionality:
-
-.. code-block:: bash
-
-          rlwrap osc --apiurl=https://api.suse.de/ qam
-
-.. _rlwrap: https://github.com/hanslub42/rlwrap
+.. _bugzilla: https://bugzilla.suse.com
