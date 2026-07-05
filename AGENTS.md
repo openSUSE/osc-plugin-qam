@@ -58,9 +58,9 @@
 - Report/queue data comes from the QEM dashboard and `qam.suse.de`.
 
 ## Type & Style
-- Supported Python is **3.9+** (`requires-python = ">=3.9"`); ruff
-  `target-version = "py39"`, `line-length = 88`; `ty` is pinned to `python-version =
-  "3.9"`. Keep code 3.9-compatible.
+- Supported Python is **3.11+** (`requires-python = ">=3.11"`); ruff
+  `target-version = "py311"`, `line-length = 88`; `ty` is pinned to `python-version =
+  "3.11"`. Keep code 3.11-compatible.
 - `make checkstyle` is `ruff format --check --diff ./` + `ruff check .`, and CI lints the **whole repo
   including `tests/`** — format and lint `tests/` too. A tests-only formatting miss is the
   most common way to red the pipeline.
@@ -77,7 +77,7 @@
 
 ## Definition of Done (hard rules)
 - Run the full gate on the **whole repo** (`./`) before pushing or claiming done.
-  CI uses separate jobs (lint, typecheck, docs, test with 3.9/3.13/3.14 matrix).
+  CI uses separate jobs (lint, typecheck, docs, test with 3.11/3.13/3.14 matrix).
   Locally run: `make checkstyle && make typecheck && make docs && make test-with-coverage`
   (or `make test` for the components except the cov-fail-under variant).
   Equivalently:
