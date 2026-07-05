@@ -51,14 +51,15 @@ class QAMRejectCommand(osc.commandline.OscCommand, Common):
         if reasons == self.SUBQUERY_QUIT:
             return
         self.set_required_params(args)
-        # Use shared helper (inverts the flag meaning for RejectAction).
-        template_skip: bool = not self.template_skip_from_args(args)
+        # RejectAction's `force` has the same polarity as --skip-template:
+        # force=True skips the template/comment validation entirely.
+        force: bool = self.template_skip_from_args(args)
         action = RejectAction(
             self.api,
             self.affected_user,
             args.request_id,
             reasons,
-            template_skip,
+            force,
             message,
         )
         action()
