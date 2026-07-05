@@ -9,15 +9,17 @@ Getting started
 Overview
 --------
 
-The plugin provides the following new features:
+The plugin provides the following features:
 
-- a new subshell that can be started via ``osc qam`` that only accepts the new
-  commands of this plugin.
+- a family of ``osc qam <subcommand>`` commands that drive the QA-Maintenance
+  review workflow (assigning, signing off, approving and rejecting maintenance
+  requests) on top of osc's request/review API.
 
-- it adds command to help with the update workflow.
+- helpers to list, filter and inspect the requests that are open, assigned to a
+  group, or assigned to you.
 
-- to see a list of provided commands use ``osc qam help`` and to see what each
-  command does just use ``osc qam help <command>``.
+- to see the list of provided commands use ``osc qam --help`` and to see what a
+  specific command does use ``osc qam <command> --help``.
 
 For detailed information about common use cases see the :ref:`workflows`.
 
@@ -63,27 +65,72 @@ qam``.
       [general]
       apiurl = https://api.suse.de
 
-Running the command without any further arguments will start an interactive
-session.
-
-.. note::
-
-   When you are running a older version of ``osc`` (e.g. 0.148) then the
-   readline-support is not working out-of-the-box. Please see
-   :ref:`workarounds` to see how to still get it working.
-
-Instead of running the commands in the interactive session it is also possible
-to just write out the complete command following the osc qam part:
-
-The interactive command sequence to list open requests:
-
-.. code-block:: bash
-
-          osc qam
-          osc-qam> list
-
-The single command to list open requests:
+Every action is a subcommand of ``osc qam``. For example, to list the open
+requests:
 
 .. code-block:: bash
 
           osc qam list
+
+Commands
+--------
+
+The plugin adds the following subcommands. Pass ``--help`` to any of them for
+the full list of options (e.g. ``osc qam assign --help``).
+
+Listing and inspecting requests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``list`` (alias ``open``) — list requests that are open for review. Filter
+  with ``-G/--group`` (repeatable) and ``-U/--user``.
+
+- ``assigned`` — list requests that already have assigned reviews. Filter with
+  ``-G/--group`` (repeatable) and ``-U/--user``.
+
+- ``my`` — list the requests currently assigned to you (shortcut for
+  ``osc qam assigned -U <your-user>``).
+
+- ``info`` — show detailed information for a single ``request_id``.
+
+  All four commands share the display options ``-F/--fields`` (repeatable,
+  choose the columns to output), ``-T/--tabular`` (render as an ASCII table),
+  and ``-V/--describe-fields`` (print the available fields).
+
+Working with requests
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``assign`` — assign a request to a user. Options: ``-U/--user``,
+  ``-G/--group`` (repeatable), ``--skip-template`` (do not check that a test
+  report template exists).
+
+- ``unassign`` — remove an assignment. Options: ``-U/--user``, ``-G/--group``
+  (repeatable).
+
+- ``approve`` — sign off / approve a request. Options: ``-G/--group`` (directly
+  approve for a group that does not need reviews), ``--skip-template``.
+
+- ``reject`` — reject a request. Options: ``-U/--user``, ``-M/--message``,
+  ``-R/--reason`` (repeatable), ``--skip-template``.
+
+Comments
+~~~~~~~~
+
+- ``comment`` — add a comment to a request (``comment <request_id> "<text>"``).
+
+- ``deletecomment`` (alias ``rmcomment``) — remove one of your own comments from
+  a request.
+
+Miscellaneous
+~~~~~~~~~~~~~~
+
+- ``version`` — print the plugin version.
+
+SLFO and staging requests
+-------------------------
+
+SLFO requests are handled through the same request/review API as classic
+OBS/IBS requests. Two behaviours are specific to them: for staging requests the
+test report id (RRID) is derived from the request's **target** project (for
+example ``SUSE:SLFO:1.1``) rather than the source project, while PI releases map
+a ``SUSE:SLFO:...`` source to ``SUSE:PI:<version>``; and bug collection is
+skipped for SLFO requests.
