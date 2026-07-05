@@ -79,10 +79,14 @@ The plugin should keep building for at least the supported versions.
 Procedure
 #########
 
-1. Bump version and ChangeLog
-2. make release
-3. git tag v<version>
-4. git push && git push <remote> refs/tags/v<version>
+1. Bump ``__version__`` in ``oscqam/__init__.py`` and curate ``ChangeLog.rst``
+2. Commit the changes
+3. ``git tag <version>`` (e.g. ``1.2.1`` — no ``v`` prefix, to match repose and trigger the release workflow)
+4. ``git push && git push <remote> refs/tags/<version>``
+
+Creating a matching version tag will automatically trigger the GitHub release workflow (see ``.github/workflows/release.yml``), which verifies the version, builds sdist+wheel with ``uv build``, and creates a GitHub Release with the artifacts attached (using ``gh release create``).
+
+Note: the RPM package itself is still built and released via the internal IBS in ``QA:Maintenance`` (python-oscqam).
 
 Using a virtual environment
 ---------------------------
