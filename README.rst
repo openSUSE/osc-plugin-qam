@@ -2,6 +2,7 @@
  :target: https://github.com/openSUSE/osc-plugin-qam/actions/workflows/ci.yml
 .. image:: https://codecov.io/gh/openSUSE/osc-plugin-qam/branch/master/graph/badge.svg?token=JJRU27WKZ0 
  :target: https://codecov.io/gh/openSUSE/osc-plugin-qam
+
 Getting started
 ===============
 
