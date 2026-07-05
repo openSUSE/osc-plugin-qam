@@ -39,21 +39,19 @@ def split_comma(line):
     return [v.strip() for v in line.split(",")]
 
 
-# TODO: this looks wrong, was valid maybe in beginning of SLE12
 def split_products(product_line):
-    """Split products into a list and strip SLE-prefix from each product.
+    """Split products into a list and strip legacy SLE- prefix from each product.
 
-    Args:
-        product_line: The line to parse.
-
-    Returns:
-        A list of strings.
+    Note: The SLE- stripping and splitting logic is retained for compatibility
+    with older SLE maintenance update testreports (pre-SLE12 era comment).
+    Modern/SLFO products may arrive via metadata without the prefix.
     """
     products = (
         p if p.endswith(")") else p + ")"
         for p in (part.strip() for part in product_line.split("),"))
     )
-    return [re.sub("^SLE-", "", product, 1) for product in products]
+    # Use keyword arg for count to avoid deprecation warning on positional.
+    return [re.sub("^SLE-", "", product, count=1) for product in products]
 
 
 def split_srcrpms(srcrpm_line):

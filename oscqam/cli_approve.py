@@ -48,19 +48,21 @@ class QAMApproveCommand(osc.commandline.OscCommand, Common):
                 default="yes",
             ):
                 return
+            skip = self.template_skip_from_args(args)
             action = ApproveGroupAction(
                 self.api,
                 self.affected_user,
                 args.request_id,
                 args.group,
-                args.skip_template,
+                skip,
             )
         else:
+            skip = self.template_skip_from_args(args)
             action = ApproveUserAction(
                 self.api,
                 self.affected_user,
                 args.request_id,
                 self.affected_user,
-                args.skip_template,
+                skip,
             )
         action()

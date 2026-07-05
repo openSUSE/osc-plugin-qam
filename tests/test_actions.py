@@ -50,13 +50,13 @@ def test_infer_no_groups_match(remote):
         assign_action()
 
 
-# TODO: Fix this
-@pytest.mark.skip("Not implemented yet in mock")
 def test_infer_groups_match(remote):
+    # Use exact params order as constructed in RequestRemote.for_incident
+    # so the mock override matches (the mock uses repr of args for lookup).
     args = {
         "project": "SUSE:Maintenance:130",
-        "withfullhistory": "1",
         "view": "collection",
+        "withfullhistory": "1",
     }
     remote.register_url("request", lambda: "<request />", args)
     assign_action = actions.AssignAction(
@@ -125,13 +125,12 @@ def test_assign_multiple_groups(remote):
         assign()
 
 
-# TODO: Fix this
-@pytest.mark.skip("Not implemented yet in mock")
 def test_assign_multiple_groups_explicit(remote):
+    # Match exact params construction in for_incident to hit the mock override.
     args = {
         "project": "SUSE:Maintenance:130",
-        "withfullhistory": "1",
         "view": "collection",
+        "withfullhistory": "1",
     }
     remote.register_url("request", lambda: "<request />", args)
     out = StringIO()
@@ -265,16 +264,16 @@ def test_assign_no_review(remote):
         assign()
 
 
-# TODO: Fix this
-@pytest.mark.skip("Not implemented yet in mock")
 def test_list_assigned_user(remote):
+    # Match the exact dict construction (key order) in RequestRemote.for_user
+    # so the mock's repr-based override lookup succeeds.
     remote.register_url(
         "request",
         lambda: load_fixture("search_request.xml"),
         {
-            "states": "new,review",
             "user": "anonymous",
             "view": "collection",
+            "states": "new,review",
             "withfullhistory": "1",
         },
     )
@@ -370,8 +369,6 @@ def test_assign_previous_reject_not_old_reviewer(remote):
         assign()
 
 
-# TODO: FIX thix
-@pytest.mark.skip("Broken test - maybe wrong fixture")
 def test_assign_previous_reject_old_reviewer(remote):
     out = StringIO()
     remote.register_url(
@@ -425,8 +422,6 @@ def test_assign_previous_reject_not_old_reviewer_force(remote):
     )
 
 
-# TODO: FIX thix
-@pytest.mark.skip("Broken test - maybe wrong fixture")
 def test_assign_skip_template(remote):
     """Assign a request without a testreport template."""
     out = StringIO()
@@ -577,8 +572,6 @@ def test_approve_not_assigned(remote):
         approve_action()
 
 
-# TODO: FIX thix
-@pytest.mark.skip("Broken test - maybe wrong fixture")
 def test_approve_additional_groups(remote):
     """If a user can handle more groups after an approval he will be notified
     about it.
@@ -604,15 +597,13 @@ def test_approve_additional_groups(remote):
         out=out,
     )
     approval()
-    assert (
-        "Approving {req} for {user} ({group}). Testreport: {url}\n".format(
-            req=request,
-            user=approval.reviewer,
-            url=approval.template.fancy_url,
-            group="qam-sle",
-        )
-        == approval.out.getvalue()
+    main_msg = "Approving {req} for {user} ({group}). Testreport: {url}\n".format(
+        req=request,
+        user=approval.reviewer,
+        url=approval.template.fancy_url,
+        group="qam-sle",
     )
+    assert main_msg in approval.out.getvalue()
     assert (
         "The following groups could also be reviewed by you: qam-test"
         in approval.out.getvalue()

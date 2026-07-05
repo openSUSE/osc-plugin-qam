@@ -184,7 +184,7 @@ class MultipleReviewsError(UninferableError):
             groups: The groups the user is reviewing for.
         """
         super().__init__(
-            "User {u} is currently reviewing for mulitple groups: {g}."
+            "User {u} is currently reviewing for multiple groups: {g}."
             "Please provide which group to unassign via -G parameter.".format(
                 u=user, g=groups
             )

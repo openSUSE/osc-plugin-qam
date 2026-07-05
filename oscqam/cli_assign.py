@@ -46,7 +46,8 @@ class QAMAssignCommand(osc.commandline.OscCommand, Common):
         """
         self.set_required_params(args)
         group = args.group if args.group else None
-        template_required: bool = args.skip_template
+        # Use shared helper for consistency with approve/reject CLIs.
+        template_required: bool = not self.template_skip_from_args(args)
         action = AssignAction(
             self.api,
             self.affected_user,
@@ -61,7 +62,13 @@ class QAMAssignCommand(osc.commandline.OscCommand, Common):
             force = self.yes_no("Do you still want to assign yourself?")
             if not force:
                 return
+            # Re-create preserving group selection and template skip choice.
             action = AssignAction(
-                self.api, self.affected_user, args.request_id, group, force=force
+                self.api,
+                self.affected_user,
+                args.request_id,
+                group,
+                template_required=not self.template_skip_from_args(args),
+                force=force,
             )
             action()
