@@ -40,8 +40,18 @@ class MockRemote:
         return load_fixture(name)
 
     def _encode_args(self, *args):
+        """Encode args for override lookup, normalizing dicts for order-insensitivity.
+
+        This makes register_url calls robust to dict key ordering in call sites
+        (e.g. params={} literals in RequestRemote).
+        """
+        def norm(a):
+            if isinstance(a, dict):
+                return tuple(sorted((k, v) for k, v in a.items()))
+            return a
         if args:
-            return repr(args)
+            normed = tuple(norm(a) for a in args)
+            return repr(normed)
         return "None"
 
     def overwrite(self, *args, **kwargs):

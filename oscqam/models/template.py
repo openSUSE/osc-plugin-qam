@@ -92,7 +92,7 @@ class Template:
     @property
     def status(self):
         """The status of the test."""
-        summary = self.log_entries["SUMMARY"]
+        summary = self.log_entries.get("SUMMARY", "UNKNOWN")
         if summary.upper() == "PASSED":
             return Template.STATUS_SUCCESS
         elif summary.upper() == "FAILED":

@@ -455,8 +455,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 req.read(request)
                 requests.append(req)
             except osc.oscerr.APIError as e:
-                logging.error(e.msg)
-                pass
+                logging.warning("Dropping request due to APIError: %s", e.msg)
             except osc.oscerr.WrongArgs as e:
                 # Temporary workaround, as OBS >= 2.7 can return requests with
                 # acceptinfo-elements that old osc can not handle.
@@ -465,8 +464,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 if "acceptinfo" not in str(e):
                     raise
                 else:
-                    logging.error("Server version too high for osc-client: %s" % str(e))
-                    pass
+                    logging.warning("Dropping request due to incompatible server: %s", e)
+                    # not appended, effectively dropped with warning (not silent)
         return requests
 
     @classmethod
@@ -500,11 +499,8 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return self.reqid == other.reqid and project == other_project
 
     def __hash__(self):
-        hash_parts = [self.reqid]
-        if self.src_project:
-            hash_parts.append(self.src_project)
-        hashes = [hash(part) for part in hash_parts]
-        return sum(hashes)
+        # Use tuple for better distribution and consistency with __eq__.
+        return hash((self.reqid or "", self.src_project or ""))
 
     def __str__(self):
         return "{0}".format(self.reqid)
