@@ -11,7 +11,11 @@
   - special RRID derivation in `Request.src_project_to_rrid` (for staging requests
     the RRID comes from the **target** project such as `SUSE:SLFO:1.1`; for PI
     releases it maps source `SUSE:SLFO:...` to `SUSE:PI:<ver>`);
-  - skipping bug collection for SLFO requests (PI via src starting SUSE:SLFO:* or staging via target SUSE:SLFO:*).
+  - skipping bug collection for SLFO requests (PI via src starting SUSE:SLFO:* or staging via target SUSE:SLFO:*);
+  - skipping the `MAINT:RejectReason` attribute on reject for SLFO requests
+    (guarded by `is_slfo` in `Request.review_decline`) — no maintenance
+    incident exists and the SLFO source project rejects the attribute; the
+    reason stays in the decline comment.
 - The library lives in `oscqam/`; the user-facing entry points are the
   `osc.commandline.OscCommand` subclasses in `oscqam/cli.py` (the `osc qam`
   parent command) and `oscqam/cli_*.py` (one subcommand each, via

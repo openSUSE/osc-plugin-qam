@@ -129,8 +129,11 @@ SLFO and staging requests
 -------------------------
 
 SLFO requests are handled through the same request/review API as classic
-OBS/IBS requests. Two behaviours are specific to them: for staging requests the
+OBS/IBS requests. Three behaviours are specific to them: for staging requests the
 test report id (RRID) is derived from the request's **target** project (for
 example ``SUSE:SLFO:1.1``) rather than the source project, while PI releases map
-a ``SUSE:SLFO:...`` source to ``SUSE:PI:<version>``; and bug collection is
-skipped for SLFO requests.
+a ``SUSE:SLFO:...`` source to ``SUSE:PI:<version>``; bug collection is
+skipped for SLFO requests; and the ``MAINT:RejectReason`` attribute is not
+recorded on reject (there is no maintenance incident to attach it to and the
+SLFO source project rejects it) — the reason is still shown in the decline
+comment.
