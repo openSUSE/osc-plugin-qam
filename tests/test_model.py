@@ -270,6 +270,31 @@ def test_bugs_skipped_for_slfo_staging(remote):
     assert remote.bugs.for_request(request) == []
 
 
+def test_review_decline_skips_reject_attribute_for_slfo(remote):
+    """SLFO/PI declines must not POST the MAINT:RejectReason attribute: there
+    is no maintenance incident and the SLFO source project rejects it (400).
+    Only the changereviewstate POST should happen."""
+    request = Request.parse(remote, req_slfo_pi)[0]
+    user = remote.users.by_name("anonymous")
+    request.review_decline(user=user, comment="nope", reasons=[RejectReason.retracted])
+    assert len(remote.post_calls) == 1
+    assert "changereviewstate" in remote.post_calls[0]
+    assert "_attribute/MAINT:RejectReason" not in remote.post_calls[0]
+
+
+def test_review_decline_sets_reject_attribute_for_classic(remote):
+    """Classic maintenance declines still record the MAINT:RejectReason
+    attribute on the incident source project (regression guard)."""
+    request = Request.parse(remote, req_1_xml)[0]
+    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
+        prj=request.src_project
+    )
+    remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
+    user = remote.users.by_name("anonymous")
+    request.review_decline(user=user, comment="nope", reasons=[RejectReason.retracted])
+    assert any(endpoint in call for call in remote.post_calls)
+
+
 def test_template_splits_srcrpms():
     assert create_template().log_entries["SRCRPMs"] == ["glibc", "glibc-devel"]
 

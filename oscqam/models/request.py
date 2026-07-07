@@ -314,9 +314,15 @@ class Request(osc.core.Request, XmlFactoryMixin):
             reasons: A list of RejectReason objects that
                 explains why the request was declined.
                 The reason will be added as an attribute to the Maintenance
-                incident.
+                incident. For SLFO/PI requests this attribute is skipped
+                (see below); the reason is still carried in the decline
+                comment.
         """
-        if reasons:
+        if reasons and not self.is_slfo:
+            # SLFO requests (PI or staging) have no maintenance incident to
+            # attach the MAINT:RejectReason attribute to, and the SLFO source
+            # project rejects the MAINT namespace (400). Skip it, mirroring the
+            # bug-collection skip; the reason remains in the decline comment.
             reason = self._build_reject_attribute(reasons)
             self.remote.projects.set_attribute(self.src_project, reason)
         comment = self._format_review_comment(comment)
