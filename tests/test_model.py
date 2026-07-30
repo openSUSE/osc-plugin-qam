@@ -456,9 +456,9 @@ def test_no_incident_priority(remote):
 
 def test_priority_str():
     priority = UnknownPriority()
-    assert "None" == str(priority)
+    assert str(priority) == "None"
     priority = Priority(100)
-    assert "100" == str(priority)
+    assert str(priority) == "100"
 
 
 def test_unassigned_roles(remote):
@@ -513,7 +513,7 @@ def test_parse_comment(remote):
 def test_parse_empty_comment(remote):
     comment_data = '<comments request="0"/>'
     comments = Comment.parse(remote, comment_data)
-    assert [] == comments
+    assert comments == []
 
 
 def test_attribute_parsing(remote):
@@ -525,7 +525,7 @@ def test_attribute_writing(remote):
     attribute = Attribute.parse(remote, load_fixture("reject_reason_attribute.xml"))[0]
     assert (
         attribute.xml()
-        == b'<attribute name="RejectReason" namespace="MAINT"><value>12345:abc</value><value>23456:def</value></attribute>'
+        == b'<attribute name="RejectReason" namespace="MAINT"><value>12345:abc</value><value>23456:def</value></attribute>'  # noqa: E501
     )
 
 
