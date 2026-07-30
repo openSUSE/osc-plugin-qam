@@ -94,10 +94,7 @@ class XmlFactoryMixin:
                     if len(value) == 1:
                         value = value[0]
                 else:
-                    if child.text:
-                        value = child.text.strip()
-                    else:
-                        value = None
+                    value = child.text.strip() if child.text else None
                 if key in kwargs:
                     existing = kwargs[key]
                     if isinstance(existing, list):
