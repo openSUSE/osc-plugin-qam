@@ -93,7 +93,7 @@ class Common:
             answer = input(f"{question} {prompt}").lower()
             if not answer:
                 return valid[default]
-            elif valid.get(answer, None) is not None:
+            elif valid.get(answer) is not None:
                 return valid[answer]
             else:
                 print("Invalid choice, please use 'yes' or 'no'")
