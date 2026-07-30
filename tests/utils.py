@@ -20,7 +20,9 @@ def create_template_data(**data):
         data["Products"] = "none"
     if TemplateParser.end_marker not in data:
         data[TemplateParser.end_marker] = ""
-    return "\n".join(": ".join(v) for v in (zip(data.keys(), data.values())))
+    return "\n".join(
+        ": ".join(v) for v in (zip(data.keys(), data.values(), strict=False))
+    )
 
 
 class FakeTrGetter:
