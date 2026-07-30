@@ -28,10 +28,7 @@ class ListOpenAction(ListAction):
                 True if the request is assigned to the current user, False
                 otherwise.
             """
-            for review in req.assigned_roles:
-                if review.reviewer == self.user:
-                    return True
-            return False
+            return any(review.reviewer == self.user for review in req.assigned_roles)
 
         def filters(req):
             """Filters requests to only include active and assigned requests."""
