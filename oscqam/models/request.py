@@ -205,10 +205,12 @@ class Request(osc.core.Request, XmlFactoryMixin):
 
         Covers:
         - PI / product releases where src_project starts with SUSE:SLFO:
-        - Staging submits where the target project is SUSE:SLFO:* (RRID comes from target).
+        - Staging submits where the target project is SUSE:SLFO:*
+          (RRID comes from target).
 
-        Note: This is a compatibility / RRID / skip helper. All requests (SLFO or not)
-        continue to flow through osc.core; there is no separate Gitea backend in this plugin.
+        Note: This is a compatibility / RRID / skip helper. All requests
+        (SLFO or not) continue to flow through osc.core; there is no
+        separate Gitea backend in this plugin.
         """
         if self.src_project.startswith("SUSE:SLFO:"):
             return True
