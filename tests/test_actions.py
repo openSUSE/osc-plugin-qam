@@ -544,7 +544,7 @@ def test_decline_output(remote):
     action._template = template
     action()
     assert (
-        f"Declining request {request} for {action.user}. See Testreport: {action.template.fancy_url}"
+        f"Declining request {request} for {action.user}. See Testreport: {action.template.fancy_url}"  # noqa: E501
         in action.out.getvalue()
     )
 

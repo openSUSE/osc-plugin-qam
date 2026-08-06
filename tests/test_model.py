@@ -73,7 +73,7 @@ def test_request_eq_other_type(remote):
     assert (request == "12345") is False
     assert (request != "12345") is True
     assert request.__eq__(None) is NotImplemented
-    assert (request == None) is False
+    assert (request == None) is False  # noqa: E711
     assert (request == 42) is False
 
 
@@ -335,7 +335,7 @@ def test_multi_line_comment():
 
 
 def test_template_key_repeats():
-    template_data = "comment: a\n$Author: b\nProducts: b\nTestplatform: base=sles\nTestplatform: base=studio"
+    template_data = "comment: a\n$Author: b\nProducts: b\nTestplatform: base=sles\nTestplatform: base=studio"  # noqa: E501
     assert (
         create_template(template_data=template_data).log_entries["Testplatform"]
         == "base=sles\nbase=studio"
