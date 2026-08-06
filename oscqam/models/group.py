@@ -43,7 +43,7 @@ class Group(XmlFactoryMixin, Reviewer):
         Returns:
             A Group object.
         """
-        return super(Group, cls).parse(remote, xml, "group")
+        return super().parse(remote, xml, "group")
 
     @classmethod
     def parse_entry(cls, remote, xml):
@@ -56,7 +56,7 @@ class Group(XmlFactoryMixin, Reviewer):
         Returns:
             A Group object.
         """
-        return super(Group, cls).parse(remote, xml, "entry")
+        return super().parse(remote, xml, "entry")
 
     def is_qam_group(self):
         """Checks if the group is a QAM group.
@@ -99,4 +99,4 @@ class Group(XmlFactoryMixin, Reviewer):
         Returns:
             The name of the group.
         """
-        return "{0}".format(self.name)
+        return f"{self.name}"

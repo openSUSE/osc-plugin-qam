@@ -1,5 +1,7 @@
 """Provides an action to list assigned requests."""
 
+from typing import ClassVar
+
 from ..fields import ReportField
 from .listaction import ListAction
 
@@ -11,7 +13,7 @@ class ListAssignedAction(ListAction):
         default_fields: A list of fields to display by default.
     """
 
-    default_fields = [
+    default_fields: ClassVar[list[ReportField]] = [
         ReportField.review_request_id,
         ReportField.srcrpms,
         ReportField.rating,

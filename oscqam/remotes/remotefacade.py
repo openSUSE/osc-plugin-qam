@@ -15,6 +15,8 @@ from .remoteerror import RemoteError
 from .requestremote import RequestRemote
 from .userremote import UserRemote
 
+logger = logging.getLogger(__name__)
+
 
 class RemoteFacade:
     """A facade for interacting with the remote build service.
@@ -72,7 +74,7 @@ class RemoteFacade:
         Returns:
             The XML response from the remote.
         """
-        url = "/".join([self.remote, endpoint])
+        url = f"{self.remote}/{endpoint}"
         if params:
             params = urlencode(params)
             url = url + "?" + params
@@ -94,12 +96,12 @@ class RemoteFacade:
         Raises:
             RemoteError: If an HTTPError occurs.
         """
-        url = "/".join([self.remote, endpoint])
+        url = f"{self.remote}/{endpoint}"
         if params:
             params = urlencode(params)
             url = url + "?" + params
         try:
-            logging.debug("Retrieving: %s" % url)
+            logger.debug(f"Retrieving: {url}")
             remote = osc.core.http_GET(url)
         except HTTPError as e:
             raise RemoteError(e.url, e.status, e.msg, e.headers, e.fp)
@@ -120,9 +122,9 @@ class RemoteFacade:
         Raises:
             RemoteError: If an HTTPError occurs.
         """
-        url = "/".join([self.remote, endpoint])
+        url = f"{self.remote}/{endpoint}"
         try:
-            logging.debug("Posting: %s" % url)
+            logger.debug(f"Posting: {url}")
             remote = osc.core.http_POST(url, data=data)
             self._check_for_error(remote)
             xml = remote.read()

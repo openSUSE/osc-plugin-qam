@@ -14,11 +14,11 @@ def load_fixture(name):
 def create_template_data(**data):
     """Adds missing keys and values to the template data."""
     data = OrderedDict(**data)
-    if "comment" not in data.keys():
+    if "comment" not in data:
         data["comment"] = ""
-    if "Products" not in data.keys():
+    if "Products" not in data:
         data["Products"] = "none"
-    if TemplateParser.end_marker not in data.keys():
+    if TemplateParser.end_marker not in data:
         data[TemplateParser.end_marker] = ""
     return "\n".join(": ".join(v) for v in (zip(data.keys(), data.values())))
 

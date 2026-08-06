@@ -1,6 +1,7 @@
 """Defines domain-objects that encapsulate state without logic."""
 
 from functools import total_ordering
+from typing import ClassVar
 
 
 @total_ordering
@@ -14,7 +15,13 @@ class Rating:
         rating: The rating string.
     """
 
-    mapping = {"critical": 0, "important": 1, "moderate": 2, "low": 3, "": 4}
+    mapping: ClassVar[dict[str, int]] = {
+        "critical": 0,
+        "important": 1,
+        "moderate": 2,
+        "low": 3,
+        "": 4,
+    }
 
     def __init__(self, rating):
         """Initializes a Rating.
@@ -101,7 +108,7 @@ class Priority:
         Returns:
             The priority as a string.
         """
-        return "{0}".format(self.priority)
+        return f"{self.priority}"
 
 
 class UnknownPriority(Priority):
@@ -149,4 +156,4 @@ class UnknownPriority(Priority):
         Returns:
             The string "None".
         """
-        return "{0}".format(self.priority)
+        return f"{self.priority}"

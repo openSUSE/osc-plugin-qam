@@ -1,9 +1,10 @@
 """Provides a base class for approval actions."""
 
-from .oscaction import OscAction
 import abc
 import sys
+
 from ..models import Template
+from .oscaction import OscAction
 
 
 class ApproveAction(OscAction):
@@ -58,4 +59,3 @@ class ApproveAction(OscAction):
         Returns:
             The reviewer object.
         """
-        pass

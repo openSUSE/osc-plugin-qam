@@ -18,4 +18,4 @@ class Bug(XmlFactoryMixin):
         Returns:
             A string in the format "tracker:id".
         """
-        return "{0}:{1}".format(self.tracker, self.id)
+        return f"{self.tracker}:{self.id}"

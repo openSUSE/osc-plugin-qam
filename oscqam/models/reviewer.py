@@ -13,4 +13,3 @@ class Reviewer(metaclass=abc.ABCMeta):
         Returns:
             True if the reviewer is a QAM group, False otherwise.
         """
-        pass

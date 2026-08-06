@@ -1,13 +1,15 @@
 """Parsers to turn (external) data into a more usable formats."""
 
+import logging
+import re
 from collections import defaultdict
 from itertools import dropwhile, takewhile
 from json import loads
 from json.decoder import JSONDecodeError
-import logging
-import re
 
 from .domains import Rating
+
+logger = logging.getLogger(__name__)
 
 
 def until(snippet, lines):
@@ -80,7 +82,7 @@ def process_packages(pkgs):
         A list of unique packages.
     """
     ret = set()
-    for key in pkgs.keys():
+    for key in pkgs:
         for pkg in pkgs[key]:
             ret.add(pkg)
     return list(ret)
@@ -124,7 +126,6 @@ class TemplateParser:
                 data = loads(metadata)
             except JSONDecodeError:
                 data = None
-                pass
 
         if data:
             log_entries.update(self._read_metadata(data))
@@ -189,7 +190,7 @@ class TemplateParser:
                 key, value = [part.strip() for part in line.split(":", 1)]
                 entries[key].append(value)
             except ValueError:
-                logging.debug("Could not parse line: %s", line)
+                logger.debug("Could not parse line: %s", line)
                 continue
         return entries
 
@@ -205,9 +206,7 @@ class TemplateParser:
         log_entries = {}
         for key in entries:
             value = "\n".join(entries[key])
-            if key == "Packages":
-                log_entries[key] = split_comma(value)
-            elif key == "Bugs":
+            if key == "Packages" or key == "Bugs":
                 log_entries[key] = split_comma(value)
             elif key == "Products":
                 log_entries[key] = split_products(value)

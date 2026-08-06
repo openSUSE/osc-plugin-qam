@@ -1,6 +1,6 @@
 """Provides an action to approve a request for a user."""
 
-from ..errors import NoQamReviewsError, NonMatchingUserGroupsError, NotAssignedError
+from ..errors import NonMatchingUserGroupsError, NoQamReviewsError, NotAssignedError
 from .approveaction import ApproveAction
 
 
@@ -38,8 +38,7 @@ class ApproveUserAction(ApproveAction):
         for review in self.request.assigned_roles:
             if review.user == self.user:
                 return True
-        else:
-            raise NotAssignedError(self.user)
+        raise NotAssignedError(self.user)
 
     def validate(self):
         """Check preconditions to be met before a request can be approved.

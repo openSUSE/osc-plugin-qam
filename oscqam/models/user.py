@@ -1,6 +1,6 @@
 """Provides a class for representing users."""
 
-from ..errors import NoQamReviewsError, NonMatchingUserGroupsError
+from ..errors import NonMatchingUserGroupsError, NoQamReviewsError
 from .review import GroupReview
 from .reviewer import Reviewer
 from .xmlfactorymixin import XmlFactoryMixin
@@ -135,7 +135,7 @@ class User(XmlFactoryMixin, Reviewer):
         Returns:
             A string in the format "realname (email)".
         """
-        return "{0} ({1})".format(self.realname, self.email)
+        return f"{self.realname} ({self.email})"
 
     @classmethod
     def parse(cls, remote, xml, tag=None):
@@ -149,4 +149,4 @@ class User(XmlFactoryMixin, Reviewer):
         Returns:
             A User object.
         """
-        return super(User, cls).parse(remote, xml, remote.users.endpoint)
+        return super().parse(remote, xml, remote.users.endpoint)

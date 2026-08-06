@@ -29,8 +29,8 @@ def test_suggestions():
     fields = ["ReviewRequest"]
     error = InvalidFieldsError(fields)
     suggestions = error._get_suggestions(fields)
-    assert suggestions == set(["ReviewRequestID"])
+    assert suggestions == {"ReviewRequestID"}
     fields = ["ReviewRequest", "Bugz"]
     error = InvalidFieldsError(fields)
     suggestions = error._get_suggestions(fields)
-    assert suggestions == set(["ReviewRequestID", "Bugs"])
+    assert suggestions == {"ReviewRequestID", "Bugs"}

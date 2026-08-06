@@ -5,6 +5,8 @@ import logging
 from ..errors import NoReviewError
 from .oscaction import OscAction
 
+logger = logging.getLogger(__name__)
+
 
 class UnassignAction(OscAction):
     """Will unassign the user from the review and reopen the request for
@@ -80,7 +82,7 @@ class UnassignAction(OscAction):
         """
 
         def _():
-            self.print("UNDO: Undoing reopening of group {group}".format(group=group))
+            self.print(f"UNDO: Undoing reopening of group {group}")
             self.request.review_accept(group=group, comment=comment)
 
         return _
@@ -96,7 +98,7 @@ class UnassignAction(OscAction):
         """
 
         def _():
-            self.print("UNDO: Undoing accepting user {user}".format(user=user))
+            self.print(f"UNDO: Undoing accepting user {user}")
             self.request.review_reopen(user=self.user)
 
         return _
@@ -114,7 +116,5 @@ class UnassignAction(OscAction):
                 user=self.user, group=group, request=self.request
             )
             self.print(msg)
-            logging.debug(
-                "Reverting assignment from %s back to %s" % (group, self.user)
-            )
+            logger.debug(f"Reverting assignment from {group} back to {self.user}")
             self.request.review_unassign(reviewer=self.user, group=group, comment=msg)

@@ -55,7 +55,6 @@ class OscAction(metaclass=abc.ABCMeta):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
-        pass
 
     def rollback(self):
         """Rolls back any actions performed by this action."""

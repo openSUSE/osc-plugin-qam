@@ -1,8 +1,9 @@
 """Provides a base class for actions that operate on a list of requests."""
 
 import abc
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import ClassVar
 
 from ..domains import Rating
 from ..errors import TemplateNotFoundError
@@ -11,6 +12,8 @@ from ..models import Template
 from ..utils import multi_level_sort
 from .oscaction import OscAction
 from .report import Report
+
+logger = logging.getLogger(__name__)
 
 
 class ListAction(OscAction):
@@ -25,7 +28,7 @@ class ListAction(OscAction):
         reports: A list of reports.
     """
 
-    default_fields = [
+    default_fields: ClassVar[list[ReportField]] = [
         ReportField.review_request_id,
         ReportField.srcrpms,
         ReportField.rating,
@@ -78,7 +81,6 @@ class ListAction(OscAction):
         Returns:
             A list of requests.
         """
-        pass
 
     def merge_requests(self, user_requests, group_requests):
         """Merge the requests together and set a field 'origin' to determine
@@ -121,4 +123,4 @@ class ListAction(OscAction):
             try:
                 yield promise.result()
             except TemplateNotFoundError as e:
-                logging.warning(str(e))
+                logger.warning(str(e))

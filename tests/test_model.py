@@ -23,7 +23,6 @@ from oscqam.reject_reasons import RejectReason
 from .mockremote import MockRemote
 from .utils import FakeTrGetter, create_template_data, load_fixture
 
-
 comment_1_xml = load_fixture("comments_1.xml")
 req_1_xml = load_fixture("request_12345.xml")
 req_2_xml = load_fixture("request_23456.xml")
@@ -63,7 +62,7 @@ def test_merge_requests(remote):
     request_2 = Request.parse(remote, req_1_xml)[0]
     assert request_1 == request_2
     assert hash(request_1) == hash(request_2)
-    requests = set([request_1, request_2])
+    requests = {request_1, request_2}
     assert len(requests) == 1
 
 
@@ -74,7 +73,7 @@ def test_request_eq_other_type(remote):
     assert (request == "12345") is False
     assert (request != "12345") is True
     assert request.__eq__(None) is NotImplemented
-    assert (request == None) is False  # noqa: E711 - exercises the eq path
+    assert (request == None) is False
     assert (request == 42) is False
 
 
@@ -92,7 +91,7 @@ def test_request_eq_hash_without_actions(remote):
 def test_parse_drops_invalid_request(remote, caplog):
     """A malformed request in a collection is dropped with an ERROR log,
     while the valid requests are still returned."""
-    collection = "<collection>{0}{1}</collection>".format(
+    collection = "<collection>{}{}</collection>".format(
         req_1_xml, '<request><state name="new"/></request>'
     )
     with caplog.at_level(logging.ERROR):
@@ -286,9 +285,7 @@ def test_review_decline_sets_reject_attribute_for_classic(remote):
     """Classic maintenance declines still record the MAINT:RejectReason
     attribute on the incident source project (regression guard)."""
     request = Request.parse(remote, req_1_xml)[0]
-    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
-        prj=request.src_project
-    )
+    endpoint = f"source/{request.src_project}/_attribute/MAINT:RejectReason"
     remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
     user = remote.users.by_name("anonymous")
     request.review_decline(user=user, comment="nope", reasons=[RejectReason.retracted])
@@ -338,15 +335,7 @@ def test_multi_line_comment():
 
 
 def test_template_key_repeats():
-    template_data = "\n".join(
-        [
-            "comment: a",
-            "$Author: b",
-            "Products: b",
-            "Testplatform: base=sles",
-            "Testplatform: base=studio",
-        ]
-    )
+    template_data = "comment: a\n$Author: b\nProducts: b\nTestplatform: base=sles\nTestplatform: base=studio"
     assert (
         create_template(template_data=template_data).log_entries["Testplatform"]
         == "base=sles\nbase=studio"
@@ -408,7 +397,7 @@ def test_assignment_inference_ignores_qam_auto(remote):
 def test_incident_priority(remote):
     request = Request.parse(remote, req_1_xml)[0]
     src_project = request.src_project
-    endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(src_project)
+    endpoint = f"/source/{src_project}/_attribute/OBS:IncidentPriority"
     remote.register_url(
         endpoint,
         lambda: (
@@ -427,7 +416,7 @@ def test_incident_priority(remote):
 def test_incident_priority_empty(remote):
     request = Request.parse(remote, req_1_xml)[0]
     src_project = request.src_project
-    endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(src_project)
+    endpoint = f"/source/{src_project}/_attribute/OBS:IncidentPriority"
     remote.register_url(endpoint, lambda: "<attributes/>")
     incident_priority = request.incident_priority
     assert incident_priority == UnknownPriority()
@@ -437,7 +426,7 @@ def test_incident_priority_empty(remote):
 def test_incident_priority_empty_value(remote):
     request = Request.parse(remote, req_1_xml)[0]
     src_project = request.src_project
-    endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(src_project)
+    endpoint = f"/source/{src_project}/_attribute/OBS:IncidentPriority"
     remote.register_url(
         endpoint,
         lambda: (
@@ -459,7 +448,7 @@ def test_no_incident_priority(remote):
 
     request = Request.parse(remote, req_1_xml)[0]
     src_project = request.src_project
-    endpoint = "/source/{0}/_attribute/OBS:IncidentPriority".format(src_project)
+    endpoint = f"/source/{src_project}/_attribute/OBS:IncidentPriority"
     remote.register_url(endpoint, raise_http)
     request = Request.parse(remote, req_1_xml)[0]
     assert request.incident_priority == UnknownPriority()
@@ -542,9 +531,7 @@ def test_attribute_writing(remote):
 
 def test_attribute_get(remote):
     request = Request.parse(remote, req_1_xml)[0]
-    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
-        prj=request.src_project
-    )
+    endpoint = f"source/{request.src_project}/_attribute/MAINT:RejectReason"
     attribute = Attribute.parse(remote, load_fixture("reject_reason_attribute.xml"))[0]
     remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
     assert attribute == request.attribute("MAINT:RejectReason")
@@ -558,51 +545,35 @@ def test_attribute_post(remote):
 
 def test_build_reject_reason(remote):
     request = Request.parse(remote, req_1_xml)[0]
-    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
-        prj=request.src_project
-    )
+    endpoint = f"source/{request.src_project}/_attribute/MAINT:RejectReason"
     remote.register_url(
         endpoint, lambda: load_fixture("reject_reason_attribute_empty.xml")
     )
     reject_reasons = [RejectReason.administrative, RejectReason.build_problem]
     attribute = request._build_reject_attribute(reject_reasons)
-    value1 = "{reqid}:{admin}".format(
-        reqid=request.reqid, admin=RejectReason.administrative.flag
-    )
-    value2 = "{reqid}:{build}".format(
-        reqid=request.reqid, build=RejectReason.build_problem.flag
-    )
+    value1 = f"{request.reqid}:{RejectReason.administrative.flag}"
+    value2 = f"{request.reqid}:{RejectReason.build_problem.flag}"
     assert attribute.value == (value1, value2)
 
 
 def test_build_reject_reason_existing_reason(remote):
     request = Request.parse(remote, req_1_xml)[0]
-    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
-        prj=request.src_project
-    )
+    endpoint = f"source/{request.src_project}/_attribute/MAINT:RejectReason"
     remote.register_url(endpoint, lambda: load_fixture("reject_reason_tracking.xml"))
     reject_reasons = [RejectReason.build_problem]
     attribute = request._build_reject_attribute(reject_reasons)
-    value1 = "{reqid}:{track}".format(
-        reqid=request.reqid, track=RejectReason.tracking_issue.flag
-    )
-    value2 = "{reqid}:{build}".format(
-        reqid=request.reqid, build=RejectReason.build_problem.flag
-    )
+    value1 = f"{request.reqid}:{RejectReason.tracking_issue.flag}"
+    value2 = f"{request.reqid}:{RejectReason.build_problem.flag}"
     assert attribute.value == [value1, value2]
 
 
 def test_build_reject_reason_existing_reasons(remote):
     request = Request.parse(remote, req_1_xml)[0]
-    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
-        prj=request.src_project
-    )
+    endpoint = f"source/{request.src_project}/_attribute/MAINT:RejectReason"
     remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
     reject_reasons = [RejectReason.build_problem]
     attribute = request._build_reject_attribute(reject_reasons)
-    value2 = "{reqid}:{build}".format(
-        reqid=request.reqid, build=RejectReason.build_problem.flag
-    )
+    value2 = f"{request.reqid}:{RejectReason.build_problem.flag}"
     assert attribute.value == ["12345:abc", "23456:def", value2]
 
 

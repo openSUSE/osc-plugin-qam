@@ -6,6 +6,8 @@ from dateutil import parser
 
 from .review import GroupReview, UserReview
 
+logger = logging.getLogger(__name__)
+
 
 class Assignment:
     """Associates a user with a group in the relation
@@ -46,7 +48,7 @@ class Assignment:
         return str(self)
 
     def __str__(self):
-        return "{1} -> {0}".format(self.user, self.group)
+        return f"{self.group} -> {self.user}"
 
     @classmethod
     def infer_group(cls, remote, request, group_review):
@@ -83,20 +85,20 @@ class Assignment:
             return sorted(relevant_events, key=lambda e: parser.parse(e.when))
 
         group = group_review.reviewer
-        review_state = [r for r in request.reviews if r.by_group == group.name][0]
+        review_state = next(r for r in request.reviews if r.by_group == group.name)
         events = get_history(review_state)
         assignments = set()
         for event in events:
             user = remote.users.by_name(event.who)
             if event.get_description() == cls.ACCEPTED_DESC:
-                logging.debug("Assignment for: %s -> %s" % (group, user))
+                logger.debug(f"Assignment for: {group} -> {user}")
                 assignments.add(Assignment(user, group))
             elif event.get_description() == cls.REOPENED_DESC:
-                logging.debug("Unassignment for: %s -> %s" % (group, user))
+                logger.debug(f"Unassignment for: {group} -> {user}")
                 if Assignment(user, group) in assignments:
                     assignments.remove(Assignment(user, group))
             else:
-                logging.debug("Unknown event: %s " % event.get_description())
+                logger.debug(f"Unknown event: {event.get_description()} ")
         return assignments
 
     @classmethod
@@ -143,11 +145,11 @@ class Assignment:
             removal = [a for a in assignments if a.user == user_review.reviewer]
 
             if removal:
-                logging.debug("Removing assignments %s as they are finished" % removal)
+                logger.debug(f"Removing assignments {removal} as they are finished")
 
                 for r in removal:
                     assignments.remove(r)
 
         if not assignments:
-            logging.debug("No assignments could be found for %s" % request)
+            logger.debug(f"No assignments could be found for {request}")
         return list(assignments)

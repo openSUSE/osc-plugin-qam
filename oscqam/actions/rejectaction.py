@@ -37,7 +37,7 @@ class RejectAction(OscAction):
             message: A message to include with the rejection.
             out: A file-like object to print messages to.
         """
-        super(RejectAction, self).__init__(remote, user, out=out)
+        super().__init__(remote, user, out=out)
         self.request = remote.requests.by_id(request_id)
         self._template = None if not force else "There is no template"
         self.reason = reason

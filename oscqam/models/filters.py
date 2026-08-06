@@ -1,6 +1,7 @@
 """Provides filters for groups based on the remote."""
 
 import abc
+from typing import ClassVar
 
 
 class GroupFilter(metaclass=abc.ABCMeta):
@@ -15,7 +16,6 @@ class GroupFilter(metaclass=abc.ABCMeta):
         Args:
             group: The group to check.
         """
-        pass
 
     @classmethod
     def for_remote(cls, remote):
@@ -55,7 +55,7 @@ class IBSGroupFilter(GroupFilter):
         IGNORED_GROUPS: A list of groups to ignore.
     """
 
-    IGNORED_GROUPS = ["qam-auto", "qam-openqa"]
+    IGNORED_GROUPS: ClassVar[list[str]] = ["qam-auto", "qam-openqa"]
 
     def is_qam_group(self, group):
         """Checks if a group is a QAM group in IBS.

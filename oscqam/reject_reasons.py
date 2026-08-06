@@ -1,6 +1,7 @@
 """Implements an enum for the possible reject reasons."""
 
 from enum import Enum
+
 from .errors import ReportedError
 
 
@@ -15,7 +16,7 @@ class InvalidRejectError(ReportedError):
         Args:
             bad_fields: A list of invalid fields.
         """
-        super(InvalidRejectError, self).__init__(
+        super().__init__(
             self._msg.format(
                 ", ".join(map(repr, bad_fields)),
                 ", ".join(r.flag for r in RejectReason),
@@ -119,4 +120,4 @@ class RejectReason(Enum):
         for f in cls:
             if f.value[0] == id:
                 return f
-        raise ValueError("Enum for id not found {0}. Valid ids: {1} ".format(id, ids))
+        raise ValueError(f"Enum for id not found {id}. Valid ids: {ids} ")

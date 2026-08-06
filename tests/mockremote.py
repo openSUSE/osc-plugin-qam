@@ -1,5 +1,5 @@
-from collections import defaultdict
 import logging
+from collections import defaultdict
 
 from oscqam.remotes.bugremote import BugRemote
 from oscqam.remotes.commentremote import CommentRemote
@@ -10,6 +10,8 @@ from oscqam.remotes.requestremote import RequestRemote
 from oscqam.remotes.userremote import UserRemote
 
 from .utils import load_fixture
+
+logger = logging.getLogger(__name__)
 
 
 class MockRemote:
@@ -77,11 +79,11 @@ class MockRemote:
         """
         overwrite = self.overwrite(*args, **kwargs)
         if overwrite:
-            logging.debug("MOCK::Overwrite: {0}".format(overwrite))
+            logger.debug(f"MOCK::Overwrite: {overwrite}")
             return overwrite
         url = args[0]
         args = args[1:]
-        logging.debug("MOCK::URL: {0}".format(url))
+        logger.debug(f"MOCK::URL: {url}")
         try:
             cls, identifier = url.split("/", 1)
         except ValueError:
@@ -93,11 +95,11 @@ class MockRemote:
         return self._load(cls, identifier)
 
     def delete(self, *args, **kwargs):
-        called = "Call-Args: %s. Call-Kwargs: %s" % (args, kwargs)
+        called = f"Call-Args: {args}. Call-Kwargs: {kwargs}"
         self.delete_calls.append(called)
 
     def post(self, *args, **kwargs):
-        called = "Call-Args: %s. Call-Kwargs: %s" % (args, kwargs)
+        called = f"Call-Args: {args}. Call-Kwargs: {kwargs}"
         overwrite = self.overwrite(*args, **kwargs)
         if overwrite:
             return overwrite
