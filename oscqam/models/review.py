@@ -38,7 +38,7 @@ class Review:
         Returns:
             A string in the format "Review: reviewer (state)".
         """
-        return "Review: {0} ({1})".format(self.reviewer, self.state)
+        return f"Review: {self.reviewer} ({self.state})"
 
 
 class GroupReview(Review):

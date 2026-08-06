@@ -50,7 +50,7 @@ class Comment(XmlFactoryMixin):
         Returns:
             A Comment object.
         """
-        return super(Comment, cls).parse(remote, xml, "comment")
+        return super().parse(remote, xml, "comment")
 
     def __str__(self):
         """Returns a string representation of the comment.
@@ -58,4 +58,4 @@ class Comment(XmlFactoryMixin):
         Returns:
             A string in the format "id: text".
         """
-        return "{0}: {1}".format(self.id, self.text)
+        return f"{self.id}: {self.text}"

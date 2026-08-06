@@ -1,6 +1,7 @@
 """Formatters used to generate nice looking output."""
 
 import fcntl
+import logging
 import os
 import platform
 import struct
@@ -10,6 +11,8 @@ import termios
 import prettytable
 
 from .fields import ReportField
+
+logger = logging.getLogger(__name__)
 
 
 def terminal_dimensions(fd=None):
@@ -30,8 +33,8 @@ def terminal_dimensions(fd=None):
     if rows == 0 and columns == 0:
         try:
             rows, columns = (int(os.environ[v]) for v in ["LINES", "COLUMNS"])
-        except Exception:
-            pass
+        except (KeyError, ValueError) as e:
+            logger.debug("Could not determine terminal size from environment: %s", e)
     return rows, columns
 
 
@@ -76,7 +79,7 @@ class Formatter:
         default_format: The default formatter to use.
     """
 
-    def __init__(self, listsep, formatters={}):
+    def __init__(self, listsep, formatters=None):
         """Initializes a Formatter.
 
         Args:
@@ -93,8 +96,7 @@ class Formatter:
             ReportField.unassigned_roles: self.list_formatter,
             ReportField.assigned_roles: self.list_formatter,
         }
-        for formatter in formatters:
-            self._formatters[formatter] = formatters[formatter]
+        self._formatters.update(formatters or {})
         self.default_format = str
 
     def output(self, keys, reports):
@@ -107,7 +109,6 @@ class Formatter:
         Returns:
             A string that can be passed to print.
         """
-        pass
 
     def formatter(self, key):
         """Gets the formatter for a given key.
@@ -169,9 +170,7 @@ class VerboseOutput(Formatter):
             A string that can be passed to print.
         """
         output = []
-        str_template = "{{0:{length}s}}: {{1}}".format(
-            length=max([len(str(k)) for k in keys])
-        )
+        str_template = f"{{0:{max([len(str(k)) for k in keys])}s}}: {{1}}"
         for report in reports:
             values = []
             for key in keys:

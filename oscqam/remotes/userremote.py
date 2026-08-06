@@ -1,7 +1,5 @@
 """Provides a class for interacting with users on the remote."""
 
-from functools import lru_cache
-
 from ..models import User
 
 
@@ -21,8 +19,8 @@ class UserRemote:
         """
         self.remote = remote
         self.endpoint = "person"
+        self._by_name_cache = {}
 
-    @lru_cache(maxsize=None)
     def by_name(self, name):
         """Gets a user by name.
 
@@ -35,8 +33,10 @@ class UserRemote:
         Raises:
             AttributeError: If the user is not found.
         """
-        url = "/".join([self.endpoint, name])
-        users = User.parse(self.remote, self.remote.get(url))
-        if users:
-            return users[0]
-        raise AttributeError("User not found.")
+        if name not in self._by_name_cache:
+            url = f"{self.endpoint}/{name}"
+            users = User.parse(self.remote, self.remote.get(url))
+            if not users:
+                raise AttributeError("User not found.")
+            self._by_name_cache[name] = users[0]
+        return self._by_name_cache[name]

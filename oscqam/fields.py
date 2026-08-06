@@ -1,6 +1,7 @@
 """Provides classes and functions for handling report fields."""
 
 from enum import Enum
+from typing import ClassVar
 
 from .errors import ReportedError
 
@@ -146,7 +147,7 @@ class ReportFields:
         all_fields: A list of all available report fields.
     """
 
-    all_fields = [
+    all_fields: ClassVar[list[ReportField]] = [
         ReportField.review_request_id,
         ReportField.products,
         ReportField.srcrpms,

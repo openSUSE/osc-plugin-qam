@@ -37,9 +37,7 @@ class NoQamReviewsError(UninferableError):
         message += (
             (
                 " The following groups were already assigned/finished: {msg}".format(
-                    msg=", ".join(
-                        ["{r.reviewer}".format(r=review) for review in accept_reviews]
-                    )
+                    msg=", ".join([f"{review.reviewer}" for review in accept_reviews])
                 )
             )
             if accept_reviews
@@ -105,9 +103,7 @@ class InvalidRequestError(ReportedError):
         Args:
             request: The invalid request.
         """
-        super(InvalidRequestError, self).__init__(
-            "Invalid build service request: {0}".format(request)
-        )
+        super().__init__(f"Invalid build service request: {request}")
 
 
 class MissingSourceProjectError(InvalidRequestError):
@@ -120,7 +116,7 @@ class MissingSourceProjectError(InvalidRequestError):
             request: The request that is missing the source project.
         """
         super().__init__(
-            "Invalid build service request: {0} has no source project.".format(request)
+            f"Invalid build service request: {request} has no source project."
         )
 
 
@@ -133,7 +129,7 @@ class TemplateNotFoundError(ReportedError):
         Args:
             message: The error message.
         """
-        super().__init__("Report could not be loaded: {0}".format(message))
+        super().__init__(f"Report could not be loaded: {message}")
 
 
 class TestResultMismatchError(ReportedError):
@@ -168,7 +164,7 @@ class NoReviewError(UninferableError):
         Args:
             user: The user who attempted the action.
         """
-        super().__init__("User {u} is not assigned for any groups.".format(u=user))
+        super().__init__(f"User {user} is not assigned for any groups.")
 
 
 class MultipleReviewsError(UninferableError):
@@ -184,10 +180,8 @@ class MultipleReviewsError(UninferableError):
             groups: The groups the user is reviewing for.
         """
         super().__init__(
-            "User {u} is currently reviewing for multiple groups: {g}."
-            "Please provide which group to unassign via -G parameter.".format(
-                u=user, g=groups
-            )
+            f"User {user} is currently reviewing for multiple groups: {groups}."
+            "Please provide which group to unassign via -G parameter."
         )
 
 
@@ -283,8 +277,6 @@ class NotAssignedError(ReportedError):
 class ConflictingOptions(ReportedError):
     """Raise when conflicting options are provided."""
 
-    pass
-
 
 class NoCommentsError(ReportedError):
     """Raise when no comments are found for a request."""
@@ -312,7 +304,7 @@ class InvalidCommentIdError(ReportedError):
             rid: The invalid comment ID.
             comments: A list of valid comments.
         """
-        msg = "Id {0} is not in valid ids: {1}".format(
+        msg = "Id {} is not in valid ids: {}".format(
             rid, ", ".join([c.id for c in comments])
         )
         super().__init__(msg)

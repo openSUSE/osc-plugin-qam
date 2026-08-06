@@ -18,7 +18,6 @@ class RequestFilter(metaclass=abc.ABCMeta):
         Returns:
             A list of maintenance requests.
         """
-        pass
 
     @classmethod
     def for_remote(cls, remote):

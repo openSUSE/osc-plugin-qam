@@ -56,7 +56,7 @@ class Template:
     # Human readable reports
     fancy_base_url = "https://qam.suse.de/reports/"
 
-    def __init__(self, request, tr_getter=get_testreport_web, parser=TemplateParser()):
+    def __init__(self, request, tr_getter=get_testreport_web, parser=None):
         """Create a template from the given request.
 
         Args:
@@ -67,6 +67,7 @@ class Template:
             parser: Class that can parse the data returned by tr_getter.
         """
         self._request = request
+        parser = parser or TemplateParser()
         self.log_entries = parser(*tr_getter(self.url, self.metadata_url))
 
     def failed(self):

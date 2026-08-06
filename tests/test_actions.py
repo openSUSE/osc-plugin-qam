@@ -201,15 +201,13 @@ def test_reject_no_comment(remote):
 def test_reject_no_comment_force(remote):
     """Reject can be forced without template"""
     request = remote.requests.by_id(cloud_open)
-    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
-        prj=request.src_project
-    )
+    endpoint = f"source/{request.src_project}/_attribute/MAINT:RejectReason"
     remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
     action = actions.RejectAction(
         remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative], True
     )
     action()
-    assert len(remote.post_calls), 2
+    assert len(remote.post_calls) == 2
     assert request.src_project in remote.post_calls[0]
     assert "Testreport: There is no template" in remote.post_calls[1]
 
@@ -225,16 +223,14 @@ def test_reject_posts_reason(remote):
                                comment: Something broke.""",
         ),
     )
-    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
-        prj=request.src_project
-    )
+    endpoint = f"source/{request.src_project}/_attribute/MAINT:RejectReason"
     remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
     action = actions.RejectAction(
         remote, user_id, cloud_open, [reject_reasons.RejectReason.administrative], False
     )
     action._template = template
     action()
-    assert len(remote.post_calls), 2
+    assert len(remote.post_calls) == 2
     assert request.src_project in remote.post_calls[0]
 
 
@@ -335,11 +331,7 @@ def test_group_sort_reports_missing_rating(remote):
 
 def test_approval_requires_status_passed(remote):
     request = remote.requests.by_id(cloud_open)
-    report = create_template_data(
-        **{
-            "SUMMARY": "FAILED",
-        }
-    )
+    report = create_template_data(SUMMARY="FAILED")
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote, user_id, "12345", user_id, False, template_factory=lambda _: template
@@ -350,11 +342,7 @@ def test_approval_requires_status_passed(remote):
 
 def test_approval(remote):
     request = remote.requests.by_id(cloud_open)
-    report = create_template_data(
-        **{
-            "SUMMARY": "PASSED",
-        }
-    )
+    report = create_template_data(SUMMARY="PASSED")
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote, user_id, "12345", user_id, False, template_factory=lambda _: template
@@ -495,11 +483,7 @@ def test_assign_skip_template(remote):
 
 
 def test_report(remote):
-    report = create_template_data(
-        **{
-            "SUMMARY": "PASSED",
-        }
-    )
+    report = create_template_data(SUMMARY="PASSED")
     request = remote.requests.by_id(cloud_open)
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     report = Report(request=request, template_factory=lambda _: template)
@@ -547,9 +531,7 @@ def test_decline_output(remote):
                                comment: Something broke.""",
         ),
     )
-    endpoint = "source/{prj}/_attribute/MAINT:RejectReason".format(
-        prj=request.src_project
-    )
+    endpoint = f"source/{request.src_project}/_attribute/MAINT:RejectReason"
     remote.register_url(endpoint, lambda: load_fixture("reject_reason_attribute.xml"))
     action = actions.RejectAction(
         remote,
@@ -562,9 +544,7 @@ def test_decline_output(remote):
     action._template = template
     action()
     assert (
-        "Declining request {req} for {user}. See Testreport: {url}".format(
-            req=request, user=action.user, url=action.template.fancy_url
-        )
+        f"Declining request {request} for {action.user}. See Testreport: {action.template.fancy_url}"
         in action.out.getvalue()
     )
 
@@ -572,7 +552,7 @@ def test_decline_output(remote):
 def test_approve_output(remote):
     out = StringIO()
     request = remote.requests.by_id(cloud_open)
-    report = create_template_data(**{"SUMMARY": "PASSED"})
+    report = create_template_data(SUMMARY="PASSED")
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote,
@@ -598,7 +578,7 @@ def test_approve_output(remote):
 def test_approve_not_assigned(remote):
     """A user can not approve an update that is not assigned to him."""
     unassigned_request = remote.requests.by_id(multi_available_assign)
-    report = create_template_data(**{"SUMMARY": "PASSED"})
+    report = create_template_data(SUMMARY="PASSED")
     template = models.Template(unassigned_request, tr_getter=FakeTrGetter(report))
     approve_action = actions.ApproveUserAction(
         remote,
@@ -621,11 +601,7 @@ def test_approve_additional_groups(remote):
     request = remote.requests.by_id(
         one_open,
     )
-    report = create_template_data(
-        **{
-            "SUMMARY": "PASSED",
-        }
-    )
+    report = create_template_data(SUMMARY="PASSED")
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote,
@@ -655,11 +631,7 @@ def test_approve_group(remote):
     request = remote.requests.by_id(
         one_open,
     )
-    report = create_template_data(
-        **{
-            "SUMMARY": "PASSED",
-        }
-    )
+    report = create_template_data(SUMMARY="PASSED")
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveGroupAction(
         remote,
@@ -682,11 +654,7 @@ def test_approve_group_not_in_request(remote):
     request = remote.requests.by_id(
         one_open,
     )
-    report = create_template_data(
-        **{
-            "SUMMARY": "PASSED",
-        }
-    )
+    report = create_template_data(SUMMARY="PASSED")
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveGroupAction(
         remote,
@@ -706,11 +674,7 @@ def test_approve_last_group_does_not_raise(remote):
     request = remote.requests.by_id(
         last_qam,
     )
-    report = create_template_data(
-        **{
-            "SUMMARY": "PASSED",
-        }
-    )
+    report = create_template_data(SUMMARY="PASSED")
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote,
@@ -738,11 +702,7 @@ def test_approve_misses_assigned_role(remote):
     request = remote.requests.by_id(
         inverse_assign_order,
     )
-    report = create_template_data(
-        **{
-            "SUMMARY": "PASSED",
-        }
-    )
+    report = create_template_data(SUMMARY="PASSED")
     template = models.Template(request, tr_getter=FakeTrGetter(report))
     approval = actions.ApproveUserAction(
         remote,

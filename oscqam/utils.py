@@ -1,7 +1,7 @@
 """A collection of utility functions."""
 
-from itertools import groupby
 import ssl
+from itertools import groupby
 from urllib.error import HTTPError
 from urllib.request import urlopen
 

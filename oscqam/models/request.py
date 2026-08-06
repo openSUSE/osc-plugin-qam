@@ -2,6 +2,7 @@
 
 import logging
 import re
+from typing import ClassVar
 from urllib.parse import urlencode
 from xml.etree import ElementTree as ET
 
@@ -14,6 +15,8 @@ from .attribute import Attribute
 from .comment import Comment
 from .review import GroupReview, UserReview
 from .xmlfactorymixin import XmlFactoryMixin
+
+logger = logging.getLogger(__name__)
 
 
 class Request(osc.core.Request, XmlFactoryMixin):
@@ -38,7 +41,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
     STATE_NEW = "new"
     STATE_REVIEW = "review"
     STATE_DECLINED = "declined"
-    OPEN_STATES = [STATE_NEW, STATE_REVIEW]
+    OPEN_STATES: ClassVar[list[str]] = [STATE_NEW, STATE_REVIEW]
     REVIEW_USER = "BY_USER"
     REVIEW_GROUP = "BY_GROUP"
     REVIEW_OTHER = "BY_OTHER"
@@ -156,7 +159,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 if prj:
                     return prj
                 else:
-                    logging.info("This project has no source project: %s", self.reqid)
+                    logger.info("This project has no source project: %s", self.reqid)
                     return ""
         return ""
 
@@ -192,7 +195,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                         return f"SUSE:PI:{ver}"
                     return prj
                 else:
-                    logging.info("This project has no source project: %s", self.reqid)
+                    logger.info("This project has no source project: %s", self.reqid)
                     return ""
         return ""
 
@@ -339,9 +342,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
             An Attribute object.
         """
         reject_reason = self.attribute(Attribute.reject_reason)
-        reason_values = list(
-            map(lambda reason: "{0}:{1}".format(self.reqid, reason.flag), reasons)
-        )
+        reason_values = [f"{self.reqid}:{reason.flag}" for reason in reasons]
         if not reject_reason:
             reject_reason = Attribute.preset(
                 self.remote, Attribute.reject_reason, *reason_values
@@ -373,7 +374,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         """
         if not comment:
             return None
-        return "[oscqam] {comment}".format(comment=comment)
+        return f"[oscqam] {comment}"
 
     def review_list(self):
         """Returns all reviews as a list.
@@ -411,7 +412,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
         Args:
             comment: The comment to add.
         """
-        endpoint = "/comments/request/{id}".format(id=self.reqid)
+        endpoint = f"/comments/request/{self.reqid}"
         self.remote.post(endpoint, comment)
 
     def get_template(self, template_factory):
@@ -463,7 +464,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 req.read(request)
                 requests.append(req)
             except osc.oscerr.APIError as e:
-                logging.error("Dropping request due to APIError: %s", e.msg)
+                logger.error("Dropping request due to APIError: %s", e.msg)
             except osc.oscerr.WrongArgs as e:
                 # Temporary workaround, as OBS >= 2.7 can return requests with
                 # acceptinfo-elements that old osc can not handle.
@@ -472,9 +473,7 @@ class Request(osc.core.Request, XmlFactoryMixin):
                 if "acceptinfo" not in str(e):
                     raise
                 else:
-                    logging.warning(
-                        "Dropping request due to incompatible server: %s", e
-                    )
+                    logger.warning("Dropping request due to incompatible server: %s", e)
                     # not appended, effectively dropped with warning (not silent)
         return requests
 
@@ -513,4 +512,4 @@ class Request(osc.core.Request, XmlFactoryMixin):
         return hash((self.reqid or "", self.src_project or ""))
 
     def __str__(self):
-        return "{0}".format(self.reqid)
+        return f"{self.reqid}"

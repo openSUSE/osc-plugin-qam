@@ -32,7 +32,7 @@ class CommentRemote:
         Returns:
             A list of Comment objects.
         """
-        endpoint = "{0}/request/{1}".format(self.endpoint, request.reqid)
+        endpoint = f"{self.endpoint}/request/{request.reqid}"
         xml = self.remote.get(endpoint)
         return Comment.parse(self.remote, xml)
 
@@ -42,5 +42,5 @@ class CommentRemote:
         Args:
             comment_id: The ID of the comment to delete.
         """
-        endpoint = "{0}/{1}".format(self.delete_endpoint, comment_id)
+        endpoint = f"{self.delete_endpoint}/{comment_id}"
         self.remote.delete(endpoint)

@@ -17,7 +17,7 @@ class QAMListCommand(osc.commandline.OscCommand, Common):
 
     name = "list"
     parent = "QAMCommand"
-    aliases = ["open"]
+    aliases = ["open"]  # noqa: RUF012 -- overrides osc's instance attribute
 
     def init_arguments(self):
         """Initializes the command-line arguments for the command."""

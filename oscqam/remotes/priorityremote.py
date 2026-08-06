@@ -79,7 +79,7 @@ class PriorityRemote:
             if not prio:
                 return UnknownPriority()
             return Priority(prio[0]["node"]["priority"])
-        except Exception:
+        except (requests.exceptions.RequestException, ValueError, KeyError, IndexError):
             return UnknownPriority()
 
     def for_request(self, request):

@@ -1,13 +1,12 @@
 import argparse
 import builtins
-
 from contextlib import contextmanager
 
 from oscqam import cli_approve, cli_assign, cli_reject, formatters
+from oscqam.common import Common
 from oscqam.errors import NotPreviousReviewerError
 from oscqam.reject_reasons import RejectReason
 from oscqam.utils import multi_level_sort
-from oscqam.common import Common
 
 
 @contextmanager

@@ -24,4 +24,3 @@ class QAMCommand(osc.commandline.OscCommand):
             args: The arguments passed to the command.
 
         """
-        pass

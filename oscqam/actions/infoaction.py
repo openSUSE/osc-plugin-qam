@@ -1,7 +1,9 @@
 """Provides an action to get information about a request."""
 
-from .listaction import ListAction
+from typing import ClassVar
+
 from ..fields import ReportField
+from .listaction import ListAction
 
 
 class InfoAction(ListAction):
@@ -12,7 +14,7 @@ class InfoAction(ListAction):
         request: The request to get information about.
     """
 
-    default_fields = [
+    default_fields: ClassVar[list[ReportField]] = [
         ReportField.review_request_id,
         ReportField.srcrpms,
         ReportField.rating,

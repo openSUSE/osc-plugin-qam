@@ -39,11 +39,9 @@ class RequestRemote:
         xpaths = []
         for group in groups:
             name = get_group_name(group)
-            xpaths.append(
-                "(review[@by_group='{0}' and @state='{1}'])".format(name, state)
-            )
+            xpaths.append(f"(review[@by_group='{name}' and @state='{state}'])")
         xpath = " or ".join(xpaths)
-        return "( {0} )".format(xpath)
+        return f"( {xpath} )"
 
     def _get_groups(self, groups, state, **kwargs):
         """Gets requests for a list of groups with a given state.
@@ -58,12 +56,12 @@ class RequestRemote:
         """
         if not kwargs:
             kwargs = {"withfullhistory": "1"}
-        xpaths = ["(state/@name='{0}')".format("review")]
+        xpaths = ["(state/@name='{}')".format("review")]
         xpaths.append(self._group_xpath(groups, state))
         xpath = " and ".join(xpaths)
         params = {"match": xpath, "withfullhistory": "1"}
         params.update(kwargs)
-        search = "/".join(["search", self.endpoint])
+        search = f"search/{self.endpoint}"
         requests = Request.parse(self.remote, self.remote.get(search, params))
         return RequestFilter.for_remote(self.remote).maintenance_requests(requests)
 
@@ -130,7 +128,7 @@ class RequestRemote:
         return [
             request
             for request in requests
-            if any([r.reviewer.is_qam_group() for r in request.review_list()])
+            if any(r.reviewer.is_qam_group() for r in request.review_list())
         ]
 
     def by_id(self, req_id):
@@ -143,7 +141,7 @@ class RequestRemote:
             A Request object.
         """
         req_id = Request.parse_request_id(req_id)
-        endpoint = "/".join([self.endpoint, req_id])
+        endpoint = f"{self.endpoint}/{req_id}"
         req = Request.parse(
             self.remote, self.remote.get(endpoint, {"withfullhistory": 1})
         )

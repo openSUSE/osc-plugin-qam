@@ -27,7 +27,7 @@ class Common:
     all_columns_string = ", ".join(str(f) for f in ReportFields.all_fields)
     all_reasons_string = ", ".join(r.flag for r in RejectReason)
 
-    api: "RemoteFacade"
+    api: RemoteFacade
     apiurl: str
     affected_user: str | None = None
 
@@ -90,7 +90,7 @@ class Common:
             default = "n"
             prompt = "[y/N]"
         while True:
-            answer = input(" ".join([question, prompt])).lower()
+            answer = input(f"{question} {prompt}").lower()
             if not answer:
                 return valid[default]
             elif valid.get(answer, None) is not None:
@@ -116,7 +116,7 @@ class Common:
         """
         ids = [tid(member) for member in enum]
         for member in enum:
-            print("{0}. {1}".format(tid(member), desc(member)))
+            print(f"{tid(member)}. {desc(member)}")
         print("q. Quit")
         user_input = input(
             "Please specify the options (separate multiple values with ,): "
@@ -126,6 +126,6 @@ class Common:
         numbers = [int(s.strip()) for s in user_input.split(",")]
         for number in numbers:
             if number not in ids:
-                print("Invalid number specified: {0}".format(number))
+                print(f"Invalid number specified: {number}")
                 return cls.query_enum(enum, tid, desc)
         return [enum.from_id(i) for i in numbers]

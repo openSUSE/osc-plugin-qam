@@ -1,7 +1,5 @@
 """Provides a class for interacting with groups on the remote."""
 
-from functools import lru_cache
-
 from ..models import Group
 
 
@@ -21,16 +19,21 @@ class GroupRemote:
         """
         self.remote = remote
         self.endpoint = "group"
+        self._all_cache = None
+        self._for_name_cache = {}
+        self._for_user_cache = {}
 
-    @lru_cache(maxsize=None)
     def all(self):
         """Gets all groups.
 
         Returns:
             A list of all Group objects.
         """
-        group_entries = Group.parse_entry(self.remote, self.remote.get(self.endpoint))
-        return group_entries
+        if self._all_cache is None:
+            self._all_cache = Group.parse_entry(
+                self.remote, self.remote.get(self.endpoint)
+            )
+        return self._all_cache
 
     def for_pattern(self, pattern):
         """Gets all groups that match a given pattern.
@@ -43,7 +46,6 @@ class GroupRemote:
         """
         return [group for group in self.all() if pattern.match(group.name)]
 
-    @lru_cache(maxsize=None)
     def for_name(self, group_name):
         """Gets a group by name.
 
@@ -56,14 +58,14 @@ class GroupRemote:
         Raises:
             AttributeError: If no group is found with the given name.
         """
-        url = "/".join([self.endpoint, group_name])
-        group = Group.parse(self.remote, self.remote.get(url))
-        if group:
-            return group[0]
-        else:
-            raise AttributeError("No group found for name: {0}".format(group_name))
+        if group_name not in self._for_name_cache:
+            url = f"{self.endpoint}/{group_name}"
+            group = Group.parse(self.remote, self.remote.get(url))
+            if not group:
+                raise AttributeError(f"No group found for name: {group_name}")
+            self._for_name_cache[group_name] = group[0]
+        return self._for_name_cache[group_name]
 
-    @lru_cache(maxsize=None)
     def for_user(self, user):
         """Gets all groups for a given user.
 
@@ -73,9 +75,10 @@ class GroupRemote:
         Returns:
             A list of Group objects.
         """
-        params = {"login": user.login}
-        group_entries = Group.parse_entry(
-            self.remote, self.remote.get(self.endpoint, params)
-        )
-        groups = [self.for_name(g.name) for g in group_entries]
-        return groups
+        if user not in self._for_user_cache:
+            params = {"login": user.login}
+            group_entries = Group.parse_entry(
+                self.remote, self.remote.get(self.endpoint, params)
+            )
+            self._for_user_cache[user] = [self.for_name(g.name) for g in group_entries]
+        return self._for_user_cache[user]

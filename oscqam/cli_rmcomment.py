@@ -16,7 +16,7 @@ class QAMDeleteCommentCommand(osc.commandline.OscCommand, Common):
 
     name = "deletecomment"
     parent = "QAMCommand"
-    aliases = ["rmcomment"]
+    aliases = ["rmcomment"]  # noqa: RUF012 -- overrides osc's instance attribute
 
     def init_arguments(self):
         """Initializes the command-line arguments for the command."""
@@ -41,7 +41,7 @@ class QAMDeleteCommentCommand(osc.commandline.OscCommand, Common):
         print("CommentID: Message")
         print("------------------")
         for comment in request.comments:
-            print("{0}: {1}".format(comment.id, comment.text))
+            print(f"{comment.id}: {comment.text}")
         comment_id = input("Comment-Id to remove: ")
         if comment_id not in [c.id for c in request.comments]:
             raise InvalidCommentIdError(comment_id, request.comments)

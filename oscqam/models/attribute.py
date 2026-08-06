@@ -41,7 +41,7 @@ class Attribute(XmlFactoryMixin):
         Returns:
             An Attribute object.
         """
-        return super(Attribute, cls).parse(remote, xml, "attribute")
+        return super().parse(remote, xml, "attribute")
 
     @classmethod
     def preset(cls, remote, preset, *value):

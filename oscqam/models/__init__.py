@@ -6,30 +6,29 @@ everything in a consistent state.
 
 import osc.core
 
+from .assignment import Assignment
 from .attribute import Attribute
 from .bug import Bug
 from .comment import Comment
 from .group import Group
 from .request import Request
 from .requestfilters import RequestFilter
-from .review import UserReview
-from .review import GroupReview
+from .review import GroupReview, UserReview
 from .template import Template
 from .user import User
-from .assignment import Assignment
 
 __all__ = [
     "Assignment",
-    "Template",
-    "UserReview",
+    "Attribute",
+    "Bug",
+    "Comment",
+    "Group",
     "GroupReview",
     "Request",
-    "Bug",
     "RequestFilter",
+    "Template",
     "User",
-    "Group",
-    "Comment",
-    "Attribute",
+    "UserReview",
 ]
 
 
