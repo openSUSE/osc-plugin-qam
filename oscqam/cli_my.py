@@ -1,4 +1,4 @@
-"""Provides a command-line interface for listing requests assigned to the current user."""
+"""Provides a command-line interface for listing requests assigned to the current user."""  # noqa: E501
 
 import osc.commandline
 

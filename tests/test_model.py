@@ -73,7 +73,7 @@ def test_request_eq_other_type(remote):
     assert (request == "12345") is False
     assert (request != "12345") is True
     assert request.__eq__(None) is NotImplemented
-    assert (request == None) is False
+    assert (request == None) is False  # noqa: E711
     assert (request == 42) is False
 
 
@@ -335,7 +335,7 @@ def test_multi_line_comment():
 
 
 def test_template_key_repeats():
-    template_data = "comment: a\n$Author: b\nProducts: b\nTestplatform: base=sles\nTestplatform: base=studio"
+    template_data = "comment: a\n$Author: b\nProducts: b\nTestplatform: base=sles\nTestplatform: base=studio"  # noqa: E501
     assert (
         create_template(template_data=template_data).log_entries["Testplatform"]
         == "base=sles\nbase=studio"
@@ -456,9 +456,9 @@ def test_no_incident_priority(remote):
 
 def test_priority_str():
     priority = UnknownPriority()
-    assert "None" == str(priority)
+    assert str(priority) == "None"
     priority = Priority(100)
-    assert "100" == str(priority)
+    assert str(priority) == "100"
 
 
 def test_unassigned_roles(remote):
@@ -513,7 +513,7 @@ def test_parse_comment(remote):
 def test_parse_empty_comment(remote):
     comment_data = '<comments request="0"/>'
     comments = Comment.parse(remote, comment_data)
-    assert [] == comments
+    assert comments == []
 
 
 def test_attribute_parsing(remote):
@@ -525,7 +525,7 @@ def test_attribute_writing(remote):
     attribute = Attribute.parse(remote, load_fixture("reject_reason_attribute.xml"))[0]
     assert (
         attribute.xml()
-        == b'<attribute name="RejectReason" namespace="MAINT"><value>12345:abc</value><value>23456:def</value></attribute>'
+        == b'<attribute name="RejectReason" namespace="MAINT"><value>12345:abc</value><value>23456:def</value></attribute>'  # noqa: E501
     )
 
 
@@ -580,3 +580,72 @@ def test_build_reject_reason_existing_reasons(remote):
 def test_parse_bugs(remote):
     bugs = Bug.parse(remote, bugs_txt, "issue")
     assert len(bugs) == 4
+
+
+def test_review_str(remote):
+    from oscqam.models.review import Review
+
+    class MockInnerReview:
+        state = "REVIEW"
+
+    inner = MockInnerReview()
+    review = Review(remote, inner, "anonymous")
+    assert str(review) == "Review: anonymous (review)"
+
+
+def test_bug_str(remote):
+    bugs = Bug.parse(remote, bugs_txt, "issue")
+    assert str(bugs[0]) == f"{bugs[0].tracker}:{bugs[0].id}"
+
+
+def test_comment_str(remote):
+    comment = Comment.parse(remote, comment_1_xml)[0]
+    assert str(comment) == f"{comment.id}: {comment.text}"
+
+
+def test_get_testreport_web(monkeypatch):
+    import oscqam.models.template
+    from oscqam.models.template import get_testreport_web
+
+    class MockResponse:
+        def read(self):
+            return b"content"
+
+    def mock_https(url):
+        if "meta" in url or "log" in url:
+            return MockResponse()
+        return None
+
+    monkeypatch.setattr(oscqam.models.template, "https", mock_https)
+
+    report, metadata = get_testreport_web(
+        "https://example.com/log", "https://example.com/meta"
+    )
+    assert report == b"content"
+    assert metadata == b"content"
+
+
+def test_group_remote_for_name_not_found(remote):
+    remote.register_url("group/non-existent", lambda: "<collection/>")
+    with pytest.raises(AttributeError):
+        remote.groups.for_name("non-existent")
+
+
+def test_project_without_source_project_rrid(remote):
+    request = Request.parse(remote, req_no_src)[0]
+    assert request.src_project_to_rrid == ""
+
+
+def test_request_add_comment(remote):
+    request = Request.parse(remote, req_1_xml)[0]
+    request.add_comment("Some comment text")
+    assert len(remote.post_calls) == 1
+    assert "Some comment text" in remote.post_calls[0]
+
+
+def test_comment_remote_for_request(remote):
+    request = Request.parse(remote, req_1_xml)[0]
+    remote.register_url("comments/request/12345", lambda: comment_1_xml)
+    comments = remote.comments.for_request(request)
+    assert len(comments) == 1
+    assert comments[0].id == "1322"
