@@ -104,7 +104,7 @@ class RemoteFacade:
             logger.debug(f"Retrieving: {url}")
             remote = osc.core.http_GET(url)
         except HTTPError as e:
-            raise RemoteError(e.url, e.status, e.msg, e.headers, e.fp)
+            raise RemoteError(e.url, e.status, e.msg, e.headers, e.fp) from e
         self._check_for_error(remote)
         xml = remote.read()
         return xml
@@ -130,4 +130,4 @@ class RemoteFacade:
             xml = remote.read()
             return xml
         except HTTPError as e:
-            raise RemoteError(e.url, e.status, e.msg, e.headers, e.fp)
+            raise RemoteError(e.url, e.status, e.msg, e.headers, e.fp) from e
