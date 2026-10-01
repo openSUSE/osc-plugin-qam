@@ -26,10 +26,7 @@ def get_testreport_web(log_path, metadata_path):
 
     metadata = https(metadata_path)
 
-    if not metadata:
-        metadata = None
-    else:
-        metadata = metadata.read()
+    metadata = None if not metadata else metadata.read()
 
     report = report.read()
 
@@ -66,6 +63,8 @@ class Template:
                 from http://qam.suse.de.
             parser: Class that can parse the data returned by tr_getter.
         """
+        if parser is None:
+            parser = TemplateParser()
         self._request = request
         parser = parser or TemplateParser()
         self.log_entries = parser(*tr_getter(self.url, self.metadata_url))
@@ -103,14 +102,14 @@ class Template:
     @property
     def url(self):
         """Return URL to machine readable version of the report."""
-        return f"{self.base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/log"
+        return f"{self.base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/log"  # noqa: E501
 
     @property
     def metadata_url(self):
         """The URL to the metadata file."""
-        return f"{self.base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/metadata.json"
+        return f"{self.base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/metadata.json"  # noqa: E501
 
     @property
     def fancy_url(self):
         """Return URL to human readable version of the report."""
-        return f"{self.fancy_base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/log"
+        return f"{self.fancy_base_url}{self._request.src_project_to_rrid}:{self._request.reqid}/log"  # noqa: E501

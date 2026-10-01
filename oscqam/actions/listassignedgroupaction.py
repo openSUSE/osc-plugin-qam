@@ -38,10 +38,7 @@ class ListAssignedGroupAction(ListAssignedAction):
             True if the request is in review by any of the specified groups,
             False otherwise.
         """
-        for review in reviews:
-            if review.reviewer in self.groups:
-                return True
-        return False
+        return any(review.reviewer in self.groups for review in reviews)
 
     def load_requests(self):
         """Loads all requests that are in review for the specified groups.

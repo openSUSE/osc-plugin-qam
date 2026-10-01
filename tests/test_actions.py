@@ -85,7 +85,7 @@ def test_unassign_multi_reviewer(remote):
     )
     unassign()
     assert (
-        "Unassigning Unknown User (anonymous@nowhere.none) from 56789 for group qam-sle."
+        "Unassigning Unknown User (anonymous@nowhere.none) from 56789 for group qam-sle."  # noqa: E501
         in unassign.out.getvalue()
     )
 
@@ -104,7 +104,7 @@ def test_unassign_subset_group(remote):
     unassign()
     assert len(remote.post_calls) == 1
     assert (
-        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-sle"
+        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-sle"  # noqa: E501
         in unassign.out.getvalue()
     )
 
@@ -161,11 +161,11 @@ def test_unassign_multiple_groups(remote):
     unassign = actions.UnassignAction(remote, user_id, two_assigned, out=out)
     unassign()
     assert (
-        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-sle"
+        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-sle"  # noqa: E501
         in unassign.out.getvalue()
     )
     assert (
-        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-cloud"
+        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-cloud"  # noqa: E501
         in unassign.out.getvalue()
     )
 
@@ -352,7 +352,7 @@ def test_approval(remote):
 
 
 def test_report_field():
-    assert "Assigned Roles" == str(fields.ReportField.assigned_roles)
+    assert str(fields.ReportField.assigned_roles) == "Assigned Roles"
     assert fields.ReportField.assigned_roles == fields.ReportField.from_str(
         "Assigned Roles"
     )
@@ -511,11 +511,11 @@ def test_unassign_permission_error(remote):
     unassign()
     value = unassign.out.getvalue()
     assert (
-        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-sle"
+        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-sle"  # noqa: E501
         in value
     )
     assert (
-        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-cloud"
+        "Unassigning Unknown User (anonymous@nowhere.none) from twoassigned for group qam-cloud"  # noqa: E501
         in value
     )
 
@@ -544,7 +544,7 @@ def test_decline_output(remote):
     action._template = template
     action()
     assert (
-        f"Declining request {request} for {action.user}. See Testreport: {action.template.fancy_url}"
+        f"Declining request {request} for {action.user}. See Testreport: {action.template.fancy_url}"  # noqa: E501
         in action.out.getvalue()
     )
 

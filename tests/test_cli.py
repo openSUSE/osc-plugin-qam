@@ -225,3 +225,25 @@ def test_reject_default_validates_template(monkeypatch, remote):
         "broken",
     )
     assert action.calls == 1
+
+
+def test_cli_imports():
+    from oscqam import (
+        cli_assigned,
+        cli_comment,
+        cli_info,
+        cli_list,
+        cli_my,
+        cli_rmcomment,
+        cli_unassign,
+        cli_version,
+    )
+
+    assert cli_list.QAMListCommand is not None
+    assert cli_rmcomment.QAMDeleteCommentCommand is not None
+    assert cli_my.QAMMyCommand is not None
+    assert cli_comment.QAMCommentCommand is not None
+    assert cli_info.QAMInfoCommand is not None
+    assert cli_unassign.QAMUnassignCommand is not None
+    assert cli_version.QAMVersionCommand is not None
+    assert cli_assigned.QAMAssignedCommand is not None

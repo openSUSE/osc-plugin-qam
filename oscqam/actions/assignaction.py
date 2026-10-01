@@ -80,7 +80,7 @@ class AssignAction(OscAction):
         try:
             self.request.get_template(self.template_factory)
         except TemplateNotFoundError as e:
-            raise ReportNotYetGeneratedError(self.request, str(e))
+            raise ReportNotYetGeneratedError(self.request, str(e)) from e
 
     def check_open_review(self) -> None:
         """Checks that the request is in an open state.
@@ -124,7 +124,7 @@ class AssignAction(OscAction):
 
     def validate(self):
         """Validates the assignment."""
-        # If there is no open review, all other checks aren't required and can't be overridden by self.force.
+        # If there is no open review, all other checks aren't required and can't be overridden by self.force.  # noqa: E501
         self.check_open_review()
         if self.force:
             return

@@ -24,7 +24,7 @@ class PriorityRemote:
 
     endpoint = "/source/{0}/_attribute/OBS:IncidentPriority"
     smelt = "http://smelt.suse.de/graphql"
-    query = "{{ incidents(incidentId: {incident}) {{ edges {{ node {{ priority priorityOverride }} }} }} }}"
+    query = "{{ incidents(incidentId: {incident}) {{ edges {{ node {{ priority priorityOverride }} }} }} }}"  # noqa: E501
 
     def __init__(self, remote):
         """Initializes a PriorityRemote.

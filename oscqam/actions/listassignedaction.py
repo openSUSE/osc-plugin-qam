@@ -32,10 +32,7 @@ class ListAssignedAction(ListAction):
         Returns:
             True if the request is in review by the current user, False otherwise.
         """
-        for review in reviews:
-            if review.reviewer == self.user and review.open:
-                return True
-        return False
+        return any(review.reviewer == self.user and review.open for review in reviews)
 
     def load_requests(self):
         """Loads all requests that are in review for QAM groups.
@@ -46,6 +43,4 @@ class ListAssignedAction(ListAction):
         qam_groups = [
             group for group in self.remote.groups.all() if group.is_qam_group()
         ]
-        return {
-            request for request in self.remote.requests.review_for_groups(qam_groups)
-        }
+        return set(self.remote.requests.review_for_groups(qam_groups))

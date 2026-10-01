@@ -43,7 +43,7 @@ class Report:
             )
             value = sorted(str(r.reviewer) for r in reviews)
         elif field == ReportField.package_streams:
-            value = [p for p in self.request.packages]
+            value = list(self.request.packages)
         elif field == ReportField.assigned_roles:
             roles = self.request.assigned_roles
             value = [str(r) for r in roles]

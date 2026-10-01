@@ -61,10 +61,7 @@ class ApproveUserAction(ApproveAction):
     def action(self):
         """Performs the approval action."""
         self.validate()
-        if self.template:
-            url = self.template.fancy_url
-        else:
-            url = "no template"
+        url = self.template.fancy_url if self.template else "no template"
         groups = ", ".join([str(g) for g in self.user.in_review_groups(self.request)])
         msg = self.APPROVE_MSG.format(
             user=self.reviewer, groups=groups, request=self.request, url=url

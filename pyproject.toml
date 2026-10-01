@@ -61,6 +61,21 @@ markers = [
 line-length = 88
 target-version = "py311"
 
+[tool.ruff.lint]
+extend-select = [
+    "E", "F", "W",
+    "I", # isort
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "C4", # flake8-comprehensions
+    "PIE", # flake8-pie
+    "BLE", # flake8-blind-except
+    "LOG", # flake8-logging
+    "RUF0", "RUF100", # ruff-specific
+    "FLY", # flynt
+    "UP", # pyupgrade
+]
+
 [tool.ruff.format]
 
 [tool.ty.environment]

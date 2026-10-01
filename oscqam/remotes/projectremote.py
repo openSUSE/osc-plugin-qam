@@ -47,5 +47,5 @@ class ProjectRemote:
             project: The name of the project.
             attribute: The Attribute object to set.
         """
-        endpoint = f"{self.endpoint}/{project}/_attribute/{attribute.namespace}:{attribute.name}"
+        endpoint = f"{self.endpoint}/{project}/_attribute/{attribute.namespace}:{attribute.name}"  # noqa: E501
         self.remote.post(endpoint, self.create_body.format(attribute=attribute.xml()))
